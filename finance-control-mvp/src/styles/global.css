@@ -1644,3 +1644,263 @@ select:disabled {
 .app-layout .empty-message {
   font-size: 13px;
 }
+
+/* ============================================================
+   CUENTAS - TABS FORM / ACTIVAS / INACTIVAS
+============================================================ */
+
+.accounts-page {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-bottom: 10px;
+}
+
+.accounts-tab-layout {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.accounts-tabs {
+  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.accounts-view-tab {
+  min-height: 36px;
+  padding: 7px 12px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  border-radius: 14px;
+  box-shadow: none;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  font-size: 12px;
+  line-height: 1.1;
+}
+
+/* Crear cuenta nueva: siempre azul */
+.accounts-view-tab-primary,
+.accounts-view-tab-primary.active {
+  background: var(--color-primary);
+  color: white;
+  border: 1px solid var(--color-primary);
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.18);
+}
+
+.accounts-view-tab-primary:hover {
+  background: var(--color-primary-dark);
+  color: white;
+  border-color: var(--color-primary-dark);
+}
+
+/* Botones secundarios */
+.accounts-view-tab-secondary {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+.accounts-view-tab-secondary:hover {
+  background: #f8fafc;
+  color: var(--color-text);
+  border-color: #cbd5e1;
+}
+
+/* Estado seleccionado para activas / inactivas */
+.accounts-view-tab-secondary.active {
+  background: #e2e8f0;
+  color: #0f172a;
+  border-color: #94a3b8;
+  box-shadow: inset 0 0 0 1px #94a3b8;
+}
+
+.accounts-view-tab span {
+  font-weight: 800;
+}
+
+.accounts-view-tab small {
+  min-width: 22px;
+  height: 19px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #e2e8f0;
+  color: #475569;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.accounts-view-tab-primary small,
+.accounts-view-tab-primary.active small {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.accounts-view-tab-secondary.active small {
+  background: #cbd5e1;
+  color: #0f172a;
+}
+
+.accounts-workspace-panel {
+  flex: 1;
+  min-height: 680px;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+}
+
+/* FORMULARIO */
+.accounts-form-view {
+  overflow: visible;
+  display: block;
+  padding: 22px 28px 32px;
+}
+
+.accounts-form-centered {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.accounts-form-centered h2 {
+  margin: 0 0 6px;
+}
+
+.accounts-form-centered > p {
+  margin: 0 0 18px;
+  color: var(--color-muted);
+}
+
+.accounts-form-view .account-form {
+  margin-top: 18px;
+  overflow: visible;
+}
+
+.accounts-form-centered {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.accounts-form-centered h2 {
+  margin: 0 0 6px;
+}
+
+.accounts-form-centered > p {
+  margin: 0 0 18px;
+  color: var(--color-muted);
+}
+
+/* Evita scroll interno en el formulario */
+.accounts-form-view,
+.accounts-form-view .account-form,
+.accounts-form-view form {
+  overflow: visible;
+}
+
+.accounts-form-view .account-form {
+  margin-top: 18px;
+}
+
+/* LISTAS */
+.accounts-list-view {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.accounts-list-view-header {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.accounts-list-view-header h2 {
+  margin: 0 0 6px;
+}
+
+.accounts-list-view-header p {
+  margin: 0;
+  color: var(--color-muted);
+}
+
+.accounts-list-view-header span {
+  min-width: 34px;
+  height: 28px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--color-primary-soft);
+  color: var(--color-primary-dark);
+  font-weight: 900;
+}
+
+.accounts-single-scroll-list {
+  margin-top: 16px;
+  max-height: none;
+}
+
+@keyframes accountsFadeSlide {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 960px) {
+  .accounts-page {
+    height: auto;
+    min-height: 100%;
+    overflow: visible;
+  }
+
+  .accounts-tab-layout {
+    min-height: auto;
+  }
+
+  .accounts-tabs {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .accounts-workspace-panel {
+    min-height: 700px;
+  }
+
+  .accounts-form-view {
+    padding: 18px;
+  }
+
+  .accounts-single-scroll-list {
+    max-height: 520px;
+  }
+
+  .accounts-list-view-header {
+    flex-direction: column;
+  }
+}
+
+.accounts-page > .error-message,
+.accounts-page > .info-message {
+  margin-bottom: 16px;
+}
