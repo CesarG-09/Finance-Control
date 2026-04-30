@@ -21,6 +21,16 @@ function formatCurrency(value) {
   }).format(numericValue);
 }
 
+function isIncomeTransaction(transaction) {
+  return transaction.transaction_type?.ty_name?.toLowerCase() === 'entrada';
+}
+
+function formatTransactionAmount(transaction) {
+  const amount = formatCurrency(transaction.tr_amount);
+
+  return isIncomeTransaction(transaction) ? `+${amount}` : `-${amount}`;
+}
+
 function formatDate(value) {
   if (!value) {
     return '-';
@@ -58,7 +68,11 @@ function TransactionCard({ transaction, onEdit, onDelete }) {
           <p>{formatDate(transaction.tr_date)}</p>
         </div>
 
-        <span className="status-tag active">
+        <span
+          className={`status-tag ${
+            isIncomeTransaction(transaction) ? 'income' : 'expense'
+          }`}
+        >
           {transaction.transaction_type?.ty_name || 'Sin tipo'}
         </span>
       </div>
@@ -76,7 +90,13 @@ function TransactionCard({ transaction, onEdit, onDelete }) {
       </div>
 
       <div className="transaction-card-footer">
-        <strong>{formatCurrency(transaction.tr_amount)}</strong>
+        <strong
+          className={
+            isIncomeTransaction(transaction) ? 'amount-positive' : 'amount-negative'
+          }
+        >
+          {formatTransactionAmount(transaction)}
+        </strong>
 
         <div className="transaction-actions">
           <button type="button" onClick={() => onEdit(transaction)}>
@@ -301,7 +321,7 @@ export default function TransactionsPage() {
         <div className="transactions-summary-card">
           <span>Balance actual</span>
           <strong>
-            {selectedAccount ? formatCurrency(selectedAccount.ac_balance) : '$0.00'}
+            {selectedAccount ? formatCurrency(selectedAccount.ac_balance) : formatCurrency(0)}
           </strong>
         </div>
       </section>

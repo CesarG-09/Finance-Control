@@ -21,10 +21,24 @@ function formatCurrency(value) {
 
 function AccountCard({ account, onEdit, onDeactivate, onReactivate }) {
   return (
-    <article className="account-card">
+    <article
+      className={`account-card ${
+        account.ac_is_active
+          ? 'account-card-active'
+          : 'account-card-inactive'
+      }`}
+    >
       <div>
         <h3>{account.ac_name}</h3>
         <p>{account.account_type?.ta_name || 'Sin tipo'}</p>
+
+        <span
+          className={`account-status-pill ${
+            account.ac_is_active ? 'active' : 'inactive'
+          }`}
+        >
+          {account.ac_is_active ? 'Activa' : 'Inactiva'}
+        </span>
 
         {account.ac_description && (
           <p className="muted-text">{account.ac_description}</p>
