@@ -1,9 +1,12 @@
-import { Link, Outlet, useNavigate } from 'react-router';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 import { useAuth } from '../context/AuthContext';
 
 export default function AppLayout() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { logout, clientProfile } = useAuth();
+
+  const isTransactionsPage = location.pathname.startsWith('/transacciones');
 
   async function handleLogout() {
     await logout();
@@ -31,7 +34,9 @@ export default function AppLayout() {
         </div>
       </aside>
 
-      <main className="main-content">
+      <main
+        className={`main-content ${isTransactionsPage ? 'transactions-main-content' : ''}`}
+      >
         <Outlet />
       </main>
     </div>
