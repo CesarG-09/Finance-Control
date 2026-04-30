@@ -7,6 +7,11 @@ export default function AppLayout() {
   const { logout, clientProfile } = useAuth();
 
   const isTransactionsPage = location.pathname.startsWith('/transacciones');
+  const isDashboardPage = location.pathname.startsWith('/dashboard');
+  const isMovementsPage = location.pathname.startsWith('/movimientos');
+
+  const isScrollablePage =
+    isTransactionsPage || isDashboardPage || isMovementsPage;
 
   async function handleLogout() {
     await logout();
@@ -35,7 +40,9 @@ export default function AppLayout() {
       </aside>
 
       <main
-        className={`main-content ${isTransactionsPage ? 'transactions-main-content' : ''}`}
+        className={`main-content ${
+          isScrollablePage ? 'scrollable-main-content' : ''
+        } ${isTransactionsPage ? 'transactions-main-content' : ''}`}
       >
         <Outlet />
       </main>
