@@ -14,12 +14,28 @@ const emptyForm = {
   tr_date: getTodayDate(),
 };
 
-function getActiveSubcategory(transaction) {
+function getActiveSubcategoryData(transaction) {
   const activeRelation = transaction?.subcategories_transaction?.find(
     (item) => item.st_is_active
   );
 
-  return activeRelation?.subcategory ?? null;
+  const subcategory = activeRelation?.subcategory ?? null;
+
+  if (!subcategory) {
+    return {
+      ct_id: '',
+      sct_id: '',
+    };
+  }
+
+  return {
+    ct_id: subcategory.ct_id
+      ? String(subcategory.ct_id)
+      : subcategory.category?.ct_id
+        ? String(subcategory.category.ct_id)
+        : '',
+    sct_id: subcategory.sct_id ? String(subcategory.sct_id) : '',
+  };
 }
 
 export default function TransactionForm({
@@ -69,18 +85,18 @@ export default function TransactionForm({
 
   useEffect(() => {
     if (initialData) {
-      const activeSubcategory = getActiveSubcategory(initialData);
+        const activeSubcategoryData = getActiveSubcategoryData(initialData);
 
-      setForm({
-        ty_id: initialData.ty_id ? String(initialData.ty_id) : '',
-        ct_id: activeSubcategory?.ct_id ? String(activeSubcategory.ct_id) : '',
-        sct_id: activeSubcategory?.sct_id ? String(activeSubcategory.sct_id) : '',
-        tr_name: initialData.tr_name ?? '',
-        tr_description: initialData.tr_description ?? '',
-        tr_amount: String(initialData.tr_amount ?? ''),
-        tr_date: initialData.tr_date ?? getTodayDate(),
-      });
-    } else {
+        setForm({
+            ty_id: initialData.ty_id ? String(initialData.ty_id) : '',
+            ct_id: activeSubcategoryData.ct_id,
+            sct_id: activeSubcategoryData.sct_id,
+            tr_name: initialData.tr_name ?? '',
+            tr_description: initialData.tr_description ?? '',
+            tr_amount: String(initialData.tr_amount ?? ''),
+            tr_date: initialData.tr_date ?? getTodayDate(),
+        });
+    }   else {
       setForm(emptyForm);
     }
 
