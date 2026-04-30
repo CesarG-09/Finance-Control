@@ -61,55 +61,84 @@ export default function RegisterPage() {
 
   return (
     <main className="auth-page">
-      <section className="auth-card">
-        <h1>Crear cuenta</h1>
-        <p>Regístrate para comenzar a gestionar tus finanzas.</p>
+      <section className="auth-shell">
+        <aside className="auth-hero">
+          <div className="auth-logo">FC</div>
 
-        <form onSubmit={handleSubmit} className="form">
-          <label>
-            Correo
-            <input
-              type="email"
-              name="email"
-              value={form.email}
-              onChange={handleChange}
-              required
-            />
-          </label>
+          <div>
+            <span className="auth-eyebrow">Empieza tu control financiero</span>
+            <h1>Crea tu cuenta y configura tu perfil para usar el aplicativo.</h1>
+            <p>
+              Después del registro, deberás crear tu perfil obligatorio antes de
+              acceder al dashboard.
+            </p>
+          </div>
 
-          <label>
-            Contraseña
-            <input
-              type="password"
-              name="password"
-              value={form.password}
-              onChange={handleChange}
-              required
-            />
-          </label>
+          <div className="auth-hero-footer">
+            <span>Registro seguro</span>
+            <strong>Supabase Auth</strong>
+          </div>
+        </aside>
 
-          <label>
-            Confirmar contraseña
-            <input
-              type="password"
-              name="confirmPassword"
-              value={form.confirmPassword}
-              onChange={handleChange}
-              required
-            />
-          </label>
+        <section className="auth-card">
+          <div className="auth-card-header">
+            <span className="auth-card-kicker">Nuevo usuario</span>
+            <h2>Crear cuenta</h2>
+            <p>Regístrate para comenzar a gestionar tus finanzas.</p>
+          </div>
 
-          {errorMessage && <p className="error-message">{errorMessage}</p>}
-          {infoMessage && <p className="info-message">{infoMessage}</p>}
+          <form onSubmit={handleSubmit} className="form auth-form">
+            <label>
+              Correo
+              <input
+                type="email"
+                name="email"
+                value={form.email}
+                onChange={handleChange}
+                placeholder="tu_correo@email.com"
+                autoComplete="email"
+                required
+              />
+            </label>
 
-          <button type="submit" disabled={loading}>
-            {loading ? 'Creando cuenta...' : 'Registrarme'}
-          </button>
-        </form>
+            <label>
+              Contraseña
+              <input
+                type="password"
+                name="password"
+                value={form.password}
+                onChange={handleChange}
+                placeholder="Mínimo 6 caracteres"
+                autoComplete="new-password"
+                required
+              />
+            </label>
 
-        <p>
-          ¿Ya tienes cuenta? <Link to="/login">Inicia sesión</Link>
-        </p>
+            <label>
+              Confirmar contraseña
+              <input
+                type="password"
+                name="confirmPassword"
+                value={form.confirmPassword}
+                onChange={handleChange}
+                placeholder="Repite tu contraseña"
+                autoComplete="new-password"
+                required
+              />
+            </label>
+
+            {errorMessage && <p className="error-message">{errorMessage}</p>}
+            {infoMessage && <p className="info-message">{infoMessage}</p>}
+
+            <button type="submit" disabled={loading} className="auth-submit-button">
+              {loading ? 'Creando cuenta...' : 'Registrarme'}
+            </button>
+          </form>
+
+          <p className="auth-switch-text">
+            ¿Ya tienes cuenta? <Link to="/login">Inicia sesión</Link>
+          </p>
+        </section>
       </section>
     </main>
   );

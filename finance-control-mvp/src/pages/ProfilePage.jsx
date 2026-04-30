@@ -62,119 +62,147 @@ export default function ProfilePage() {
   }
 
   return (
-    <main className="auth-page">
-      <section className="auth-card profile-card">
-        <h1>Crear perfil</h1>
-        <p>Completa tu perfil para continuar usando la aplicación.</p>
+    <main className="auth-page profile-auth-page">
+      <section className="profile-shell">
+        <section className="auth-card profile-card">
+          <div className="auth-card-header">
+            <span className="auth-card-kicker">Perfil obligatorio</span>
+            <h2>Completa tu perfil</h2>
+            <p>
+              Necesitamos estos datos para asociar tus cuentas y movimientos a un
+              único perfil de usuario.
+            </p>
+          </div>
 
-        <form onSubmit={handleSubmit} className="form">
-          <label>
-            <span className="label-row">
-              Primer nombre
-              <span className="required-tag">Obligatorio</span>
+          <div className="profile-info-box">
+            <strong>Importante</strong>
+            <span>
+              Solo podrás acceder al dashboard después de crear tu perfil.
             </span>
-            <input
-              type="text"
-              name="cl_first_name"
-              value={form.cl_first_name}
-              onChange={handleChange}
-              required
-            />
-          </label>
+          </div>
 
-          <label>
-            <span className="label-row">
-              Segundo nombre
-              <span className="optional-tag">Opcional</span>
-            </span>
-            <input
-              type="text"
-              name="cl_middle_name"
-              value={form.cl_middle_name}
-              onChange={handleChange}
-            />
-          </label>
+          <form onSubmit={handleSubmit} className="form profile-form">
+            <label>
+              <span className="label-row">
+                Primer nombre
+                <span className="required-tag">Obligatorio</span>
+              </span>
+              <input
+                type="text"
+                name="cl_first_name"
+                value={form.cl_first_name}
+                onChange={handleChange}
+                placeholder="Ej: María"
+                required
+              />
+            </label>
 
-          <label>
-            <span className="label-row">
-              Apellido
-              <span className="required-tag">Obligatorio</span>
-            </span>
-            <input
-              type="text"
-              name="cl_last_name"
-              value={form.cl_last_name}
-              onChange={handleChange}
-              required
-            />
-          </label>
+            <label>
+              <span className="label-row">
+                Segundo nombre
+                <span className="optional-tag">Opcional</span>
+              </span>
+              <input
+                type="text"
+                name="cl_middle_name"
+                value={form.cl_middle_name}
+                onChange={handleChange}
+                placeholder="Ej: Isabel"
+              />
+            </label>
 
-          <label>
-            <span className="label-row">
-              Segundo apellido
-              <span className="optional-tag">Opcional</span>
-            </span>
-            <input
-              type="text"
-              name="cl_second_last_name"
-              value={form.cl_second_last_name}
-              onChange={handleChange}
-            />
-          </label>
+            <label>
+              <span className="label-row">
+                Apellido
+                <span className="required-tag">Obligatorio</span>
+              </span>
+              <input
+                type="text"
+                name="cl_last_name"
+                value={form.cl_last_name}
+                onChange={handleChange}
+                placeholder="Ej: Pérez"
+                required
+              />
+            </label>
 
-          <label>
-            <span className="label-row">
-              Género
-              <span className="required-tag">Obligatorio</span>
-            </span>
-            <select
-              name="cl_gender"
-              value={form.cl_gender}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Selecciona una opción</option>
-              <option value="Femenino">Femenino</option>
-              <option value="Masculino">Masculino</option>
-              <option value="Otro">Otro</option>
-              <option value="Prefiero no decir">Prefiero no decir</option>
-            </select>
-          </label>
+            <label>
+              <span className="label-row">
+                Segundo apellido
+                <span className="optional-tag">Opcional</span>
+              </span>
+              <input
+                type="text"
+                name="cl_second_last_name"
+                value={form.cl_second_last_name}
+                onChange={handleChange}
+                placeholder="Ej: Gómez"
+              />
+            </label>
 
-          <label>
-            <span className="label-row">
-              Fecha de nacimiento
-              <span className="required-tag">Obligatorio</span>
-            </span>
-            <input
-              type="date"
-              name="cl_birth_date"
-              value={form.cl_birth_date}
-              onChange={handleChange}
-              required
-            />
-          </label>
+            <label>
+              <span className="label-row">
+                Género
+                <span className="required-tag">Obligatorio</span>
+              </span>
+              <select
+                name="cl_gender"
+                value={form.cl_gender}
+                onChange={handleChange}
+                required
+              >
+                <option value="">Selecciona una opción</option>
+                <option value="Femenino">Femenino</option>
+                <option value="Masculino">Masculino</option>
+                <option value="Otro">Otro</option>
+                <option value="Prefiero no decir">Prefiero no decir</option>
+              </select>
+            </label>
 
-          <label>
-            <span className="label-row">
-              Profesión
-              <span className="required-tag">Obligatorio</span>
-            </span>
-            <input
-              type="text"
-              name="cl_profession"
-              value={form.cl_profession}
-              onChange={handleChange}
-              required
-            />
-          </label>
+            <label>
+              <span className="label-row">
+                Fecha de nacimiento
+                <span className="required-tag">Obligatorio</span>
+              </span>
+              <input
+                type="date"
+                name="cl_birth_date"
+                value={form.cl_birth_date}
+                onChange={handleChange}
+                required
+              />
+            </label>
 
-          {errorMessage && <p className="error-message">{errorMessage}</p>}
+            <label className="profile-form-full">
+              <span className="label-row">
+                Profesión
+                <span className="required-tag">Obligatorio</span>
+              </span>
+              <input
+                type="text"
+                name="cl_profession"
+                value={form.cl_profession}
+                onChange={handleChange}
+                placeholder="Ej: Analista, estudiante, desarrollador"
+                required
+              />
+            </label>
 
-          <button type="submit" disabled={loading}>
-            {loading ? 'Guardando...' : 'Crear perfil'}
-          </button>
-        </form>
+            {errorMessage && (
+              <p className="error-message profile-form-full">{errorMessage}</p>
+            )}
+
+            <div className="form-actions profile-form-full">
+              <button
+                type="submit"
+                disabled={loading}
+                className="auth-submit-button"
+              >
+                {loading ? 'Guardando...' : 'Crear perfil'}
+              </button>
+            </div>
+          </form>
+        </section>
       </section>
     </main>
   );
