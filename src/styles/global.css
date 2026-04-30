@@ -274,28 +274,25 @@ select:disabled {
   padding-bottom: 32px;
 }
 
-.profile-shell .auth-card {
-  padding: 40px;
-}
-
-.profile-card {
-  max-height: none;
-}
-
-.profile-auth-page .profile-card {
-  margin-bottom: 32px;
-}
-
 .profile-shell {
   width: 100%;
   max-width: 880px;
 }
 
+.profile-shell .auth-card {
+  padding: 40px;
+}
+
 .profile-card {
   max-width: none;
+  max-height: none;
   border-radius: 28px;
   border: 1px solid rgba(226, 232, 240, 0.9);
   box-shadow: 0 24px 70px rgba(15, 23, 42, 0.12);
+}
+
+.profile-auth-page .profile-card {
+  margin-bottom: 32px;
 }
 
 .profile-info-box {
@@ -309,10 +306,7 @@ select:disabled {
   color: #1e40af;
 }
 
-.profile-info-box strong {
-  font-size: 14px;
-}
-
+.profile-info-box strong,
 .profile-info-box span {
   font-size: 14px;
 }
@@ -332,7 +326,6 @@ select:disabled {
 
   .auth-shell {
     max-width: 520px;
-    min-height: auto;
     grid-template-columns: 1fr;
   }
 
@@ -354,29 +347,79 @@ select:disabled {
 }
 
 /* ============================================================
-   LAYOUT GENERAL
+   LAYOUT GENERAL / SIDEBAR
 ============================================================ */
 
 .app-layout {
   height: 100vh;
   min-height: 100vh;
   display: grid;
-  grid-template-columns: 280px minmax(0, 1fr);
+  grid-template-columns: 82px minmax(0, 1fr);
   overflow: hidden;
   background: #f3f4f6;
+  transition: grid-template-columns 0.14s ease-out;
+}
+
+.app-layout.sidebar-collapsed-layout {
+  grid-template-columns: 82px minmax(0, 1fr);
+}
+
+.app-layout.sidebar-expanded-layout {
+  grid-template-columns: 280px minmax(0, 1fr);
 }
 
 .sidebar {
   height: 100vh;
-  background:
-    linear-gradient(180deg, #0f172a 0%, #111827 55%, #020617 100%);
   color: white;
-  padding: 22px;
+  padding: 18px;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
   overflow-x: hidden;
+  background:
+    linear-gradient(180deg, #0f172a 0%, #111827 55%, #020617 100%);
   border-right: 1px solid rgba(255, 255, 255, 0.08);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.sidebar::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+.sidebar-top {
+  display: grid;
+  gap: 18px;
+}
+
+.sidebar-toggle-button {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  gap: 4px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: none;
+  transition: background 0.14s ease;
+}
+
+.sidebar-toggle-button:hover {
+  background: rgba(255, 255, 255, 0.14);
+  transform: none;
+  box-shadow: none;
+}
+
+.sidebar-toggle-button span {
+  width: 18px;
+  height: 2px;
+  display: block;
+  border-radius: 999px;
+  background: white;
 }
 
 .sidebar-brand {
@@ -437,7 +480,7 @@ select:disabled {
   gap: 10px;
 }
 
-.sidebar-nav-section > p {
+.sidebar-section-title {
   margin: 0;
   color: #9ca3af;
   font-size: 11px;
@@ -462,16 +505,15 @@ select:disabled {
   color: #d1d5db;
   border: 1px solid transparent;
   transition:
-    background 0.18s ease,
-    color 0.18s ease,
-    border-color 0.18s ease,
-    transform 0.18s ease;
+    background 0.14s ease,
+    color 0.14s ease,
+    border-color 0.14s ease;
 }
 
 .sidebar-link:hover {
   color: white;
   background: rgba(255, 255, 255, 0.06);
-  transform: translateX(2px);
+  transform: none;
 }
 
 .sidebar-link.active {
@@ -500,6 +542,7 @@ select:disabled {
   min-width: 0;
   display: grid;
   gap: 2px;
+  white-space: nowrap;
 }
 
 .sidebar-link-text strong {
@@ -573,11 +616,119 @@ select:disabled {
   color: white;
 }
 
+.sidebar-logout-icon {
+  font-weight: 900;
+}
+
 .main-content {
   height: 100vh;
   min-width: 0;
   padding: 32px;
   overflow: hidden;
+}
+
+/* Sidebar colapsado */
+.sidebar-collapsed {
+  align-items: center;
+}
+
+.sidebar-collapsed .sidebar-top {
+  justify-items: center;
+}
+
+.sidebar-collapsed .sidebar-brand,
+.sidebar-collapsed .sidebar-section-title,
+.sidebar-collapsed .sidebar-link-text,
+.sidebar-collapsed .sidebar-user-info,
+.sidebar-collapsed .sidebar-logout-text {
+  display: none;
+}
+
+.sidebar-collapsed .sidebar-nav {
+  width: 100%;
+  margin-top: 28px;
+  justify-items: center;
+}
+
+.sidebar-collapsed .sidebar-nav-section {
+  width: 100%;
+}
+
+.sidebar-collapsed .sidebar-nav-links {
+  width: 100%;
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+}
+
+.sidebar-collapsed .sidebar-link {
+  width: 46px;
+  height: 46px;
+  padding: 4px;
+  display: grid;
+  grid-template-columns: 38px;
+  place-items: center;
+  overflow: hidden;
+}
+
+.sidebar-collapsed .sidebar-link-icon {
+  width: 38px;
+  height: 38px;
+}
+
+.sidebar-collapsed .sidebar-footer {
+  width: 100%;
+  align-items: center;
+  justify-items: center;
+}
+
+.sidebar-collapsed .sidebar-user-card {
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  place-items: center;
+  border-radius: 14px;
+}
+
+.sidebar-collapsed .sidebar-user-avatar {
+  width: 38px;
+  height: 38px;
+  font-size: 13px;
+}
+
+.sidebar-collapsed .sidebar-logout-button {
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+}
+
+/* Sidebar expandido */
+.sidebar-expanded {
+  align-items: stretch;
+}
+
+.sidebar-expanded .sidebar-brand {
+  display: grid;
+}
+
+.sidebar-expanded .sidebar-link {
+  width: 100%;
+}
+
+.sidebar-expanded .sidebar-logout-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.sidebar-expanded .sidebar-logout-icon {
+  display: none;
 }
 
 /* ============================================================
@@ -746,97 +897,187 @@ select:disabled {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-bottom: 10px;
 }
 
 .accounts-page .page-header {
   flex-shrink: 0;
 }
 
-/*
-  Layout principal:
-  - Columna izquierda: formulario.
-  - Columna derecha: cuentas activas + inactivas.
-  - Ambas columnas tienen la misma altura.
-*/
-.accounts-layout {
+.accounts-page > .error-message,
+.accounts-page > .info-message {
+  margin-bottom: 16px;
+}
+
+.accounts-tab-layout {
   flex: 1;
   min-height: 0;
-  display: grid;
-  grid-template-columns: 420px minmax(0, 1fr);
-  gap: 20px;
-  align-items: stretch;
-}
-
-/*
-  Formulario:
-  - Debe ocupar la misma altura total que la columna derecha.
-  - No debe tener scroll propio.
-  - No debe crecer por cantidad de cuentas.
-*/
-.account-form-panel {
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.account-form {
-  max-width: 100%;
-}
-
-/*
-  Columna derecha:
-  - Se divide en 2 filas iguales.
-  - Fila 1: cuentas activas.
-  - Fila 2: cuentas inactivas.
-*/
-.accounts-groups {
-  height: 100%;
-  min-height: 0;
-  display: grid;
-  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 20px;
-}
-
-/*
-  Paneles de cuentas:
-  - No deben crecer con más cuentas.
-  - El scroll vive en .accounts-scroll-list.
-*/
-.accounts-section {
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
 
-.section-header {
+.accounts-tabs {
+  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.accounts-view-tab {
+  min-height: 36px;
+  padding: 7px 12px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  border-radius: 14px;
+  box-shadow: none;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  font-size: 12px;
+  line-height: 1.1;
+}
+
+.accounts-view-tab-primary,
+.accounts-view-tab-primary.active {
+  background: var(--color-primary);
+  color: white;
+  border: 1px solid var(--color-primary);
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.18);
+}
+
+.accounts-view-tab-primary:hover {
+  background: var(--color-primary-dark);
+  color: white;
+  border-color: var(--color-primary-dark);
+}
+
+.accounts-view-tab-secondary {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+.accounts-view-tab-secondary:hover {
+  background: #f8fafc;
+  color: var(--color-text);
+  border-color: #cbd5e1;
+}
+
+.accounts-view-tab-secondary.active {
+  background: #e2e8f0;
+  color: #0f172a;
+  border-color: #94a3b8;
+  box-shadow: inset 0 0 0 1px #94a3b8;
+}
+
+.accounts-view-tab span {
+  font-weight: 800;
+}
+
+.accounts-view-tab small {
+  min-width: 22px;
+  height: 19px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #e2e8f0;
+  color: #475569;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.accounts-view-tab-primary small,
+.accounts-view-tab-primary.active small {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.accounts-view-tab-secondary.active small {
+  background: #cbd5e1;
+  color: #0f172a;
+}
+
+.accounts-workspace-panel {
+  flex: 1;
+  min-height: 680px;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+}
+
+.accounts-workspace-content {
+  flex: 1;
+  min-height: 0;
+  animation: accountsFadeSlide 0.22s ease;
+}
+
+.accounts-form-view {
+  overflow: visible;
+  display: block;
+  padding: 22px 28px 32px;
+}
+
+.accounts-form-centered {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.accounts-form-centered h2 {
+  margin: 0 0 6px;
+}
+
+.accounts-form-centered > p {
+  margin: 0 0 18px;
+  color: var(--color-muted);
+}
+
+.accounts-form-view .account-form,
+.accounts-form-view form {
+  margin-top: 18px;
+  overflow: visible;
+}
+
+.accounts-list-view {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.accounts-list-view-header {
   flex-shrink: 0;
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  gap: 12px;
+  align-items: flex-start;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--color-border);
 }
 
-.section-header h2 {
+.accounts-list-view-header h2 {
+  margin: 0 0 6px;
+}
+
+.accounts-list-view-header p {
   margin: 0;
+  color: var(--color-muted);
 }
 
-.section-header span {
-  background: #e5e7eb;
-  color: #374151;
+.accounts-list-view-header span {
+  min-width: 34px;
+  height: 28px;
+  display: inline-grid;
+  place-items: center;
   border-radius: 999px;
-  padding: 4px 10px;
-  font-size: 13px;
-  font-weight: 700;
+  background: var(--color-primary-soft);
+  color: var(--color-primary-dark);
+  font-weight: 900;
 }
 
-/*
-  Lista scrollable:
-  - Solo esta parte debe moverse.
-  - No usar min-height aquí porque empuja el panel.
-*/
 .accounts-scroll-list {
   flex: 1;
   min-height: 0;
@@ -849,10 +1090,11 @@ select:disabled {
   padding-right: 6px;
 }
 
-/*
-  Card:
-  - No debe reducirse ni salirse del panel.
-*/
+.accounts-single-scroll-list {
+  margin-top: 16px;
+  max-height: none;
+}
+
 .account-card {
   flex-shrink: 0;
   width: 100%;
@@ -879,7 +1121,7 @@ select:disabled {
 
 .account-card h3 {
   margin: 0 0 5px;
-  font-size: 17px;
+  font-size: 16px;
   overflow-wrap: anywhere;
 }
 
@@ -893,9 +1135,38 @@ select:disabled {
   overflow-wrap: anywhere;
 }
 
+.account-card-active {
+  border-left: 5px solid var(--color-success);
+}
+
+.account-card-inactive {
+  border-left: 5px solid #94a3b8;
+  opacity: 0.88;
+}
+
+.account-status-pill {
+  width: fit-content;
+  display: inline-flex;
+  margin-top: 8px;
+  border-radius: 999px;
+  padding: 4px 9px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.account-status-pill.active {
+  background: var(--color-success-soft);
+  color: var(--color-success);
+}
+
+.account-status-pill.inactive {
+  background: #e2e8f0;
+  color: #475569;
+}
+
 .muted-text {
   margin-top: 7px !important;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .account-card-footer {
@@ -909,7 +1180,7 @@ select:disabled {
 }
 
 .account-card-footer strong {
-  font-size: 20px;
+  font-size: 18px;
   letter-spacing: -0.4px;
 }
 
@@ -921,98 +1192,15 @@ select:disabled {
   justify-content: flex-end;
 }
 
-/* ============================================================
-   RESPONSIVE
-============================================================ */
-
-@media (max-width: 960px) {
-  body {
-    overflow: auto;
+@keyframes accountsFadeSlide {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
   }
 
-  .app-layout {
-    min-height: 100vh;
-    height: auto;
-    display: block;
-    overflow: visible;
-  }
-
-  .sidebar {
-    height: auto;
-    min-height: auto;
-    padding: 18px;
-  }
-
-  .sidebar-brand {
-    grid-template-columns: 40px minmax(0, 1fr) auto;
-  }
-
-  .sidebar-logo {
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
-  }
-
-  .sidebar-nav {
-    margin-top: 20px;
-    gap: 18px;
-  }
-
-  .sidebar-footer {
-    margin-top: 22px;
-  }
-
-  .main-content {
-    height: auto;
-    min-height: calc(100vh - 1px);
-    overflow: visible;
-    padding: 24px;
-  }
-
-  .page-header {
-    flex-direction: column;
-  }
-
-  .summary-card {
-    width: 100%;
-  }
-
-  .accounts-page {
-    height: auto;
-    overflow: visible;
-  }
-
-  .accounts-layout {
-    grid-template-columns: 1fr;
-    align-items: start;
-  }
-
-  .account-form-panel {
-    height: auto;
-    overflow: visible;
-  }
-
-  .accounts-groups {
-    height: auto;
-    grid-template-rows: auto auto;
-  }
-
-  .accounts-section {
-    height: auto;
-    min-height: 360px;
-  }
-
-  .accounts-scroll-list {
-    max-height: 360px;
-  }
-
-  .account-card-footer {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .account-actions {
-    justify-content: flex-start;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -1059,12 +1247,12 @@ select:disabled {
 
 .transactions-account-selector p {
   margin: 0;
-  color: #6b7280;
+  color: var(--color-muted);
 }
 
 .transactions-summary-card {
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
   padding: 18px;
   display: grid;
   place-items: center;
@@ -1074,12 +1262,12 @@ select:disabled {
 }
 
 .transactions-summary-card span {
-  color: #6b7280;
-  font-size: 14px;
+  color: var(--color-muted);
+  font-size: 13px;
 }
 
 .transactions-summary-card strong {
-  font-size: 24px;
+  font-size: 22px;
 }
 
 .transactions-layout {
@@ -1099,6 +1287,7 @@ select:disabled {
 
 .transaction-form-panel h2 {
   flex-shrink: 0;
+  margin-bottom: 8px;
 }
 
 .transaction-form-scroll {
@@ -1109,12 +1298,12 @@ select:disabled {
 
 .transaction-form {
   max-width: 100%;
+  margin-top: 10px;
+  gap: 12px;
 }
 
-.form-field {
-  display: grid;
-  gap: 6px;
-  font-weight: 600;
+.transaction-form .info-message {
+  margin: 0;
 }
 
 .transaction-type-buttons {
@@ -1168,7 +1357,7 @@ select:disabled {
 
 .transactions-list-header p {
   margin: 0;
-  color: #6b7280;
+  color: var(--color-muted);
 }
 
 .transactions-scroll-list {
@@ -1216,7 +1405,7 @@ select:disabled {
 
 .transaction-card-header h3 {
   margin: 0 0 5px;
-  font-size: 17px;
+  font-size: 16px;
   overflow-wrap: anywhere;
 }
 
@@ -1224,6 +1413,7 @@ select:disabled {
 .transaction-card-body p {
   margin: 0;
   color: var(--color-muted);
+  font-size: 13px;
   overflow-wrap: anywhere;
 }
 
@@ -1242,7 +1432,7 @@ select:disabled {
 }
 
 .transaction-card-footer strong {
-  font-size: 20px;
+  font-size: 18px;
   letter-spacing: -0.4px;
 }
 
@@ -1256,68 +1446,19 @@ select:disabled {
 .status-tag {
   border-radius: 999px;
   padding: 5px 10px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
   white-space: nowrap;
 }
 
-@media (max-width: 960px) {
-  .transactions-main-content {
-    overflow: visible;
-  }
-
-  .transactions-page {
-    height: auto;
-    overflow: visible;
-  }
-
-  .transactions-summary-panel {
-    grid-template-columns: 1fr;
-  }
-
-  .transactions-layout {
-    grid-template-columns: 1fr;
-    align-items: start;
-  }
-
-  .transaction-form-panel {
-    min-height: auto;
-    overflow: visible;
-  }
-
-  .transaction-form-scroll {
-    overflow: visible;
-  }
-
-  .transactions-section {
-    min-height: 420px;
-  }
-
-  .transactions-scroll-list {
-    max-height: 420px;
-  }
-
-  .transaction-card-footer {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .transaction-actions {
-    justify-content: flex-start;
-  }
+.status-tag.income {
+  background: var(--color-success-soft);
+  color: var(--color-success);
 }
 
-.transaction-form {
-  margin-top: 10px;
-  gap: 12px;
-}
-
-.transaction-form .info-message {
-  margin: 0;
-}
-
-.transaction-form-panel h2 {
-  margin-bottom: 8px;
+.status-tag.expense {
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
 }
 
 /* ============================================================
@@ -1372,7 +1513,7 @@ select:disabled {
 }
 
 .dashboard-card strong {
-  font-size: 27px;
+  font-size: 22px;
   letter-spacing: -0.8px;
   overflow-wrap: anywhere;
 }
@@ -1399,7 +1540,7 @@ select:disabled {
 
 .section-header p {
   margin: 6px 0 0;
-  color: #6b7280;
+  color: var(--color-muted);
 }
 
 .table-responsive {
@@ -1427,7 +1568,7 @@ select:disabled {
 .movements-table th {
   color: #475569;
   background: #f8fafc;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.03em;
@@ -1435,7 +1576,7 @@ select:disabled {
 
 .movements-table td {
   color: var(--color-text);
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .movements-table tbody tr:hover {
@@ -1464,6 +1605,62 @@ select:disabled {
   justify-content: flex-end;
 }
 
+/* ============================================================
+   AJUSTE TIPOGRÁFICO APP INTERNA
+============================================================ */
+
+.app-layout {
+  font-size: 14px;
+}
+
+.app-layout .page-header h1 {
+  font-size: 26px;
+  line-height: 1.15;
+}
+
+.app-layout .page-header p {
+  font-size: 14px;
+}
+
+.app-layout .panel h2,
+.app-layout .section-header h2,
+.app-layout .transactions-list-header h2,
+.app-layout .transactions-account-selector h2 {
+  font-size: 19px;
+  line-height: 1.2;
+}
+
+.app-layout .section-header p,
+.app-layout .transactions-list-header p,
+.app-layout .transactions-account-selector p {
+  font-size: 13px;
+}
+
+.app-layout label,
+.app-layout .form-field {
+  font-size: 14px;
+}
+
+.app-layout input,
+.app-layout select {
+  font-size: 14px;
+}
+
+.app-layout button,
+.app-layout .button-link {
+  font-size: 14px;
+}
+
+.app-layout .error-message,
+.app-layout .info-message,
+.app-layout .empty-message {
+  font-size: 13px;
+}
+
+/* ============================================================
+   RESPONSIVE
+============================================================ */
+
 @media (max-width: 1100px) {
   .dashboard-cards-grid,
   .movements-summary-grid {
@@ -1479,395 +1676,71 @@ select:disabled {
   }
 }
 
-@media (max-width: 640px) {
-  .dashboard-cards-grid,
-  .movements-summary-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.account-card-active {
-  border-left: 5px solid var(--color-success);
-}
-
-.account-card-inactive {
-  border-left: 5px solid #94a3b8;
-  opacity: 0.88;
-}
-
-.account-status-pill {
-  width: fit-content;
-  display: inline-flex;
-  margin-top: 8px;
-  border-radius: 999px;
-  padding: 4px 9px;
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.account-status-pill.active {
-  background: var(--color-success-soft);
-  color: var(--color-success);
-}
-
-.account-status-pill.inactive {
-  background: #e2e8f0;
-  color: #475569;
-}
-
-.status-tag.income {
-  background: var(--color-success-soft);
-  color: var(--color-success);
-}
-
-.status-tag.expense {
-  background: var(--color-danger-soft);
-  color: var(--color-danger);
-}
-
-/* ============================================================
-   AJUSTE TIPOGRÁFICO APP INTERNA
-   No afecta Login / Register / Profile
-============================================================ */
-
-/* Base general dentro del aplicativo */
-.app-layout {
-  font-size: 14px;
-}
-
-/* Títulos principales de páginas internas */
-.app-layout .page-header h1 {
-  font-size: 26px;
-  line-height: 1.15;
-}
-
-/* Descripciones bajo títulos */
-.app-layout .page-header p {
-  font-size: 14px;
-}
-
-/* Títulos de paneles */
-.app-layout .panel h2,
-.app-layout .section-header h2,
-.app-layout .transactions-list-header h2,
-.app-layout .transactions-account-selector h2 {
-  font-size: 19px;
-  line-height: 1.2;
-}
-
-/* Textos secundarios de secciones */
-.app-layout .section-header p,
-.app-layout .transactions-list-header p,
-.app-layout .transactions-account-selector p {
-  font-size: 13px;
-}
-
-/* Cards resumen */
-.app-layout .summary-card span,
-.app-layout .dashboard-card span,
-.app-layout .transactions-summary-card span {
-  font-size: 13px;
-}
-
-.app-layout .summary-card strong,
-.app-layout .dashboard-card strong,
-.app-layout .transactions-summary-card strong {
-  font-size: 22px;
-}
-
-/* Cards de cuentas */
-.app-layout .account-card h3 {
-  font-size: 16px;
-}
-
-.app-layout .account-card p,
-.app-layout .muted-text {
-  font-size: 13px;
-}
-
-.app-layout .account-card-footer strong {
-  font-size: 18px;
-}
-
-/* Cards de transacciones */
-.app-layout .transaction-card-header h3 {
-  font-size: 16px;
-}
-
-.app-layout .transaction-card-header p,
-.app-layout .transaction-card-body p {
-  font-size: 13px;
-}
-
-.app-layout .transaction-card-footer strong {
-  font-size: 18px;
-}
-
-/* Formularios internos */
-.app-layout label,
-.app-layout .form-field {
-  font-size: 14px;
-}
-
-.app-layout input,
-.app-layout select {
-  font-size: 14px;
-}
-
-/* Botones internos */
-.app-layout button,
-.app-layout .button-link {
-  font-size: 14px;
-  padding: 9px 13px;
-}
-
-/* Badges / tags */
-.app-layout .required-tag,
-.app-layout .optional-tag,
-.app-layout .status-tag,
-.app-layout .account-status-pill {
-  font-size: 11px;
-}
-
-/* Tablas */
-.app-layout .movements-table th {
-  font-size: 12px;
-}
-
-.app-layout .movements-table td {
-  font-size: 13px;
-}
-
-/* Mensajes */
-.app-layout .error-message,
-.app-layout .info-message,
-.app-layout .empty-message {
-  font-size: 13px;
-}
-
-/* ============================================================
-   CUENTAS - TABS FORM / ACTIVAS / INACTIVAS
-============================================================ */
-
-.accounts-page {
-  height: 100%;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding-bottom: 10px;
-}
-
-.accounts-tab-layout {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.accounts-tabs {
-  flex-shrink: 0;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 14px;
-}
-
-.accounts-view-tab {
-  min-height: 36px;
-  padding: 7px 12px;
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-  border-radius: 14px;
-  box-shadow: none;
-  text-transform: uppercase;
-  letter-spacing: 0.01em;
-  font-size: 12px;
-  line-height: 1.1;
-}
-
-/* Crear cuenta nueva: siempre azul */
-.accounts-view-tab-primary,
-.accounts-view-tab-primary.active {
-  background: var(--color-primary);
-  color: white;
-  border: 1px solid var(--color-primary);
-  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.18);
-}
-
-.accounts-view-tab-primary:hover {
-  background: var(--color-primary-dark);
-  color: white;
-  border-color: var(--color-primary-dark);
-}
-
-/* Botones secundarios */
-.accounts-view-tab-secondary {
-  background: var(--color-surface);
-  color: var(--color-text);
-  border: 1px solid var(--color-border);
-}
-
-.accounts-view-tab-secondary:hover {
-  background: #f8fafc;
-  color: var(--color-text);
-  border-color: #cbd5e1;
-}
-
-/* Estado seleccionado para activas / inactivas */
-.accounts-view-tab-secondary.active {
-  background: #e2e8f0;
-  color: #0f172a;
-  border-color: #94a3b8;
-  box-shadow: inset 0 0 0 1px #94a3b8;
-}
-
-.accounts-view-tab span {
-  font-weight: 800;
-}
-
-.accounts-view-tab small {
-  min-width: 22px;
-  height: 19px;
-  display: inline-grid;
-  place-items: center;
-  border-radius: 999px;
-  background: #e2e8f0;
-  color: #475569;
-  font-size: 10px;
-  font-weight: 800;
-}
-
-.accounts-view-tab-primary small,
-.accounts-view-tab-primary.active small {
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-}
-
-.accounts-view-tab-secondary.active small {
-  background: #cbd5e1;
-  color: #0f172a;
-}
-
-.accounts-workspace-panel {
-  flex: 1;
-  min-height: 680px;
-  overflow: visible;
-  display: flex;
-  flex-direction: column;
-}
-
-/* FORMULARIO */
-.accounts-form-view {
-  overflow: visible;
-  display: block;
-  padding: 22px 28px 32px;
-}
-
-.accounts-form-centered {
-  width: 100%;
-  max-width: 720px;
-  margin: 0 auto;
-}
-
-.accounts-form-centered h2 {
-  margin: 0 0 6px;
-}
-
-.accounts-form-centered > p {
-  margin: 0 0 18px;
-  color: var(--color-muted);
-}
-
-.accounts-form-view .account-form {
-  margin-top: 18px;
-  overflow: visible;
-}
-
-.accounts-form-centered {
-  width: 100%;
-  max-width: 720px;
-  margin: 0 auto;
-}
-
-.accounts-form-centered h2 {
-  margin: 0 0 6px;
-}
-
-.accounts-form-centered > p {
-  margin: 0 0 18px;
-  color: var(--color-muted);
-}
-
-/* Evita scroll interno en el formulario */
-.accounts-form-view,
-.accounts-form-view .account-form,
-.accounts-form-view form {
-  overflow: visible;
-}
-
-.accounts-form-view .account-form {
-  margin-top: 18px;
-}
-
-/* LISTAS */
-.accounts-list-view {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.accounts-list-view-header {
-  flex-shrink: 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.accounts-list-view-header h2 {
-  margin: 0 0 6px;
-}
-
-.accounts-list-view-header p {
-  margin: 0;
-  color: var(--color-muted);
-}
-
-.accounts-list-view-header span {
-  min-width: 34px;
-  height: 28px;
-  display: inline-grid;
-  place-items: center;
-  border-radius: 999px;
-  background: var(--color-primary-soft);
-  color: var(--color-primary-dark);
-  font-weight: 900;
-}
-
-.accounts-single-scroll-list {
-  margin-top: 16px;
-  max-height: none;
-}
-
-@keyframes accountsFadeSlide {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 @media (max-width: 960px) {
+  body {
+    overflow: auto;
+  }
+
+  .app-layout,
+  .app-layout.sidebar-collapsed-layout,
+  .app-layout.sidebar-expanded-layout {
+    min-height: 100vh;
+    height: auto;
+    display: block;
+    overflow: visible;
+  }
+
+  .sidebar {
+    width: 100%;
+    height: auto;
+    min-height: auto;
+    padding: 18px;
+    align-items: stretch;
+  }
+
+  .sidebar-collapsed .sidebar-brand {
+    display: grid;
+  }
+
+  .sidebar-collapsed .sidebar-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .sidebar-collapsed .sidebar-nav {
+    margin-top: 18px;
+  }
+
+  .sidebar-collapsed .sidebar-nav-links {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    justify-items: stretch;
+  }
+
+  .sidebar-collapsed .sidebar-link {
+    width: 100%;
+  }
+
+  .sidebar-collapsed .sidebar-footer {
+    display: none;
+  }
+
+  .main-content {
+    height: auto;
+    min-height: calc(100vh - 1px);
+    overflow: visible;
+    padding: 24px;
+  }
+
+  .page-header {
+    flex-direction: column;
+  }
+
+  .summary-card {
+    width: 100%;
+  }
+
   .accounts-page {
     height: auto;
     min-height: 100%;
@@ -1898,461 +1771,57 @@ select:disabled {
   .accounts-list-view-header {
     flex-direction: column;
   }
-}
 
-.accounts-page > .error-message,
-.accounts-page > .info-message {
-  margin-bottom: 16px;
-}
-
-/* ============================================================
-   SIDEBAR COLAPSABLE / HAMBURGUESA
-============================================================ */
-
-.app-layout.sidebar-collapsed-layout {
-  grid-template-columns: 82px minmax(0, 1fr);
-}
-
-.app-layout.sidebar-expanded-layout {
-  grid-template-columns: 280px minmax(0, 1fr);
-}
-
-.sidebar {
-  transition:
-    width 0.22s ease,
-    padding 0.22s ease,
-    background 0.22s ease;
-}
-
-.sidebar-top {
-  display: grid;
-  gap: 18px;
-}
-
-.sidebar-toggle-button {
-  width: 44px;
-  height: 44px;
-  padding: 0;
-  display: grid;
-  place-items: center;
-  gap: 4px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: none;
-}
-
-.sidebar-toggle-button:hover {
-  background: rgba(255, 255, 255, 0.14);
-  transform: none;
-  box-shadow: none;
-}
-
-.sidebar-toggle-button span {
-  width: 18px;
-  height: 2px;
-  display: block;
-  border-radius: 999px;
-  background: white;
-}
-
-.sidebar-expanded .sidebar-toggle-button {
-  justify-self: start;
-}
-
-.sidebar-collapsed {
-  padding: 18px;
-  align-items: center;
-}
-
-.sidebar-collapsed .sidebar-top {
-  justify-items: center;
-}
-
-.sidebar-collapsed .sidebar-brand {
-  display: none;
-}
-
-.sidebar-expanded .sidebar-brand {
-  display: grid;
-}
-
-.sidebar-collapsed .sidebar-nav {
-  width: 100%;
-  margin-top: 28px;
-  justify-items: center;
-}
-
-.sidebar-collapsed .sidebar-nav-section {
-  width: 100%;
-  gap: 12px;
-}
-
-.sidebar-collapsed .sidebar-section-title {
-  display: none;
-}
-
-.sidebar-collapsed .sidebar-nav-links {
-  width: 100%;
-  display: grid;
-  justify-items: stretch;
-  gap: 12px;
-}
-
-.sidebar-collapsed .sidebar-link {
-  width: 46px;
-  height: 46px;
-  padding: 0;
-  display: grid;
-  grid-template-columns: 1fr;
-  place-items: center;
-  border-radius: 14px;
-}
-
-.sidebar-collapsed .sidebar-link:hover {
-  transform: none;
-}
-
-.sidebar-collapsed .sidebar-link-icon {
-  width: 38px;
-  height: 38px;
-}
-
-.sidebar-collapsed .sidebar-link-text {
-  display: none;
-}
-
-.sidebar-collapsed .sidebar-footer {
-  width: 100%;
-  align-items: center;
-  justify-items: center;
-}
-
-.sidebar-collapsed .sidebar-user-card {
-  width: 46px;
-  height: 46px;
-  padding: 0;
-  display: grid;
-  grid-template-columns: 1fr;
-  place-items: center;
-  border-radius: 14px;
-}
-
-.sidebar-collapsed .sidebar-user-avatar {
-  width: 38px;
-  height: 38px;
-  font-size: 13px;
-}
-
-.sidebar-collapsed .sidebar-user-info {
-  display: none;
-}
-
-.sidebar-collapsed .sidebar-logout-button {
-  width: 46px;
-  height: 46px;
-  padding: 0;
-  display: grid;
-  place-items: center;
-  border-radius: 14px;
-}
-
-.sidebar-collapsed .sidebar-logout-text {
-  display: none;
-}
-
-.sidebar-logout-icon {
-  font-weight: 900;
-}
-
-.sidebar-expanded .sidebar-logout-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.sidebar-expanded .sidebar-logout-icon {
-  display: none;
-}
-
-/* Mantiene el sidebar abierto como estaba visualmente */
-.sidebar-expanded {
-  align-items: stretch;
-}
-
-.sidebar-expanded .sidebar-link {
-  width: 100%;
-  justify-content: start;
-}
-
-/* Responsive */
-@media (max-width: 960px) {
-  .app-layout.sidebar-collapsed-layout,
-  .app-layout.sidebar-expanded-layout {
-    display: block;
+  .transactions-main-content {
+    overflow: visible;
   }
 
-  .sidebar-collapsed,
-  .sidebar-expanded {
-    width: 100%;
+  .transactions-page {
     height: auto;
+    overflow: visible;
+  }
+
+  .transactions-summary-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .transactions-layout {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .transaction-form-panel {
     min-height: auto;
-    align-items: stretch;
+    overflow: visible;
   }
 
-  .sidebar-collapsed .sidebar-brand {
-    display: grid;
+  .transaction-form-scroll {
+    overflow: visible;
   }
 
-  .sidebar-collapsed .sidebar-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+  .transactions-section {
+    min-height: 420px;
   }
 
-  .sidebar-collapsed .sidebar-nav {
-    margin-top: 18px;
+  .transactions-scroll-list {
+    max-height: 420px;
   }
 
-  .sidebar-collapsed .sidebar-nav-links {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    display: grid;
+  .transaction-card-footer,
+  .account-card-footer {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
-  .sidebar-collapsed .sidebar-link {
-    width: 100%;
-  }
-
-  .sidebar-collapsed .sidebar-footer {
-    margin-top: 18px;
-    display: none;
+  .transaction-actions,
+  .account-actions {
+    justify-content: flex-start;
   }
 }
 
-/* ============================================================
-   OCULTAR SCROLLBAR DEL SIDEBAR
-============================================================ */
-
-.sidebar {
-  scrollbar-width: none;        /* Firefox */
-  -ms-overflow-style: none;     /* Edge antiguo */
-}
-
-.sidebar::-webkit-scrollbar {
-  width: 0;
-  height: 0;
-  display: none;                /* Chrome, Edge, Safari */
-}
-
-.app-layout {
-  transition: grid-template-columns 0.22s ease;
-}
-
-/* ============================================================
-   SIDEBAR - TRANSICIÓN OPTIMIZADA
-============================================================ */
-
-/* Animar solo el cambio principal de columnas */
-.app-layout {
-  transition: grid-template-columns 0.18s ease-out;
-}
-
-.app-layout.sidebar-collapsed-layout {
-  grid-template-columns: 82px minmax(0, 1fr);
-}
-
-.app-layout.sidebar-expanded-layout {
-  grid-template-columns: 280px minmax(0, 1fr);
-}
-
-/* Evita animaciones costosas en el contenedor */
-.sidebar {
-  overflow-x: hidden;
-  transition: none;
-  will-change: auto;
-}
-
-/* Estado colapsado */
-.sidebar-collapsed {
-  padding: 18px;
-  align-items: center;
-}
-
-/* Botón hamburguesa estable */
-.sidebar-toggle-button {
-  width: 44px;
-  height: 44px;
-  padding: 0;
-  flex-shrink: 0;
-  display: grid;
-  place-items: center;
-  gap: 4px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: none;
-  transition: background 0.14s ease;
-}
-
-.sidebar-toggle-button:hover {
-  background: rgba(255, 255, 255, 0.14);
-  transform: none;
-  box-shadow: none;
-}
-
-.sidebar-toggle-button span {
-  width: 18px;
-  height: 2px;
-  display: block;
-  border-radius: 999px;
-  background: white;
-}
-
-/* Brand */
-.sidebar-collapsed .sidebar-brand {
-  display: none;
-}
-
-.sidebar-expanded .sidebar-brand {
-  display: grid;
-}
-
-/* Navegación */
-.sidebar-collapsed .sidebar-nav {
-  width: 100%;
-  margin-top: 28px;
-  justify-items: center;
-}
-
-.sidebar-collapsed .sidebar-nav-section {
-  width: 100%;
-}
-
-.sidebar-collapsed .sidebar-section-title {
-  display: none;
-}
-
-.sidebar-collapsed .sidebar-nav-links {
-  width: 100%;
-  display: grid;
-  justify-items: center;
-  gap: 12px;
-}
-
-/* Mantener el ícono estable */
-.sidebar-link {
-  grid-template-columns: 42px minmax(0, 1fr);
-  transition:
-    background 0.14s ease,
-    border-color 0.14s ease;
-}
-
-.sidebar-link:hover {
-  transform: none;
-}
-
-.sidebar-collapsed .sidebar-link {
-  width: 46px;
-  height: 46px;
-  padding: 4px;
-  display: grid;
-  grid-template-columns: 38px;
-  place-items: center;
-  overflow: hidden;
-}
-
-.sidebar-collapsed .sidebar-link-icon {
-  width: 38px;
-  height: 38px;
-}
-
-/* Texto: solo fade, sin animar width */
-.sidebar-link-text {
-  white-space: nowrap;
-  transition:
-    opacity 0.12s ease,
-    transform 0.12s ease;
-}
-
-.sidebar-collapsed .sidebar-link-text {
-  opacity: 0;
-  transform: translateX(-4px);
-  pointer-events: none;
-}
-
-.sidebar-expanded .sidebar-link-text {
-  opacity: 1;
-  transform: translateX(0);
-}
-
-/* Footer */
-.sidebar-collapsed .sidebar-footer {
-  width: 100%;
-  align-items: center;
-  justify-items: center;
-}
-
-.sidebar-collapsed .sidebar-user-card {
-  width: 46px;
-  height: 46px;
-  padding: 0;
-  display: grid;
-  grid-template-columns: 1fr;
-  place-items: center;
-  border-radius: 14px;
-}
-
-.sidebar-collapsed .sidebar-user-avatar {
-  width: 38px;
-  height: 38px;
-  font-size: 13px;
-}
-
-.sidebar-collapsed .sidebar-user-info {
-  display: none;
-}
-
-.sidebar-collapsed .sidebar-logout-button {
-  width: 46px;
-  height: 46px;
-  padding: 0;
-  display: grid;
-  place-items: center;
-  border-radius: 14px;
-}
-
-.sidebar-collapsed .sidebar-logout-text {
-  display: none;
-}
-
-.sidebar-expanded .sidebar-logout-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.sidebar-expanded .sidebar-logout-icon {
-  display: none;
-}
-
-.sidebar-logout-icon {
-  font-weight: 900;
-}
-
-/* Ocultar scrollbar sin quitar scroll */
-.sidebar {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.sidebar::-webkit-scrollbar {
-  width: 0;
-  height: 0;
-  display: none;
-}
-
-.app-layout {
-  transition: grid-template-columns 0.14s ease-out;
+@media (max-width: 640px) {
+  .dashboard-cards-grid,
+  .movements-summary-grid {
+    grid-template-columns: 1fr;
+  }
 }
