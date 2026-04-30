@@ -274,12 +274,6 @@ select:disabled {
   padding-bottom: 32px;
 }
 
-.profile-shell {
-  width: 100%;
-  max-width: 880px;
-  padding-bottom: 32px;
-}
-
 .profile-shell .auth-card {
   padding: 40px;
 }
