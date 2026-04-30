@@ -509,18 +509,53 @@ select {
   height: 100%;
   min-height: 0;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.transaction-form-panel h2 {
+  flex-shrink: 0;
+}
+
+.transaction-form-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 6px;
 }
 
 .transaction-form {
   max-width: 100%;
 }
 
-.transactions-groups {
-  height: 100%;
-  min-height: 0;
+.form-field {
   display: grid;
-  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 20px;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.transaction-type-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.type-option-button {
+  border: 1px solid #2563eb;
+  transition: opacity 0.2s ease, background 0.2s ease;
+}
+
+.type-option-button.selected {
+  background: #2563eb;
+  color: white;
+  opacity: 1;
+}
+
+.type-option-button.muted {
+  background: #dbeafe;
+  color: #1e40af;
+  opacity: 0.45;
 }
 
 .transactions-section {
@@ -529,6 +564,23 @@ select {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+}
+
+.transactions-account-header {
+  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  gap: 16px;
+  align-items: start;
+}
+
+.transactions-account-header h2 {
+  margin: 0 0 6px;
+}
+
+.transactions-account-header p {
+  margin: 0;
+  color: #6b7280;
 }
 
 .transactions-scroll-list {
@@ -611,11 +663,6 @@ select {
   color: #065f46;
 }
 
-.status-tag.inactive {
-  background: #e5e7eb;
-  color: #374151;
-}
-
 @media (max-width: 960px) {
   .transactions-page {
     height: auto;
@@ -632,18 +679,21 @@ select {
     overflow: visible;
   }
 
-  .transactions-groups {
-    height: auto;
-    grid-template-rows: auto auto;
+  .transaction-form-scroll {
+    max-height: 520px;
   }
 
   .transactions-section {
     height: auto;
-    min-height: 360px;
+    min-height: 420px;
+  }
+
+  .transactions-account-header {
+    grid-template-columns: 1fr;
   }
 
   .transactions-scroll-list {
-    max-height: 360px;
+    max-height: 420px;
   }
 
   .transaction-card-footer {

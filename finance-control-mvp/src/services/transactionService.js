@@ -44,7 +44,7 @@ function validateTransactionPayload(transaction) {
   }
 
   if (!transaction.ty_id) {
-    throw new Error('Debes seleccionar un tipo de transacción.');
+    throw new Error('Debes seleccionar Entrada o Salida.');
   }
 
   if (!transaction.sct_id) {
@@ -118,8 +118,8 @@ export async function getActiveSubcategories() {
   return data ?? [];
 }
 
-export async function getTransactionsByAccountIds(accountIds) {
-  if (!accountIds || accountIds.length === 0) {
+export async function getActiveTransactionsByAccountId(accountId) {
+  if (!accountId) {
     return [];
   }
 
@@ -127,7 +127,8 @@ export async function getTransactionsByAccountIds(accountIds) {
     .schema('ctrl_finance')
     .from('transaction')
     .select(TRANSACTION_SELECT)
-    .in('ac_id', accountIds)
+    .eq('ac_id', accountId)
+    .eq('tr_is_active', true)
     .order('tr_date', { ascending: false })
     .order('created_at', { ascending: false });
 

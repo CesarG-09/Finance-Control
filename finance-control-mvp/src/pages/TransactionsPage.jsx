@@ -7,8 +7,8 @@ import {
   createTransaction,
   deactivateTransaction,
   getActiveSubcategories,
+  getActiveTransactionsByAccountId,
   getActiveTypeTransactions,
-  getTransactionsByAccountIds,
   updateTransaction,
 } from '../services/transactionService';
 
@@ -49,10 +49,7 @@ function getTransactionCategory(transaction) {
   return `${categoryName || 'Sin categoría'} - ${subcategoryName || 'Sin subcategoría'}`;
 }
 
-function TransactionCard({ transaction, onEdit, onDeactivate }) {
-  const isActive = transaction.tr_is_active;
-  const typeName = transaction.transaction_type?.ty_name || 'Sin tipo';
-
+function TransactionCard({ transaction, onEdit, onDelete }) {
   return (
     <article className="transaction-card">
       <div className="transaction-card-header">
@@ -61,18 +58,12 @@ function TransactionCard({ transaction, onEdit, onDeactivate }) {
           <p>{formatDate(transaction.tr_date)}</p>
         </div>
 
-        <span className={isActive ? 'status-tag active' : 'status-tag inactive'}>
-          {isActive ? 'Activa' : 'Inactiva'}
+        <span className="status-tag active">
+          {transaction.transaction_type?.ty_name || 'Sin tipo'}
         </span>
       </div>
 
       <div className="transaction-card-body">
-        <p>
-          <strong>Cuenta:</strong> {transaction.account?.ac_name || 'Sin cuenta'}
-        </p>
-        <p>
-          <strong>Tipo:</strong> {typeName}
-        </p>
         <p>
           <strong>Categoría:</strong> {getTransactionCategory(transaction)}
         </p>
@@ -87,20 +78,18 @@ function TransactionCard({ transaction, onEdit, onDeactivate }) {
       <div className="transaction-card-footer">
         <strong>{formatCurrency(transaction.tr_amount)}</strong>
 
-        {isActive && (
-          <div className="transaction-actions">
-            <button type="button" onClick={() => onEdit(transaction)}>
-              Editar
-            </button>
-            <button
-              type="button"
-              className="danger-button"
-              onClick={() => onDeactivate(transaction)}
-            >
-              Desactivar
-            </button>
-          </div>
-        )}
+        <div className="transaction-actions">
+          <button type="button" onClick={() => onEdit(transaction)}>
+            Editar
+          </button>
+          <button
+            type="button"
+            className="danger-button"
+            onClick={() => onDelete(transaction)}
+          >
+            Eliminar
+          </button>
+        </div>
       </div>
     </article>
   );
@@ -113,6 +102,7 @@ export default function TransactionsPage() {
   const [typeTransactions, setTypeTransactions] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
   const [transactions, setTransactions] = useState([]);
+  const [selectedAccountId, setSelectedAccountId] = useState('');
   const [editingTransaction, setEditingTransaction] = useState(null);
 
   const [loading, setLoading] = useState(true);
@@ -122,19 +112,17 @@ export default function TransactionsPage() {
 
   const clientId = clientProfile?.cl_id;
 
-  const activeTransactions = useMemo(
-    () => transactions.filter((transaction) => transaction.tr_is_active),
-    [transactions]
-  );
-
-  const inactiveTransactions = useMemo(
-    () => transactions.filter((transaction) => !transaction.tr_is_active),
-    [transactions]
-  );
-
   const activeAccounts = useMemo(
     () => accounts.filter((account) => account.ac_is_active),
     [accounts]
+  );
+
+  const selectedAccount = useMemo(
+    () =>
+      activeAccounts.find(
+        (account) => String(account.ac_id) === String(selectedAccountId)
+      ),
+    [activeAccounts, selectedAccountId]
   );
 
   useEffect(() => {
@@ -145,7 +133,7 @@ export default function TransactionsPage() {
     loadTransactionsData();
   }, [clientId]);
 
-  async function loadTransactionsData() {
+  async function loadTransactionsData(preferredAccountId = selectedAccountId) {
     try {
       setLoading(true);
       setError('');
@@ -157,18 +145,45 @@ export default function TransactionsPage() {
           getActiveSubcategories(),
         ]);
 
-      const accountIds = accountsData.map((account) => account.ac_id);
-      const transactionsData = await getTransactionsByAccountIds(accountIds);
+      const activeAccountsData = accountsData.filter(
+        (account) => account.ac_is_active
+      );
+
+      const accountExists = activeAccountsData.some(
+        (account) => String(account.ac_id) === String(preferredAccountId)
+      );
+
+      const nextSelectedAccountId = accountExists
+        ? String(preferredAccountId)
+        : activeAccountsData[0]?.ac_id
+          ? String(activeAccountsData[0].ac_id)
+          : '';
+
+      const transactionsData = nextSelectedAccountId
+        ? await getActiveTransactionsByAccountId(nextSelectedAccountId)
+        : [];
 
       setAccounts(accountsData);
       setTypeTransactions(typeTransactionsData);
       setSubcategories(subcategoriesData);
+      setSelectedAccountId(nextSelectedAccountId);
       setTransactions(transactionsData);
     } catch (currentError) {
       setError(currentError.message);
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleSelectedAccountChange(event) {
+    const accountId = event.target.value;
+
+    setSelectedAccountId(accountId);
+    setEditingTransaction(null);
+    setSuccess('');
+    setError('');
+
+    await loadTransactionsData(accountId);
   }
 
   async function handleSubmit(formData) {
@@ -186,7 +201,7 @@ export default function TransactionsPage() {
       }
 
       setEditingTransaction(null);
-      await loadTransactionsData();
+      await loadTransactionsData(formData.ac_id);
     } catch (currentError) {
       setError(currentError.message);
     } finally {
@@ -194,9 +209,9 @@ export default function TransactionsPage() {
     }
   }
 
-  async function handleDeactivate(transaction) {
+  async function handleDelete(transaction) {
     const confirmed = window.confirm(
-      `¿Deseas desactivar la transacción "${transaction.tr_name}"? El balance será revertido automáticamente.`
+      `¿Deseas eliminar la transacción "${transaction.tr_name}"? No se borrará físicamente, solo se desactivará.`
     );
 
     if (!confirmed) {
@@ -210,9 +225,9 @@ export default function TransactionsPage() {
 
       await deactivateTransaction(transaction.tr_id);
 
-      setSuccess('Transacción desactivada correctamente. El balance fue revertido vía trigger.');
+      setSuccess('Transacción eliminada correctamente. El balance fue revertido vía trigger.');
       setEditingTransaction(null);
-      await loadTransactionsData();
+      await loadTransactionsData(transaction.ac_id);
     } catch (currentError) {
       setError(currentError.message);
     } finally {
@@ -241,12 +256,16 @@ export default function TransactionsPage() {
       <div className="page-header">
         <div>
           <h1>Transacciones</h1>
-          <p>Registra entradas y salidas. El balance se actualiza automáticamente desde la base de datos.</p>
+          <p>
+            Registra entradas y salidas. El balance se actualiza automáticamente desde la base de datos.
+          </p>
         </div>
 
         <div className="summary-card">
-          <span>Cuentas activas</span>
-          <strong>{activeAccounts.length}</strong>
+          <span>Cuenta seleccionada</span>
+          <strong>
+            {selectedAccount ? formatCurrency(selectedAccount.ac_balance) : '$0.00'}
+          </strong>
         </div>
       </div>
 
@@ -257,62 +276,64 @@ export default function TransactionsPage() {
         <section className="panel transaction-form-panel">
           <h2>{editingTransaction ? 'Editar transacción' : 'Nueva transacción'}</h2>
 
-          <TransactionForm
-            accounts={accounts}
-            typeTransactions={typeTransactions}
-            subcategories={subcategories}
-            initialData={editingTransaction}
-            saving={saving}
-            onSubmit={handleSubmit}
-            onCancel={handleCancelEdit}
-          />
+          <div className="transaction-form-scroll">
+            <TransactionForm
+              accounts={accounts}
+              typeTransactions={typeTransactions}
+              subcategories={subcategories}
+              selectedAccountId={selectedAccountId}
+              initialData={editingTransaction}
+              saving={saving}
+              onSubmit={handleSubmit}
+              onCancel={handleCancelEdit}
+            />
+          </div>
         </section>
 
-        <div className="transactions-groups">
-          <section className="panel transactions-section">
-            <div className="section-header">
-              <h2>Transacciones activas</h2>
-              <span>{activeTransactions.length}</span>
+        <section className="panel transactions-section">
+          <div className="transactions-account-header">
+            <div>
+              <h2>Transacciones por cuenta</h2>
+              <p>
+                Solo se muestran transacciones activas de la cuenta seleccionada.
+              </p>
             </div>
 
-            <div className="transactions-scroll-list">
-              {activeTransactions.length === 0 ? (
-                <p className="empty-message">Aún no tienes transacciones activas.</p>
-              ) : (
-                activeTransactions.map((transaction) => (
-                  <TransactionCard
-                    key={transaction.tr_id}
-                    transaction={transaction}
-                    onEdit={handleEdit}
-                    onDeactivate={handleDeactivate}
-                  />
-                ))
-              )}
-            </div>
-          </section>
+            <select
+              value={selectedAccountId}
+              onChange={handleSelectedAccountChange}
+              disabled={activeAccounts.length === 0 || saving}
+            >
+              <option value="">Selecciona una cuenta</option>
+              {activeAccounts.map((account) => (
+                <option key={account.ac_id} value={account.ac_id}>
+                  {account.ac_name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-          <section className="panel transactions-section">
-            <div className="section-header">
-              <h2>Transacciones inactivas</h2>
-              <span>{inactiveTransactions.length}</span>
-            </div>
-
-            <div className="transactions-scroll-list">
-              {inactiveTransactions.length === 0 ? (
-                <p className="empty-message">No tienes transacciones inactivas.</p>
-              ) : (
-                inactiveTransactions.map((transaction) => (
-                  <TransactionCard
-                    key={transaction.tr_id}
-                    transaction={transaction}
-                    onEdit={handleEdit}
-                    onDeactivate={handleDeactivate}
-                  />
-                ))
-              )}
-            </div>
-          </section>
-        </div>
+          <div className="transactions-scroll-list">
+            {!selectedAccountId ? (
+              <p className="empty-message">
+                Debes tener una cuenta activa para ver transacciones.
+              </p>
+            ) : transactions.length === 0 ? (
+              <p className="empty-message">
+                Esta cuenta aún no tiene transacciones activas.
+              </p>
+            ) : (
+              transactions.map((transaction) => (
+                <TransactionCard
+                  key={transaction.tr_id}
+                  transaction={transaction}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                />
+              ))
+            )}
+          </div>
+        </section>
       </div>
     </section>
   );

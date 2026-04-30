@@ -28,6 +28,7 @@ export default function TransactionForm({
   accounts,
   typeTransactions,
   subcategories,
+  selectedAccountId,
   initialData,
   saving,
   onSubmit,
@@ -55,11 +56,14 @@ export default function TransactionForm({
         tr_date: initialData.tr_date ?? getTodayDate(),
       });
     } else {
-      setForm(emptyForm);
+      setForm({
+        ...emptyForm,
+        ac_id: selectedAccountId ? String(selectedAccountId) : '',
+      });
     }
 
     setError('');
-  }, [initialData]);
+  }, [initialData, selectedAccountId]);
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -67,6 +71,13 @@ export default function TransactionForm({
     setForm((currentForm) => ({
       ...currentForm,
       [name]: value,
+    }));
+  }
+
+  function handleTypeSelect(typeId) {
+    setForm((currentForm) => ({
+      ...currentForm,
+      ty_id: String(typeId),
     }));
   }
 
@@ -80,7 +91,7 @@ export default function TransactionForm({
     }
 
     if (!form.ty_id) {
-      setError('Debes seleccionar si es Entrada o Salida.');
+      setError('Debes seleccionar Entrada o Salida.');
       return;
     }
 
@@ -114,7 +125,10 @@ export default function TransactionForm({
     await onSubmit(form);
 
     if (!isEditing) {
-      setForm(emptyForm);
+      setForm({
+        ...emptyForm,
+        ac_id: selectedAccountId ? String(selectedAccountId) : '',
+      });
     }
   }
 
@@ -150,25 +164,30 @@ export default function TransactionForm({
         </select>
       </label>
 
-      <label>
+      <div className="form-field">
         <span className="label-row">
           Tipo
           <span className="required-tag">Obligatorio</span>
         </span>
-        <select
-          name="ty_id"
-          value={form.ty_id}
-          onChange={handleChange}
-          disabled={!hasActiveAccounts || saving}
-        >
-          <option value="">Selecciona Entrada o Salida</option>
-          {typeTransactions.map((typeTransaction) => (
-            <option key={typeTransaction.ty_id} value={typeTransaction.ty_id}>
-              {typeTransaction.ty_name}
-            </option>
-          ))}
-        </select>
-      </label>
+
+        <div className="transaction-type-buttons">
+          {typeTransactions.map((typeTransaction) => {
+            const isSelected = String(typeTransaction.ty_id) === String(form.ty_id);
+
+            return (
+              <button
+                key={typeTransaction.ty_id}
+                type="button"
+                className={`type-option-button ${isSelected ? 'selected' : 'muted'}`}
+                onClick={() => handleTypeSelect(typeTransaction.ty_id)}
+                disabled={!hasActiveAccounts || saving}
+              >
+                {typeTransaction.ty_name}
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       <label>
         <span className="label-row">
@@ -215,7 +234,7 @@ export default function TransactionForm({
           name="tr_description"
           value={form.tr_description}
           onChange={handleChange}
-          placeholder="Detalle opcional del movimiento"
+          placeholder="Detalle opcional"
           disabled={!hasActiveAccounts || saving}
         />
       </label>
