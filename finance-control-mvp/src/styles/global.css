@@ -479,3 +479,179 @@ select {
     justify-content: flex-start;
   }
 }
+
+/* ============================================================
+   TRANSACCIONES
+============================================================ */
+
+.transactions-page {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.transactions-page .page-header {
+  flex-shrink: 0;
+}
+
+.transactions-layout {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 420px minmax(0, 1fr);
+  gap: 20px;
+  align-items: stretch;
+}
+
+.transaction-form-panel {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.transaction-form {
+  max-width: 100%;
+}
+
+.transactions-groups {
+  height: 100%;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 20px;
+}
+
+.transactions-section {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.transactions-scroll-list {
+  flex: 1;
+  min-height: 0;
+  margin-top: 14px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-right: 6px;
+}
+
+.transaction-card {
+  flex-shrink: 0;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 14px;
+  display: grid;
+  gap: 12px;
+  background: #f9fafb;
+}
+
+.transaction-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.transaction-card-header h3 {
+  margin: 0 0 4px;
+  overflow-wrap: anywhere;
+}
+
+.transaction-card-header p,
+.transaction-card-body p {
+  margin: 0;
+  color: #4b5563;
+  overflow-wrap: anywhere;
+}
+
+.transaction-card-body {
+  display: grid;
+  gap: 6px;
+}
+
+.transaction-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.transaction-card-footer strong {
+  font-size: 18px;
+}
+
+.transaction-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.status-tag {
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.status-tag.active {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status-tag.inactive {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+@media (max-width: 960px) {
+  .transactions-page {
+    height: auto;
+    overflow: visible;
+  }
+
+  .transactions-layout {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .transaction-form-panel {
+    height: auto;
+    overflow: visible;
+  }
+
+  .transactions-groups {
+    height: auto;
+    grid-template-rows: auto auto;
+  }
+
+  .transactions-section {
+    height: auto;
+    min-height: 360px;
+  }
+
+  .transactions-scroll-list {
+    max-height: 360px;
+  }
+
+  .transaction-card-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .transaction-actions {
+    justify-content: flex-start;
+  }
+}
