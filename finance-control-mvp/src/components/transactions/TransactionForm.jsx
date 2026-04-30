@@ -7,6 +7,7 @@ function getTodayDate() {
 const emptyForm = {
   ac_id: '',
   ty_id: '',
+  ct_id: '',
   sct_id: '',
   tr_name: '',
   tr_description: '',
@@ -14,14 +15,12 @@ const emptyForm = {
   tr_date: getTodayDate(),
 };
 
-function getActiveSubcategoryId(transaction) {
+function getActiveSubcategory(transaction) {
   const activeRelation = transaction?.subcategories_transaction?.find(
     (item) => item.st_is_active
   );
 
-  return activeRelation?.subcategory?.sct_id
-    ? String(activeRelation.subcategory.sct_id)
-    : '';
+  return activeRelation?.subcategory ?? null;
 }
 
 export default function TransactionForm({
@@ -44,12 +43,44 @@ export default function TransactionForm({
     [accounts]
   );
 
+  const categories = useMemo(() => {
+    const categoryMap = new Map();
+
+    subcategories.forEach((subcategory) => {
+      const category = subcategory.category;
+
+      if (!category?.ct_id) {
+        return;
+      }
+
+      categoryMap.set(String(category.ct_id), {
+        ct_id: category.ct_id,
+        ct_name: category.ct_name,
+      });
+    });
+
+    return Array.from(categoryMap.values()).sort((a, b) =>
+      a.ct_name.localeCompare(b.ct_name)
+    );
+  }, [subcategories]);
+
+  const filteredSubcategories = useMemo(
+    () =>
+      subcategories.filter(
+        (subcategory) => String(subcategory.ct_id) === String(form.ct_id)
+      ),
+    [subcategories, form.ct_id]
+  );
+
   useEffect(() => {
     if (initialData) {
+      const activeSubcategory = getActiveSubcategory(initialData);
+
       setForm({
         ac_id: initialData.ac_id ? String(initialData.ac_id) : '',
         ty_id: initialData.ty_id ? String(initialData.ty_id) : '',
-        sct_id: getActiveSubcategoryId(initialData),
+        ct_id: activeSubcategory?.ct_id ? String(activeSubcategory.ct_id) : '',
+        sct_id: activeSubcategory?.sct_id ? String(activeSubcategory.sct_id) : '',
         tr_name: initialData.tr_name ?? '',
         tr_description: initialData.tr_description ?? '',
         tr_amount: String(initialData.tr_amount ?? ''),
@@ -74,6 +105,16 @@ export default function TransactionForm({
     }));
   }
 
+  function handleCategoryChange(event) {
+    const { value } = event.target;
+
+    setForm((currentForm) => ({
+      ...currentForm,
+      ct_id: value,
+      sct_id: '',
+    }));
+  }
+
   function handleTypeSelect(typeId) {
     setForm((currentForm) => ({
       ...currentForm,
@@ -95,8 +136,13 @@ export default function TransactionForm({
       return;
     }
 
+    if (!form.ct_id) {
+      setError('Debes seleccionar una categoría.');
+      return;
+    }
+
     if (!form.sct_id) {
-      setError('Debes seleccionar una categoría/subcategoría.');
+      setError('Debes seleccionar una subcategoría.');
       return;
     }
 
@@ -191,19 +237,44 @@ export default function TransactionForm({
 
       <label>
         <span className="label-row">
-          Categoría / Subcategoría
+          Categoría
+          <span className="required-tag">Obligatorio</span>
+        </span>
+        <select
+          name="ct_id"
+          value={form.ct_id}
+          onChange={handleCategoryChange}
+          disabled={!hasActiveAccounts || saving}
+        >
+          <option value="">Selecciona una categoría</option>
+          {categories.map((category) => (
+            <option key={category.ct_id} value={category.ct_id}>
+              {category.ct_name}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <label>
+        <span className="label-row">
+          Subcategoría
           <span className="required-tag">Obligatorio</span>
         </span>
         <select
           name="sct_id"
           value={form.sct_id}
           onChange={handleChange}
-          disabled={!hasActiveAccounts || saving}
+          disabled={!hasActiveAccounts || saving || !form.ct_id}
         >
-          <option value="">Selecciona una categoría</option>
-          {subcategories.map((subcategory) => (
+          <option value="">
+            {form.ct_id
+              ? 'Selecciona una subcategoría'
+              : 'Primero selecciona una categoría'}
+          </option>
+
+          {filteredSubcategories.map((subcategory) => (
             <option key={subcategory.sct_id} value={subcategory.sct_id}>
-              {subcategory.category?.ct_name || 'Sin categoría'} - {subcategory.sct_name}
+              {subcategory.sct_name}
             </option>
           ))}
         </select>
