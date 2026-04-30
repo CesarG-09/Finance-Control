@@ -112,75 +112,251 @@ select:disabled {
 ============================================================ */
 
 .auth-page {
+  height: 100vh;
   min-height: 100vh;
   display: grid;
   place-items: center;
-  padding: 24px;
-  overflow-y: auto;
-}
-
-.auth-card {
-  width: 100%;
-  max-width: 420px;
-  background: white;
   padding: 28px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background:
+    radial-gradient(circle at top left, rgba(37, 99, 235, 0.18), transparent 34%),
+    linear-gradient(135deg, #eef4ff 0%, #f8fafc 48%, #eef2ff 100%);
+}
+
+.auth-shell {
+  width: 100%;
+  max-width: 920px;
+  min-height: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) 390px;
+  overflow: hidden;
+  border-radius: 24px;
+  background: white;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 20px 55px rgba(15, 23, 42, 0.12);
+}
+
+.auth-hero {
+  min-height: 100%;
+  padding: 34px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 24px;
+  color: white;
+  background:
+    linear-gradient(160deg, rgba(37, 99, 235, 0.94), rgba(15, 23, 42, 0.98)),
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.25), transparent 32%);
+}
+
+.auth-logo {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
   border-radius: 16px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  font-weight: 900;
+  letter-spacing: -0.5px;
 }
 
-.profile-card {
-  max-width: 620px;
+.auth-eyebrow,
+.auth-card-kicker {
+  display: inline-flex;
+  width: fit-content;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 900;
 }
 
-.form {
-  display: grid;
-  gap: 14px;
-  margin-top: 20px;
+.auth-eyebrow {
+  margin-bottom: 16px;
+  color: #bfdbfe;
+  background: rgba(255, 255, 255, 0.12);
 }
 
-.form label {
-  display: grid;
-  gap: 6px;
-  font-weight: 600;
+.auth-hero h1 {
+  margin: 0;
+  max-width: 480px;
+  font-size: 30px;
+  line-height: 1.08;
+  letter-spacing: -0.9px;
 }
 
-.label-row {
+.auth-hero p {
+  margin: 14px 0 0;
+  max-width: 460px;
+  color: #dbeafe;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.auth-hero-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 12px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
 }
 
-.required-tag,
-.optional-tag {
-  font-size: 12px;
-  font-weight: 600;
-  padding: 3px 8px;
-  border-radius: 999px;
+.auth-hero-footer span {
+  color: #bfdbfe;
+  font-size: 13px;
+  font-weight: 800;
 }
 
-.required-tag {
-  background: #fee2e2;
-  color: #991b1b;
+.auth-hero-footer strong {
+  font-size: 14px;
 }
 
-.optional-tag {
-  background: #e5e7eb;
-  color: #374151;
+.auth-card {
+  width: 100%;
+  max-width: none;
+  padding: 34px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: white;
+  box-shadow: none;
+  border-radius: 0;
 }
 
-.error-message {
-  color: #b91c1c;
-  background: #fee2e2;
-  padding: 10px;
-  border-radius: 8px;
+.auth-card-header {
+  margin-bottom: 22px;
 }
 
-.info-message {
-  color: #065f46;
-  background: #d1fae5;
-  padding: 10px;
-  border-radius: 8px;
+.auth-card-kicker {
+  margin-bottom: 12px;
+  color: #1d4ed8;
+  background: #dbeafe;
+}
+
+.auth-card h1,
+.auth-card h2 {
+  margin: 0 0 8px;
+  font-size: 26px;
+  line-height: 1.1;
+  letter-spacing: -0.7px;
+}
+
+.auth-card p {
+  margin: 0;
+  color: var(--color-muted);
+}
+
+.auth-form {
+  margin-top: 0;
+}
+
+.auth-submit-button {
+  width: 100%;
+  margin-top: 4px;
+}
+
+.auth-switch-text {
+  margin-top: 20px !important;
+  text-align: center;
+  font-size: 14px;
+}
+
+.auth-switch-text a {
+  font-weight: 800;
+}
+
+.profile-auth-page {
+  align-items: start;
+  place-items: start center;
+  padding-top: 32px;
+  padding-bottom: 32px;
+}
+
+.profile-shell {
+  width: 100%;
+  max-width: 880px;
+  padding-bottom: 32px;
+}
+
+.profile-shell .auth-card {
+  padding: 40px;
+}
+
+.profile-card {
+  max-height: none;
+}
+
+.profile-auth-page .profile-card {
+  margin-bottom: 32px;
+}
+
+.profile-shell {
+  width: 100%;
+  max-width: 880px;
+}
+
+.profile-card {
+  max-width: none;
+  border-radius: 28px;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.12);
+}
+
+.profile-info-box {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 20px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+}
+
+.profile-info-box strong {
+  font-size: 14px;
+}
+
+.profile-info-box span {
+  font-size: 14px;
+}
+
+.profile-form {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.profile-form-full {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 900px) {
+  .auth-page {
+    padding: 20px;
+  }
+
+  .auth-shell {
+    max-width: 520px;
+    min-height: auto;
+    grid-template-columns: 1fr;
+  }
+
+  .auth-hero {
+    padding: 28px;
+  }
+
+  .auth-hero h1 {
+    font-size: 28px;
+  }
+
+  .auth-card {
+    padding: 28px;
+  }
+
+  .profile-form {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ============================================================
@@ -1353,4 +1529,124 @@ select:disabled {
 .status-tag.expense {
   background: var(--color-danger-soft);
   color: var(--color-danger);
+}
+
+/* ============================================================
+   AJUSTE TIPOGRÁFICO APP INTERNA
+   No afecta Login / Register / Profile
+============================================================ */
+
+/* Base general dentro del aplicativo */
+.app-layout {
+  font-size: 14px;
+}
+
+/* Títulos principales de páginas internas */
+.app-layout .page-header h1 {
+  font-size: 26px;
+  line-height: 1.15;
+}
+
+/* Descripciones bajo títulos */
+.app-layout .page-header p {
+  font-size: 14px;
+}
+
+/* Títulos de paneles */
+.app-layout .panel h2,
+.app-layout .section-header h2,
+.app-layout .transactions-list-header h2,
+.app-layout .transactions-account-selector h2 {
+  font-size: 19px;
+  line-height: 1.2;
+}
+
+/* Textos secundarios de secciones */
+.app-layout .section-header p,
+.app-layout .transactions-list-header p,
+.app-layout .transactions-account-selector p {
+  font-size: 13px;
+}
+
+/* Cards resumen */
+.app-layout .summary-card span,
+.app-layout .dashboard-card span,
+.app-layout .transactions-summary-card span {
+  font-size: 13px;
+}
+
+.app-layout .summary-card strong,
+.app-layout .dashboard-card strong,
+.app-layout .transactions-summary-card strong {
+  font-size: 22px;
+}
+
+/* Cards de cuentas */
+.app-layout .account-card h3 {
+  font-size: 16px;
+}
+
+.app-layout .account-card p,
+.app-layout .muted-text {
+  font-size: 13px;
+}
+
+.app-layout .account-card-footer strong {
+  font-size: 18px;
+}
+
+/* Cards de transacciones */
+.app-layout .transaction-card-header h3 {
+  font-size: 16px;
+}
+
+.app-layout .transaction-card-header p,
+.app-layout .transaction-card-body p {
+  font-size: 13px;
+}
+
+.app-layout .transaction-card-footer strong {
+  font-size: 18px;
+}
+
+/* Formularios internos */
+.app-layout label,
+.app-layout .form-field {
+  font-size: 14px;
+}
+
+.app-layout input,
+.app-layout select {
+  font-size: 14px;
+}
+
+/* Botones internos */
+.app-layout button,
+.app-layout .button-link {
+  font-size: 14px;
+  padding: 9px 13px;
+}
+
+/* Badges / tags */
+.app-layout .required-tag,
+.app-layout .optional-tag,
+.app-layout .status-tag,
+.app-layout .account-status-pill {
+  font-size: 11px;
+}
+
+/* Tablas */
+.app-layout .movements-table th {
+  font-size: 12px;
+}
+
+.app-layout .movements-table td {
+  font-size: 13px;
+}
+
+/* Mensajes */
+.app-layout .error-message,
+.app-layout .info-message,
+.app-layout .empty-message {
+  font-size: 13px;
 }

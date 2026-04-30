@@ -45,43 +45,70 @@ export default function LoginPage() {
 
   return (
     <main className="auth-page">
-      <section className="auth-card">
-        <h1>Iniciar sesión</h1>
-        <p>Accede a tu control de finanzas personales.</p>
+      <section className="auth-shell">
+        <aside className="auth-hero">
+          <div className="auth-logo">FC</div>
 
-        <form onSubmit={handleSubmit} className="form">
-          <label>
-            Correo
-            <input
-              type="email"
-              name="email"
-              value={form.email}
-              onChange={handleChange}
-              required
-            />
-          </label>
+          <div>
+            <span className="auth-eyebrow">Control financiero personal</span>
+            <h1>Organiza tus cuentas, movimientos y balance en un solo lugar.</h1>
+            <p>
+              Accede a tu dashboard para consultar tus cuentas, registrar entradas y
+              salidas, y revisar los movimientos del mes.
+            </p>
+          </div>
 
-          <label>
-            Contraseña
-            <input
-              type="password"
-              name="password"
-              value={form.password}
-              onChange={handleChange}
-              required
-            />
-          </label>
+          <div className="auth-hero-footer">
+            <span>MVP</span>
+            <strong>Finance Control</strong>
+          </div>
+        </aside>
 
-          {errorMessage && <p className="error-message">{errorMessage}</p>}
+        <section className="auth-card">
+          <div className="auth-card-header">
+            <span className="auth-card-kicker">Bienvenido de nuevo</span>
+            <h2>Iniciar sesión</h2>
+            <p>Ingresa tus credenciales para continuar.</p>
+          </div>
 
-          <button type="submit" disabled={loading}>
-            {loading ? 'Ingresando...' : 'Ingresar'}
-          </button>
-        </form>
+          <form onSubmit={handleSubmit} className="form auth-form">
+            <label>
+              Correo
+              <input
+                type="email"
+                name="email"
+                value={form.email}
+                onChange={handleChange}
+                placeholder="tu_correo@email.com"
+                autoComplete="email"
+                required
+              />
+            </label>
 
-        <p>
-          ¿No tienes cuenta? <Link to="/registro">Regístrate</Link>
-        </p>
+            <label>
+              Contraseña
+              <input
+                type="password"
+                name="password"
+                value={form.password}
+                onChange={handleChange}
+                placeholder="Ingresa tu contraseña"
+                autoComplete="current-password"
+                required
+              />
+            </label>
+
+            {errorMessage && <p className="error-message">{errorMessage}</p>}
+
+            <button type="submit" disabled={loading} className="auth-submit-button">
+              {loading ? 'Ingresando...' : 'Ingresar'}
+            </button>
+          </form>
+
+          <p className="auth-switch-text">
+            ¿No tienes cuenta? <Link to="/registro">Regístrate</Link>
+          </p>
+        </section>
       </section>
     </main>
   );
