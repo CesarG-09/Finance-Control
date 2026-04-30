@@ -5,7 +5,6 @@ function getTodayDate() {
 }
 
 const emptyForm = {
-  ac_id: '',
   ty_id: '',
   ct_id: '',
   sct_id: '',
@@ -24,10 +23,10 @@ function getActiveSubcategory(transaction) {
 }
 
 export default function TransactionForm({
-  accounts,
   typeTransactions,
   subcategories,
   selectedAccountId,
+  selectedAccountName,
   initialData,
   saving,
   onSubmit,
@@ -37,11 +36,7 @@ export default function TransactionForm({
   const [error, setError] = useState('');
 
   const isEditing = Boolean(initialData);
-
-  const hasActiveAccounts = useMemo(
-    () => accounts.some((account) => account.ac_is_active),
-    [accounts]
-  );
+  const hasSelectedAccount = Boolean(selectedAccountId);
 
   const categories = useMemo(() => {
     const categoryMap = new Map();
@@ -77,7 +72,6 @@ export default function TransactionForm({
       const activeSubcategory = getActiveSubcategory(initialData);
 
       setForm({
-        ac_id: initialData.ac_id ? String(initialData.ac_id) : '',
         ty_id: initialData.ty_id ? String(initialData.ty_id) : '',
         ct_id: activeSubcategory?.ct_id ? String(activeSubcategory.ct_id) : '',
         sct_id: activeSubcategory?.sct_id ? String(activeSubcategory.sct_id) : '',
@@ -87,10 +81,7 @@ export default function TransactionForm({
         tr_date: initialData.tr_date ?? getTodayDate(),
       });
     } else {
-      setForm({
-        ...emptyForm,
-        ac_id: selectedAccountId ? String(selectedAccountId) : '',
-      });
+      setForm(emptyForm);
     }
 
     setError('');
@@ -126,8 +117,8 @@ export default function TransactionForm({
     event.preventDefault();
     setError('');
 
-    if (!form.ac_id) {
-      setError('Debes seleccionar una cuenta.');
+    if (!selectedAccountId) {
+      setError('Debes seleccionar una cuenta antes de registrar una transacción.');
       return;
     }
 
@@ -171,10 +162,7 @@ export default function TransactionForm({
     await onSubmit(form);
 
     if (!isEditing) {
-      setForm({
-        ...emptyForm,
-        ac_id: selectedAccountId ? String(selectedAccountId) : '',
-      });
+      setForm(emptyForm);
     }
   }
 
@@ -182,33 +170,17 @@ export default function TransactionForm({
     <form className="form transaction-form" onSubmit={handleSubmit}>
       {error && <p className="error-message">{error}</p>}
 
-      {!hasActiveAccounts && (
+      {!hasSelectedAccount && (
         <p className="error-message">
-          Debes tener al menos una cuenta activa para registrar transacciones.
+          Primero selecciona una cuenta para registrar transacciones.
         </p>
       )}
 
-      <label>
-        <span className="label-row">
-          Cuenta
-          <span className="required-tag">Obligatorio</span>
-        </span>
-        <select
-          name="ac_id"
-          value={form.ac_id}
-          onChange={handleChange}
-          disabled={!hasActiveAccounts || saving}
-        >
-          <option value="">Selecciona una cuenta</option>
-          {accounts
-            .filter((account) => account.ac_is_active)
-            .map((account) => (
-              <option key={account.ac_id} value={account.ac_id}>
-                {account.ac_name}
-              </option>
-            ))}
-        </select>
-      </label>
+      {hasSelectedAccount && (
+        <p className="info-message">
+          Registrando movimiento para: <strong>{selectedAccountName}</strong>
+        </p>
+      )}
 
       <div className="form-field">
         <span className="label-row">
@@ -226,7 +198,7 @@ export default function TransactionForm({
                 type="button"
                 className={`type-option-button ${isSelected ? 'selected' : 'muted'}`}
                 onClick={() => handleTypeSelect(typeTransaction.ty_id)}
-                disabled={!hasActiveAccounts || saving}
+                disabled={!hasSelectedAccount || saving}
               >
                 {typeTransaction.ty_name}
               </button>
@@ -244,7 +216,7 @@ export default function TransactionForm({
           name="ct_id"
           value={form.ct_id}
           onChange={handleCategoryChange}
-          disabled={!hasActiveAccounts || saving}
+          disabled={!hasSelectedAccount || saving}
         >
           <option value="">Selecciona una categoría</option>
           {categories.map((category) => (
@@ -264,7 +236,7 @@ export default function TransactionForm({
           name="sct_id"
           value={form.sct_id}
           onChange={handleChange}
-          disabled={!hasActiveAccounts || saving || !form.ct_id}
+          disabled={!hasSelectedAccount || saving || !form.ct_id}
         >
           <option value="">
             {form.ct_id
@@ -291,7 +263,7 @@ export default function TransactionForm({
           value={form.tr_name}
           onChange={handleChange}
           placeholder="Ej: Supermercado, salario, gasolina"
-          disabled={!hasActiveAccounts || saving}
+          disabled={!hasSelectedAccount || saving}
         />
       </label>
 
@@ -306,7 +278,7 @@ export default function TransactionForm({
           value={form.tr_description}
           onChange={handleChange}
           placeholder="Detalle opcional"
-          disabled={!hasActiveAccounts || saving}
+          disabled={!hasSelectedAccount || saving}
         />
       </label>
 
@@ -323,7 +295,7 @@ export default function TransactionForm({
           step="0.01"
           min="0.01"
           placeholder="0.00"
-          disabled={!hasActiveAccounts || saving}
+          disabled={!hasSelectedAccount || saving}
         />
       </label>
 
@@ -337,12 +309,12 @@ export default function TransactionForm({
           name="tr_date"
           value={form.tr_date}
           onChange={handleChange}
-          disabled={!hasActiveAccounts || saving}
+          disabled={!hasSelectedAccount || saving}
         />
       </label>
 
       <div className="form-actions">
-        <button type="submit" disabled={saving || !hasActiveAccounts}>
+        <button type="submit" disabled={saving || !hasSelectedAccount}>
           {saving
             ? 'Guardando...'
             : isEditing

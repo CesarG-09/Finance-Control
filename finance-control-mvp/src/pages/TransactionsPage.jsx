@@ -125,6 +125,8 @@ export default function TransactionsPage() {
     [activeAccounts, selectedAccountId]
   );
 
+  const transactionCount = transactions.length;
+
   useEffect(() => {
     if (!clientId) {
       return;
@@ -192,16 +194,21 @@ export default function TransactionsPage() {
       setError('');
       setSuccess('');
 
+      const payload = {
+        ...formData,
+        ac_id: selectedAccountId,
+      };
+
       if (editingTransaction) {
-        await updateTransaction(editingTransaction.tr_id, formData);
+        await updateTransaction(editingTransaction.tr_id, payload);
         setSuccess('Transacción actualizada correctamente. El balance se ajusta vía trigger.');
       } else {
-        await createTransaction(formData);
+        await createTransaction(payload);
         setSuccess('Transacción registrada correctamente. El balance se actualiza vía trigger.');
       }
 
       setEditingTransaction(null);
-      await loadTransactionsData(formData.ac_id);
+      await loadTransactionsData(selectedAccountId);
     } catch (currentError) {
       setError(currentError.message);
     } finally {
@@ -227,7 +234,7 @@ export default function TransactionsPage() {
 
       setSuccess('Transacción eliminada correctamente. El balance fue revertido vía trigger.');
       setEditingTransaction(null);
-      await loadTransactionsData(transaction.ac_id);
+      await loadTransactionsData(selectedAccountId);
     } catch (currentError) {
       setError(currentError.message);
     } finally {
@@ -257,20 +264,47 @@ export default function TransactionsPage() {
         <div>
           <h1>Transacciones</h1>
           <p>
-            Registra entradas y salidas. El balance se actualiza automáticamente desde la base de datos.
+            Selecciona una cuenta para registrar y consultar sus transacciones.
           </p>
-        </div>
-
-        <div className="summary-card">
-          <span>Cuenta seleccionada</span>
-          <strong>
-            {selectedAccount ? formatCurrency(selectedAccount.ac_balance) : '$0.00'}
-          </strong>
         </div>
       </div>
 
       {error && <p className="error-message">{error}</p>}
       {success && <p className="info-message">{success}</p>}
+
+      <section className="panel transactions-summary-panel">
+        <div className="transactions-account-selector">
+          <div>
+            <h2>{selectedAccount?.ac_name || 'Selecciona una cuenta'}</h2>
+            <p>Cuenta activa para registrar y visualizar transacciones.</p>
+          </div>
+
+          <select
+            value={selectedAccountId}
+            onChange={handleSelectedAccountChange}
+            disabled={activeAccounts.length === 0 || saving}
+          >
+            <option value="">Elegir cuenta</option>
+            {activeAccounts.map((account) => (
+              <option key={account.ac_id} value={account.ac_id}>
+                {account.ac_name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="transactions-summary-card">
+          <span>Cantidad de transacciones</span>
+          <strong>{transactionCount}</strong>
+        </div>
+
+        <div className="transactions-summary-card">
+          <span>Balance actual</span>
+          <strong>
+            {selectedAccount ? formatCurrency(selectedAccount.ac_balance) : '$0.00'}
+          </strong>
+        </div>
+      </section>
 
       <div className="transactions-layout">
         <section className="panel transaction-form-panel">
@@ -278,10 +312,10 @@ export default function TransactionsPage() {
 
           <div className="transaction-form-scroll">
             <TransactionForm
-              accounts={accounts}
               typeTransactions={typeTransactions}
               subcategories={subcategories}
               selectedAccountId={selectedAccountId}
+              selectedAccountName={selectedAccount?.ac_name || ''}
               initialData={editingTransaction}
               saving={saving}
               onSubmit={handleSubmit}
@@ -291,32 +325,17 @@ export default function TransactionsPage() {
         </section>
 
         <section className="panel transactions-section">
-          <div className="transactions-account-header">
-            <div>
-              <h2>Transacciones por cuenta</h2>
-              <p>
-                Solo se muestran transacciones activas de la cuenta seleccionada.
-              </p>
-            </div>
-
-            <select
-              value={selectedAccountId}
-              onChange={handleSelectedAccountChange}
-              disabled={activeAccounts.length === 0 || saving}
-            >
-              <option value="">Selecciona una cuenta</option>
-              {activeAccounts.map((account) => (
-                <option key={account.ac_id} value={account.ac_id}>
-                  {account.ac_name}
-                </option>
-              ))}
-            </select>
+          <div className="transactions-list-header">
+            <h2>Transacciones de la cuenta</h2>
+            <p>
+              Solo se muestran transacciones activas de la cuenta seleccionada.
+            </p>
           </div>
 
           <div className="transactions-scroll-list">
             {!selectedAccountId ? (
               <p className="empty-message">
-                Debes tener una cuenta activa para ver transacciones.
+                Selecciona una cuenta para ver sus transacciones.
               </p>
             ) : transactions.length === 0 ? (
               <p className="empty-message">

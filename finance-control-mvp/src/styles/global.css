@@ -494,13 +494,58 @@ select {
 
 .transactions-page .page-header {
   flex-shrink: 0;
+  margin-bottom: 16px;
+}
+
+.transactions-summary-panel {
+  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px 220px;
+  gap: 20px;
+  align-items: stretch;
+  margin-bottom: 20px;
+}
+
+.transactions-account-selector {
+  display: grid;
+  gap: 14px;
+  align-content: center;
+}
+
+.transactions-account-selector h2 {
+  margin: 0 0 6px;
+}
+
+.transactions-account-selector p {
+  margin: 0;
+  color: #6b7280;
+}
+
+.transactions-summary-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 18px;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  gap: 8px;
+  background: #f9fafb;
+}
+
+.transactions-summary-card span {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.transactions-summary-card strong {
+  font-size: 24px;
 }
 
 .transactions-layout {
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: 420px minmax(0, 1fr);
+  grid-template-columns: minmax(360px, 0.9fr) minmax(0, 1.1fr);
   gap: 20px;
   align-items: stretch;
 }
@@ -566,19 +611,15 @@ select {
   flex-direction: column;
 }
 
-.transactions-account-header {
+.transactions-list-header {
   flex-shrink: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 260px;
-  gap: 16px;
-  align-items: start;
 }
 
-.transactions-account-header h2 {
+.transactions-list-header h2 {
   margin: 0 0 6px;
 }
 
-.transactions-account-header p {
+.transactions-list-header p {
   margin: 0;
   color: #6b7280;
 }
@@ -669,6 +710,10 @@ select {
     overflow: visible;
   }
 
+  .transactions-summary-panel {
+    grid-template-columns: 1fr;
+  }
+
   .transactions-layout {
     grid-template-columns: 1fr;
     align-items: start;
@@ -686,10 +731,6 @@ select {
   .transactions-section {
     height: auto;
     min-height: 420px;
-  }
-
-  .transactions-account-header {
-    grid-template-columns: 1fr;
   }
 
   .transactions-scroll-list {
