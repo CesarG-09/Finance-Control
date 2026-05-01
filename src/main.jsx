@@ -13,6 +13,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <BrowserRouter>
       <AuthProvider>
         <App />
+        <Analytics />
       </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>
