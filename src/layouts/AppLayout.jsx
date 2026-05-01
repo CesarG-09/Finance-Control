@@ -1,6 +1,5 @@
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router';
 import { useState } from 'react';
-import { Analytics } from "@vercel/analytics/next"
 import { useAuth } from '../context/AuthContext';
 
 const menuSections = [

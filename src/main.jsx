@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router';
 
 import App from './App';
 import { AuthProvider } from './context/AuthContext';
+import { Analytics } from "@vercel/analytics/react"
 
 import './styles/global.css';
 
