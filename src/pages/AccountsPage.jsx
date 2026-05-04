@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import AccountForm from '../components/accounts/AccountForm';
 import { useAuth } from '../context/AuthContext';
+import ConfirmModal from '../components/ui/ConfirmModal';
 import {
   createAccount,
   deactivateAccount,
@@ -9,6 +10,8 @@ import {
   reactivateAccount,
   updateAccount,
 } from '../services/accountService';
+
+
 
 const ACCOUNT_VIEWS = {
   FORM: 'form',
@@ -104,6 +107,7 @@ function AccountCard({ account, onEdit, onDeactivate, onReactivate }) {
 export default function AccountsPage() {
   const { clientProfile } = useAuth();
 
+  const [confirmAction, setConfirmAction] = useState(null);
   const [accounts, setAccounts] = useState([]);
   const [typeAccounts, setTypeAccounts] = useState([]);
   const [editingAccount, setEditingAccount] = useState(null);
@@ -209,23 +213,48 @@ export default function AccountsPage() {
     }
   }
 
-  async function handleDeactivate(account) {
-    const confirmed = window.confirm(
-      `¿Deseas desactivar la cuenta "${account.ac_name}"? No se borrará físicamente.`
-    );
+  function handleDeactivate(account) {
+    setConfirmAction({
+      type: 'deactivate',
+      account,
+      title: 'Desactivar cuenta',
+      message: `¿Deseas desactivar la cuenta "${account.ac_name}"?`,
+      confirmText: 'Desactivar',
+      danger: true,
+    });
+  }
 
-    if (!confirmed) {
-      return;
-    }
+  function handleReactivate(account) {
+    setConfirmAction({
+      type: 'reactivate',
+      account,
+      title: 'Reactivar cuenta',
+      message: `¿Deseas reactivar la cuenta "${account.ac_name}" manteniendo su balance actual?`,
+      confirmText: 'Reactivar',
+      danger: false,
+    });
+  }
+
+  async function handleConfirmAction() {
+    if (!confirmAction?.account) return;
 
     try {
       setSaving(true);
       setError('');
       setSuccess('');
 
-      await deactivateAccount(clientId, account.ac_id);
-      setSuccess('Cuenta desactivada correctamente.');
-      setEditingAccount(null);
+      if (confirmAction.type === 'deactivate') {
+        await deactivateAccount(clientId, confirmAction.account.ac_id);
+        setSuccess('Cuenta desactivada correctamente.');
+        setEditingAccount(null);
+      }
+
+      if (confirmAction.type === 'reactivate') {
+        await reactivateAccount(clientId, confirmAction.account.ac_id);
+        setSuccess('Cuenta reactivada correctamente.');
+      }
+
+      setConfirmAction(null);
       await loadAccountsData();
     } catch (currentError) {
       setError(currentError.message);
@@ -234,28 +263,9 @@ export default function AccountsPage() {
     }
   }
 
-  async function handleReactivate(account) {
-    const confirmed = window.confirm(
-      `¿Deseas reactivar la cuenta "${account.ac_name}" manteniendo su balance actual?`
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
-    try {
-      setSaving(true);
-      setError('');
-      setSuccess('');
-
-      await reactivateAccount(clientId, account.ac_id);
-      setSuccess('Cuenta reactivada correctamente.');
-      await loadAccountsData();
-    } catch (currentError) {
-      setError(currentError.message);
-    } finally {
-      setSaving(false);
-    }
+  function handleCancelConfirmAction() {
+    if (saving) return;
+    setConfirmAction(null);
   }
 
   function handleEdit(account) {
@@ -406,6 +416,18 @@ export default function AccountsPage() {
           {renderWorkspaceContent()}
         </section>
       </div>
+
+      <ConfirmModal
+        open={Boolean(confirmAction)}
+        title={confirmAction?.title}
+        message={confirmAction?.message}
+        confirmText={confirmAction?.confirmText}
+        danger={confirmAction?.danger}
+        loading={saving}
+        onConfirm={handleConfirmAction}
+        onCancel={handleCancelConfirmAction}
+      />
+
     </section>
   );
 }

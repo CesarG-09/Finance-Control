@@ -42,9 +42,12 @@ export default function MovementsPage() {
   const [typeTransactions, setTypeTransactions] = useState([]);
   const [movements, setMovements] = useState([]);
 
+  const currentMonth = new Date().toISOString().slice(0, 7);
+
   const [filters, setFilters] = useState({
     accountId: '',
     typeId: '',
+    month: currentMonth,
   });
 
   const [loading, setLoading] = useState(true);
@@ -89,7 +92,7 @@ export default function MovementsPage() {
     }
 
     loadMovements();
-  }, [clientId, filters.accountId, filters.typeId]);
+  }, [clientId, filters.accountId, filters.typeId, filters.month]);
 
   async function loadInitialData() {
     try {
@@ -137,6 +140,7 @@ export default function MovementsPage() {
     setFilters({
       accountId: '',
       typeId: '',
+      month: currentMonth,
     });
   }
 
@@ -144,8 +148,8 @@ export default function MovementsPage() {
     <section className="movements-page">
       <div className="page-header">
         <div>
-          <h1>Movimientos del mes</h1>
-          <p>Consulta las transacciones activas registradas durante el mes actual.</p>
+          <h1>Movimientos</h1>
+          <p>Consulta las transacciones activas por mes, cuenta y tipo.</p>
         </div>
       </div>
 
@@ -178,8 +182,18 @@ export default function MovementsPage() {
       <section className="panel movements-filters-panel">
         <h2>Filtros básicos</h2>
 
-        <div className="filters-grid">
-          <label>
+        <div className="filters-grid movements-filters-grid">
+          <label className="filter-field filter-field-month">
+            Mes
+            <input
+              type="month"
+              name="month"
+              value={filters.month}
+              onChange={handleFilterChange}
+            />
+          </label>
+
+          <label className="filter-field filter-field-account">
             Cuenta
             <select
               name="accountId"
@@ -196,7 +210,7 @@ export default function MovementsPage() {
             </select>
           </label>
 
-          <label>
+          <label className="filter-field filter-field-type">
             Tipo
             <select
               name="typeId"
@@ -212,7 +226,7 @@ export default function MovementsPage() {
             </select>
           </label>
 
-          <div className="filters-actions">
+          <div className="filters-actions movements-filter-actions">
             <button
               type="button"
               className="secondary-button"
@@ -228,7 +242,7 @@ export default function MovementsPage() {
         <div className="section-header">
           <div>
             <h2>Tabla de movimientos</h2>
-            <p>Solo se muestran movimientos activos del mes actual.</p>
+            <p>Solo se muestran movimientos activos según los filtros seleccionados.</p>
           </div>
         </div>
 
@@ -257,12 +271,23 @@ export default function MovementsPage() {
                   const signedAmount = getMovementSignedAmount(movement);
 
                   return (
-                    <tr key={movement.tr_id}>
-                      <td>{formatDate(movement.tr_date)}</td>
+                    <tr
+                      key={`${movement.movement_source}-${movement.tr_id || movement.abh_id}`}
+                      className={movement.movement_source === 'initial_balance' ? 'initial-balance-row' : ''}
+                    >
+                      <td>{formatDate(movement.tr_date || movement.created_at?.slice(0, 10))}</td>
                       <td>{movement.account?.ac_name || 'Sin cuenta'}</td>
-                      <td>{movement.transaction_type?.ty_name || 'Sin tipo'}</td>
+                      <td>
+                        {movement.movement_source === 'initial_balance'
+                          ? 'Inicial'
+                          : movement.transaction_type?.ty_name || 'Sin tipo'}
+                      </td>
                       <td>{getMovementCategory(movement)}</td>
-                      <td>{movement.tr_description || movement.tr_name}</td>
+                      <td>
+                        {movement.movement_source === 'initial_balance'
+                          ? movement.abh_description || 'Balance inicial de la cuenta'
+                          : movement.tr_description || movement.tr_name}
+                      </td>
                       <td>
                         <strong
                           className={

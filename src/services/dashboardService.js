@@ -39,6 +39,25 @@ const MOVEMENT_SELECT = `
   )
 `;
 
+const INITIAL_BALANCE_SELECT = `
+  abh_id,
+  ac_id,
+  tr_id,
+  abh_previous_balance,
+  abh_change_amount,
+  abh_new_balance,
+  abh_movement_type,
+  abh_description,
+  created_at,
+  account:account!inner (
+    ac_id,
+    cl_id,
+    ac_name,
+    ac_balance,
+    ac_is_active
+  )
+`;
+
 function toDateString(date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -47,12 +66,17 @@ function toDateString(date) {
   return `${year}-${month}-${day}`;
 }
 
-export function getCurrentMonthRange(referenceDate = new Date()) {
-  const year = referenceDate.getFullYear();
-  const month = referenceDate.getMonth();
+export function getMonthRange(monthValue, referenceDate = new Date()) {
+  if (!monthValue) {
+    const year = referenceDate.getFullYear();
+    const month = String(referenceDate.getMonth() + 1).padStart(2, '0');
+    monthValue = `${year}-${month}`;
+  }
 
-  const startDate = new Date(year, month, 1);
-  const endDate = new Date(year, month + 1, 0);
+  const [year, month] = monthValue.split('-').map(Number);
+
+  const startDate = new Date(year, month - 1, 1);
+  const endDate = new Date(year, month, 0);
 
   return {
     startDate: toDateString(startDate),
@@ -76,18 +100,26 @@ export function isExpenseTransaction(transaction) {
   return normalizeText(transaction?.transaction_type?.ty_name) === 'salida';
 }
 
-export function getMovementSignedAmount(transaction) {
-  const amount = Number(transaction?.tr_amount ?? 0);
+export function getMovementSignedAmount(movement) {
+  if (movement?.movement_source === 'initial_balance') {
+    return Number(movement?.abh_change_amount ?? 0);
+  }
 
-  if (isExpenseTransaction(transaction)) {
+  const amount = Number(movement?.tr_amount ?? 0);
+
+  if (isExpenseTransaction(movement)) {
     return amount * -1;
   }
 
   return amount;
 }
 
-export function getMovementCategory(transaction) {
-  const activeRelation = transaction?.subcategories_transaction?.find(
+export function getMovementCategory(movement) {
+  if (movement?.movement_source === 'initial_balance') {
+    return 'Balance inicial';
+  }
+
+  const activeRelation = movement?.subcategories_transaction?.find(
     (item) => item.st_is_active
   );
 
@@ -103,34 +135,26 @@ export function getMovementCategory(transaction) {
   }`;
 }
 
-export async function getMonthMovementsByClientId(clientId, filters = {}) {
+async function getInitialBalanceMovementsByClientId(clientId, filters = {}, dateRange) {
   if (!clientId) {
     return [];
   }
 
-  const { startDate, endDate } = getCurrentMonthRange();
+  if (filters.typeId) {
+    return [];
+  }
 
   let query = supabase
     .schema('ctrl_finance')
-    .from('transaction')
-    .select(MOVEMENT_SELECT)
-    .eq('tr_is_active', true)
+    .from('account_balance_history')
+    .select(INITIAL_BALANCE_SELECT)
     .eq('account.cl_id', clientId)
-    .gte('tr_date', startDate)
-    .lte('tr_date', endDate)
-    .order('tr_date', { ascending: false })
-    .order('created_at', { ascending: false });
+    .eq('abh_movement_type', 'initial_balance')
+    .gte('created_at', `${dateRange.startDate}T00:00:00`)
+    .lte('created_at', `${dateRange.endDate}T23:59:59`);
 
   if (filters.accountId) {
     query = query.eq('ac_id', Number(filters.accountId));
-  }
-
-  if (filters.typeId) {
-    query = query.eq('ty_id', Number(filters.typeId));
-  }
-
-  if (filters.limit) {
-    query = query.limit(Number(filters.limit));
   }
 
   const { data, error } = await query;
@@ -139,7 +163,66 @@ export async function getMonthMovementsByClientId(clientId, filters = {}) {
     throw error;
   }
 
-  return data ?? [];
+  return (data ?? []).map((movement) => ({
+    ...movement,
+    movement_source: 'initial_balance',
+  }));
+}
+
+export async function getMonthMovementsByClientId(clientId, filters = {}) {
+  if (!clientId) {
+    return [];
+  }
+
+  const dateRange = getMonthRange(filters.month);
+  const { startDate, endDate } = dateRange;
+
+  let transactionQuery = supabase
+    .schema('ctrl_finance')
+    .from('transaction')
+    .select(MOVEMENT_SELECT)
+    .eq('tr_is_active', true)
+    .eq('account.cl_id', clientId)
+    .gte('tr_date', startDate)
+    .lte('tr_date', endDate);
+
+  if (filters.accountId) {
+    transactionQuery = transactionQuery.eq('ac_id', Number(filters.accountId));
+  }
+
+  if (filters.typeId) {
+    transactionQuery = transactionQuery.eq('ty_id', Number(filters.typeId));
+  }
+
+  const { data: transactionData, error: transactionError } = await transactionQuery;
+
+  if (transactionError) {
+    throw transactionError;
+  }
+
+  const transactions = (transactionData ?? []).map((movement) => ({
+    ...movement,
+    movement_source: 'transaction',
+  }));
+
+  const initialBalances = await getInitialBalanceMovementsByClientId(
+    clientId,
+    filters,
+    dateRange
+  );
+
+  const movements = [...transactions, ...initialBalances].sort((a, b) => {
+    const dateA = new Date(a.tr_date || a.created_at).getTime();
+    const dateB = new Date(b.tr_date || b.created_at).getTime();
+
+    return dateB - dateA;
+  });
+
+  if (filters.limit) {
+    return movements.slice(0, Number(filters.limit));
+  }
+
+  return movements;
 }
 
 export async function getDashboardSummary(clientId) {

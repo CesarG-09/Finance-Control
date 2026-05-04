@@ -1,13 +1,14 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import TransactionForm from '../components/transactions/TransactionForm';
 import { useAuth } from '../context/AuthContext';
 import { getAccountsByClientId } from '../services/accountService';
+import ConfirmModal from '../components/ui/ConfirmModal';
 import {
   createTransaction,
   deactivateTransaction,
   getActiveSubcategories,
-  getActiveTransactionsByAccountId,
+  getAccountTransactionsWithInitialBalance,
   getActiveTypeTransactions,
   updateTransaction,
 } from '../services/transactionService';
@@ -22,10 +23,18 @@ function formatCurrency(value) {
 }
 
 function isIncomeTransaction(transaction) {
+  if (transaction.movement_source === 'initial_balance') {
+    return true;
+  }
+
   return transaction.transaction_type?.ty_name?.toLowerCase() === 'entrada';
 }
 
 function formatTransactionAmount(transaction) {
+  if (transaction.movement_source === 'initial_balance') {
+    return `+${formatCurrency(transaction.abh_change_amount)}`;
+  }
+
   const amount = formatCurrency(transaction.tr_amount);
 
   return isIncomeTransaction(transaction) ? `+${amount}` : `-${amount}`;
@@ -48,6 +57,10 @@ function getActiveRelation(transaction) {
 }
 
 function getTransactionCategory(transaction) {
+  if (transaction.movement_source === 'initial_balance') {
+    return 'Balance inicial';
+  }
+
   const relation = getActiveRelation(transaction);
   const categoryName = relation?.subcategory?.category?.ct_name;
   const subcategoryName = relation?.subcategory?.sct_name;
@@ -60,20 +73,24 @@ function getTransactionCategory(transaction) {
 }
 
 function TransactionCard({ transaction, onEdit, onDelete }) {
+  const isInitialBalance = transaction.movement_source === 'initial_balance';
+
   return (
-    <article className="transaction-card">
+    <article
+      className={`transaction-card ${
+        isInitialBalance ? 'transaction-card-initial-balance' : ''
+      }`}
+    >
       <div className="transaction-card-header">
         <div>
-          <h3>{transaction.tr_name}</h3>
-          <p>{formatDate(transaction.tr_date)}</p>
+          <h3>{isInitialBalance ? 'Balance inicial' : transaction.tr_name}</h3>
+          <p>{formatDate(transaction.tr_date || transaction.created_at?.slice(0, 10))}</p>
         </div>
 
-        <span
-          className={`status-tag ${
-            isIncomeTransaction(transaction) ? 'income' : 'expense'
-          }`}
-        >
-          {transaction.transaction_type?.ty_name || 'Sin tipo'}
+        <span className={`status-tag ${isInitialBalance ? 'initial' : isIncomeTransaction(transaction) ? 'income' : 'expense'}`}>
+          {isInitialBalance
+            ? 'Inicial'
+            : transaction.transaction_type?.ty_name || 'Sin tipo'}
         </span>
       </div>
 
@@ -82,42 +99,74 @@ function TransactionCard({ transaction, onEdit, onDelete }) {
           <strong>Categoría:</strong> {getTransactionCategory(transaction)}
         </p>
 
-        {transaction.tr_description && (
-          <p>
-            <strong>Descripción:</strong> {transaction.tr_description}
-          </p>
-        )}
+        <p>
+          <strong>Descripción:</strong>{' '}
+          {isInitialBalance
+            ? transaction.abh_description || 'Balance inicial de la cuenta'
+            : transaction.tr_description || 'Sin descripción'}
+        </p>
       </div>
 
       <div className="transaction-card-footer">
-        <strong
-          className={
-            isIncomeTransaction(transaction) ? 'amount-positive' : 'amount-negative'
-          }
-        >
+        <strong className={isInitialBalance ? 'amount-neutral' : isIncomeTransaction(transaction) ? 'amount-positive' : 'amount-negative'}>
           {formatTransactionAmount(transaction)}
         </strong>
 
-        <div className="transaction-actions">
-          <button type="button" onClick={() => onEdit(transaction)}>
-            Editar
-          </button>
-          <button
-            type="button"
-            className="danger-button"
-            onClick={() => onDelete(transaction)}
-          >
-            Eliminar
-          </button>
-        </div>
+        {!isInitialBalance && (
+          <div className="transaction-actions">
+            <button type="button" onClick={() => onEdit(transaction)}>
+              Editar
+            </button>
+            <button
+              type="button"
+              className="danger-button"
+              onClick={() => onDelete(transaction)}
+            >
+              Eliminar
+            </button>
+          </div>
+        )}
       </div>
     </article>
   );
 }
 
+function normalizeText(value) {
+  return String(value ?? '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+function getTransactionTypeName(typeTransactions, typeId) {
+  const selectedType = typeTransactions.find(
+    (typeTransaction) => String(typeTransaction.ty_id) === String(typeId)
+  );
+
+  return normalizeText(selectedType?.ty_name);
+}
+
+function getSignedEffectByType(typeTransactions, typeId, amount) {
+  const typeName = getTransactionTypeName(typeTransactions, typeId);
+
+  if (typeName === 'salida') {
+    return Number(amount) * -1;
+  }
+
+  return Number(amount);
+}
+
+function isCreditCardAccount(account) {
+  const accountTypeName = normalizeText(account?.account_type?.ta_name);
+
+  return accountTypeName === 'tarjeta de credito' || accountTypeName === 'tarjeta de crédito';
+}
+
 export default function TransactionsPage() {
   const { clientProfile } = useAuth();
 
+  const [confirmDeleteTransaction, setConfirmDeleteTransaction] = useState(null);
   const [accounts, setAccounts] = useState([]);
   const [typeTransactions, setTypeTransactions] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
@@ -129,6 +178,8 @@ export default function TransactionsPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  const messageRef = useRef(null);
 
   const clientId = clientProfile?.cl_id;
 
@@ -145,7 +196,9 @@ export default function TransactionsPage() {
     [activeAccounts, selectedAccountId]
   );
 
-  const transactionCount = transactions.length;
+  const transactionCount = transactions.filter(
+    (transaction) => transaction.movement_source !== 'initial_balance'
+  ).length;
 
   useEffect(() => {
     if (!clientId) {
@@ -154,6 +207,15 @@ export default function TransactionsPage() {
 
     loadTransactionsData();
   }, [clientId]);
+
+  useEffect(() => {
+    if (!error && !success) return;
+
+    messageRef.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center',
+    });
+  }, [error, success]);
 
   async function loadTransactionsData(preferredAccountId = selectedAccountId) {
     try {
@@ -182,7 +244,7 @@ export default function TransactionsPage() {
           : '';
 
       const transactionsData = nextSelectedAccountId
-        ? await getActiveTransactionsByAccountId(nextSelectedAccountId)
+        ? await getAccountTransactionsWithInitialBalance(nextSelectedAccountId)
         : [];
 
       setAccounts(accountsData);
@@ -208,71 +270,124 @@ export default function TransactionsPage() {
     await loadTransactionsData(accountId);
   }
 
-  async function handleSubmit(formData) {
-    try {
-      setSaving(true);
-      setError('');
-      setSuccess('');
-
-      const payload = {
-        ...formData,
-        ac_id: selectedAccountId,
-      };
-
-      if (editingTransaction) {
-        await updateTransaction(editingTransaction.tr_id, payload);
-        setSuccess('Transacción actualizada correctamente. El balance se ajusta vía trigger.');
-      } else {
-        await createTransaction(payload);
-        setSuccess('Transacción registrada correctamente. El balance se actualiza vía trigger.');
-      }
-
-      setEditingTransaction(null);
-      await loadTransactionsData(selectedAccountId);
-    } catch (currentError) {
-      setError(currentError.message);
-    } finally {
-      setSaving(false);
-    }
+ function validateBalanceBeforeSave(formData) {
+  if (!selectedAccount) {
+    return 'Debes seleccionar una cuenta válida.';
   }
 
-  async function handleDelete(transaction) {
-    const confirmed = window.confirm(
-      `¿Deseas eliminar la transacción "${transaction.tr_name}"? No se borrará físicamente, solo se desactivará.`
-    );
+  const amount = Number(formData.tr_amount);
 
-    if (!confirmed) {
-      return;
-    }
-
-    try {
-      setSaving(true);
-      setError('');
-      setSuccess('');
-
-      await deactivateTransaction(transaction.tr_id);
-
-      setSuccess('Transacción eliminada correctamente. El balance fue revertido vía trigger.');
-      setEditingTransaction(null);
-      await loadTransactionsData(selectedAccountId);
-    } catch (currentError) {
-      setError(currentError.message);
-    } finally {
-      setSaving(false);
-    }
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return 'El monto debe ser mayor a 0.';
   }
 
-  function handleEdit(transaction) {
-    setEditingTransaction(transaction);
+  if (isCreditCardAccount(selectedAccount)) {
+    return '';
+  }
+
+  const currentBalance = Number(selectedAccount.ac_balance ?? 0);
+
+  const oldEffect = editingTransaction
+    ? getSignedEffectByType(
+        typeTransactions,
+        editingTransaction.ty_id,
+        editingTransaction.tr_amount
+      )
+    : 0;
+
+  const newEffect = getSignedEffectByType(
+    typeTransactions,
+    formData.ty_id,
+    formData.tr_amount
+  );
+
+  const balanceBeforeTransaction = currentBalance - oldEffect;
+  const resultingBalance = balanceBeforeTransaction + newEffect;
+
+  if (resultingBalance < 0) {
+    return `No puedes registrar esta salida porque dejaría la cuenta en negativo. Saldo disponible: ${formatCurrency(balanceBeforeTransaction)}. Monto solicitado: ${formatCurrency(amount)}.`;
+  }
+
+  return '';
+}
+
+async function handleSubmit(formData) {
+  const balanceValidationError = validateBalanceBeforeSave(formData);
+
+  if (balanceValidationError) {
+    setError(balanceValidationError);
+    setSuccess('');
+    return;
+  }
+
+  try {
+    setSaving(true);
     setError('');
     setSuccess('');
-  }
 
-  function handleCancelEdit() {
+    const payload = {
+      ...formData,
+      ac_id: selectedAccountId,
+    };
+
+    if (editingTransaction) {
+      await updateTransaction(editingTransaction.tr_id, payload);
+      setSuccess('Transacción actualizada correctamente. El balance se ajusta vía trigger.');
+    } else {
+      await createTransaction(payload);
+      setSuccess('Transacción registrada correctamente. El balance se actualiza vía trigger.');
+    }
+
     setEditingTransaction(null);
+    await loadTransactionsData(selectedAccountId);
+  } catch (currentError) {
+    setError(currentError.message);
+  } finally {
+    setSaving(false);
+  }
+}
+
+function handleDelete(transaction) {
+  setConfirmDeleteTransaction(transaction);
+}
+
+async function handleConfirmDeleteTransaction() {
+  if (!confirmDeleteTransaction) return;
+
+  try {
+    setSaving(true);
     setError('');
     setSuccess('');
+
+    await deactivateTransaction(confirmDeleteTransaction.tr_id);
+
+    setSuccess('Transacción eliminada correctamente. El balance fue revertido vía trigger.');
+    setEditingTransaction(null);
+    setConfirmDeleteTransaction(null);
+    await loadTransactionsData(selectedAccountId);
+  } catch (currentError) {
+    setError(currentError.message);
+  } finally {
+    setSaving(false);
   }
+}
+
+function handleCancelDeleteTransaction() {
+  if (saving) return;
+  setConfirmDeleteTransaction(null);
+}
+
+function handleEdit(transaction) {
+  setEditingTransaction(transaction);
+  setError('');
+  setSuccess('');
+}
+
+function handleCancelEdit() {
+  setEditingTransaction(null);
+  setError('');
+  setSuccess('');
+}
 
   if (loading) {
     return <p>Cargando transacciones...</p>;
@@ -289,8 +404,11 @@ export default function TransactionsPage() {
         </div>
       </div>
 
-      {error && <p className="error-message">{error}</p>}
-      {success && <p className="info-message">{success}</p>}
+
+      <div ref={messageRef}>
+        {error && <p className="error-message">{error}</p>}
+        {success && <p className="info-message">{success}</p>}
+      </div>
 
       <section className="panel transactions-summary-panel">
         <div className="transactions-account-selector">
@@ -364,7 +482,7 @@ export default function TransactionsPage() {
             ) : (
               transactions.map((transaction) => (
                 <TransactionCard
-                  key={transaction.tr_id}
+                  key={`${transaction.movement_source}-${transaction.tr_id || transaction.abh_id}`}
                   transaction={transaction}
                   onEdit={handleEdit}
                   onDelete={handleDelete}
@@ -374,6 +492,18 @@ export default function TransactionsPage() {
           </div>
         </section>
       </div>
+
+      <ConfirmModal
+        open={Boolean(confirmDeleteTransaction)}
+        title="Eliminar transacción"
+        message={`¿Deseas eliminar la transacción "${confirmDeleteTransaction?.tr_name}"?`}
+        confirmText="Eliminar"
+        danger
+        loading={saving}
+        onConfirm={handleConfirmDeleteTransaction}
+        onCancel={handleCancelDeleteTransaction}
+      />
+
     </section>
   );
 }
