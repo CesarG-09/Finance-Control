@@ -2044,3 +2044,20 @@ select:disabled {
     width: 100%;
   }
 }
+
+/* ============================================================
+   MOVIMIENTOS - BALANCE INICIAL
+============================================================ */
+
+.movements-table tr.initial-balance-row {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+.movements-table tr.initial-balance-row td {
+  border-color: #e5e7eb;
+}
+
+.movements-table tr.initial-balance-row strong {
+  color: #4b5563;
+}

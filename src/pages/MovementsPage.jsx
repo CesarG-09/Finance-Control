@@ -271,12 +271,23 @@ export default function MovementsPage() {
                   const signedAmount = getMovementSignedAmount(movement);
 
                   return (
-                    <tr key={movement.tr_id}>
-                      <td>{formatDate(movement.tr_date)}</td>
+                    <tr
+                      key={`${movement.movement_source}-${movement.tr_id || movement.abh_id}`}
+                      className={movement.movement_source === 'initial_balance' ? 'initial-balance-row' : ''}
+                    >
+                      <td>{formatDate(movement.tr_date || movement.created_at?.slice(0, 10))}</td>
                       <td>{movement.account?.ac_name || 'Sin cuenta'}</td>
-                      <td>{movement.transaction_type?.ty_name || 'Sin tipo'}</td>
+                      <td>
+                        {movement.movement_source === 'initial_balance'
+                          ? 'Inicial'
+                          : movement.transaction_type?.ty_name || 'Sin tipo'}
+                      </td>
                       <td>{getMovementCategory(movement)}</td>
-                      <td>{movement.tr_description || movement.tr_name}</td>
+                      <td>
+                        {movement.movement_source === 'initial_balance'
+                          ? movement.abh_description || 'Balance inicial de la cuenta'
+                          : movement.tr_description || movement.tr_name}
+                      </td>
                       <td>
                         <strong
                           className={
