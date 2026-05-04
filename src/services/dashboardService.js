@@ -47,12 +47,17 @@ function toDateString(date) {
   return `${year}-${month}-${day}`;
 }
 
-export function getCurrentMonthRange(referenceDate = new Date()) {
-  const year = referenceDate.getFullYear();
-  const month = referenceDate.getMonth();
+export function getMonthRange(monthValue, referenceDate = new Date()) {
+  if (!monthValue) {
+    const year = referenceDate.getFullYear();
+    const month = String(referenceDate.getMonth() + 1).padStart(2, '0');
+    monthValue = `${year}-${month}`;
+  }
 
-  const startDate = new Date(year, month, 1);
-  const endDate = new Date(year, month + 1, 0);
+  const [year, month] = monthValue.split('-').map(Number);
+
+  const startDate = new Date(year, month - 1, 1);
+  const endDate = new Date(year, month, 0);
 
   return {
     startDate: toDateString(startDate),
@@ -108,7 +113,7 @@ export async function getMonthMovementsByClientId(clientId, filters = {}) {
     return [];
   }
 
-  const { startDate, endDate } = getCurrentMonthRange();
+  const { startDate, endDate } = getMonthRange(filters.month);
 
   let query = supabase
     .schema('ctrl_finance')
