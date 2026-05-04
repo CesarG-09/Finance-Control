@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import TransactionForm from '../components/transactions/TransactionForm';
 import { useAuth } from '../context/AuthContext';
 import { getAccountsByClientId } from '../services/accountService';
+import ConfirmModal from '../components/ui/ConfirmModal';
 import {
   createTransaction,
   deactivateTransaction,
@@ -115,9 +116,42 @@ function TransactionCard({ transaction, onEdit, onDelete }) {
   );
 }
 
+function normalizeText(value) {
+  return String(value ?? '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+function getTransactionTypeName(typeTransactions, typeId) {
+  const selectedType = typeTransactions.find(
+    (typeTransaction) => String(typeTransaction.ty_id) === String(typeId)
+  );
+
+  return normalizeText(selectedType?.ty_name);
+}
+
+function getSignedEffectByType(typeTransactions, typeId, amount) {
+  const typeName = getTransactionTypeName(typeTransactions, typeId);
+
+  if (typeName === 'salida') {
+    return Number(amount) * -1;
+  }
+
+  return Number(amount);
+}
+
+function isCreditCardAccount(account) {
+  const accountTypeName = normalizeText(account?.account_type?.ta_name);
+
+  return accountTypeName === 'tarjeta de credito' || accountTypeName === 'tarjeta de crédito';
+}
+
 export default function TransactionsPage() {
   const { clientProfile } = useAuth();
 
+  const [confirmDeleteTransaction, setConfirmDeleteTransaction] = useState(null);
   const [accounts, setAccounts] = useState([]);
   const [typeTransactions, setTypeTransactions] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
@@ -129,6 +163,8 @@ export default function TransactionsPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  const messageRef = useRef(null);
 
   const clientId = clientProfile?.cl_id;
 
@@ -154,6 +190,15 @@ export default function TransactionsPage() {
 
     loadTransactionsData();
   }, [clientId]);
+
+  useEffect(() => {
+    if (!error && !success) return;
+
+    messageRef.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center',
+    });
+  }, [error, success]);
 
   async function loadTransactionsData(preferredAccountId = selectedAccountId) {
     try {
@@ -208,71 +253,124 @@ export default function TransactionsPage() {
     await loadTransactionsData(accountId);
   }
 
-  async function handleSubmit(formData) {
-    try {
-      setSaving(true);
-      setError('');
-      setSuccess('');
-
-      const payload = {
-        ...formData,
-        ac_id: selectedAccountId,
-      };
-
-      if (editingTransaction) {
-        await updateTransaction(editingTransaction.tr_id, payload);
-        setSuccess('Transacción actualizada correctamente. El balance se ajusta vía trigger.');
-      } else {
-        await createTransaction(payload);
-        setSuccess('Transacción registrada correctamente. El balance se actualiza vía trigger.');
-      }
-
-      setEditingTransaction(null);
-      await loadTransactionsData(selectedAccountId);
-    } catch (currentError) {
-      setError(currentError.message);
-    } finally {
-      setSaving(false);
-    }
+ function validateBalanceBeforeSave(formData) {
+  if (!selectedAccount) {
+    return 'Debes seleccionar una cuenta válida.';
   }
 
-  async function handleDelete(transaction) {
-    const confirmed = window.confirm(
-      `¿Deseas eliminar la transacción "${transaction.tr_name}"? No se borrará físicamente, solo se desactivará.`
-    );
+  const amount = Number(formData.tr_amount);
 
-    if (!confirmed) {
-      return;
-    }
-
-    try {
-      setSaving(true);
-      setError('');
-      setSuccess('');
-
-      await deactivateTransaction(transaction.tr_id);
-
-      setSuccess('Transacción eliminada correctamente. El balance fue revertido vía trigger.');
-      setEditingTransaction(null);
-      await loadTransactionsData(selectedAccountId);
-    } catch (currentError) {
-      setError(currentError.message);
-    } finally {
-      setSaving(false);
-    }
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return 'El monto debe ser mayor a 0.';
   }
 
-  function handleEdit(transaction) {
-    setEditingTransaction(transaction);
+  if (isCreditCardAccount(selectedAccount)) {
+    return '';
+  }
+
+  const currentBalance = Number(selectedAccount.ac_balance ?? 0);
+
+  const oldEffect = editingTransaction
+    ? getSignedEffectByType(
+        typeTransactions,
+        editingTransaction.ty_id,
+        editingTransaction.tr_amount
+      )
+    : 0;
+
+  const newEffect = getSignedEffectByType(
+    typeTransactions,
+    formData.ty_id,
+    formData.tr_amount
+  );
+
+  const balanceBeforeTransaction = currentBalance - oldEffect;
+  const resultingBalance = balanceBeforeTransaction + newEffect;
+
+  if (resultingBalance < 0) {
+    return `No puedes registrar esta salida porque dejaría la cuenta en negativo. Saldo disponible: ${formatCurrency(balanceBeforeTransaction)}. Monto solicitado: ${formatCurrency(amount)}.`;
+  }
+
+  return '';
+}
+
+async function handleSubmit(formData) {
+  const balanceValidationError = validateBalanceBeforeSave(formData);
+
+  if (balanceValidationError) {
+    setError(balanceValidationError);
+    setSuccess('');
+    return;
+  }
+
+  try {
+    setSaving(true);
     setError('');
     setSuccess('');
-  }
 
-  function handleCancelEdit() {
+    const payload = {
+      ...formData,
+      ac_id: selectedAccountId,
+    };
+
+    if (editingTransaction) {
+      await updateTransaction(editingTransaction.tr_id, payload);
+      setSuccess('Transacción actualizada correctamente. El balance se ajusta vía trigger.');
+    } else {
+      await createTransaction(payload);
+      setSuccess('Transacción registrada correctamente. El balance se actualiza vía trigger.');
+    }
+
     setEditingTransaction(null);
+    await loadTransactionsData(selectedAccountId);
+  } catch (currentError) {
+    setError(currentError.message);
+  } finally {
+    setSaving(false);
+  }
+}
+
+function handleDelete(transaction) {
+  setConfirmDeleteTransaction(transaction);
+}
+
+async function handleConfirmDeleteTransaction() {
+  if (!confirmDeleteTransaction) return;
+
+  try {
+    setSaving(true);
     setError('');
     setSuccess('');
+
+    await deactivateTransaction(confirmDeleteTransaction.tr_id);
+
+    setSuccess('Transacción eliminada correctamente. El balance fue revertido vía trigger.');
+    setEditingTransaction(null);
+    setConfirmDeleteTransaction(null);
+    await loadTransactionsData(selectedAccountId);
+  } catch (currentError) {
+    setError(currentError.message);
+  } finally {
+    setSaving(false);
   }
+}
+
+function handleCancelDeleteTransaction() {
+  if (saving) return;
+  setConfirmDeleteTransaction(null);
+}
+
+function handleEdit(transaction) {
+  setEditingTransaction(transaction);
+  setError('');
+  setSuccess('');
+}
+
+function handleCancelEdit() {
+  setEditingTransaction(null);
+  setError('');
+  setSuccess('');
+}
 
   if (loading) {
     return <p>Cargando transacciones...</p>;
@@ -289,8 +387,11 @@ export default function TransactionsPage() {
         </div>
       </div>
 
-      {error && <p className="error-message">{error}</p>}
-      {success && <p className="info-message">{success}</p>}
+
+      <div ref={messageRef}>
+        {error && <p className="error-message">{error}</p>}
+        {success && <p className="info-message">{success}</p>}
+      </div>
 
       <section className="panel transactions-summary-panel">
         <div className="transactions-account-selector">
@@ -374,6 +475,18 @@ export default function TransactionsPage() {
           </div>
         </section>
       </div>
+
+      <ConfirmModal
+        open={Boolean(confirmDeleteTransaction)}
+        title="Eliminar transacción"
+        message={`¿Deseas eliminar la transacción "${confirmDeleteTransaction?.tr_name}"?`}
+        confirmText="Eliminar"
+        danger
+        loading={saving}
+        onConfirm={handleConfirmDeleteTransaction}
+        onCancel={handleCancelDeleteTransaction}
+      />
+
     </section>
   );
 }
