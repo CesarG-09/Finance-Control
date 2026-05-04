@@ -8,7 +8,7 @@ import {
   createTransaction,
   deactivateTransaction,
   getActiveSubcategories,
-  getActiveTransactionsByAccountId,
+  getAccountTransactionsWithInitialBalance,
   getActiveTypeTransactions,
   updateTransaction,
 } from '../services/transactionService';
@@ -23,10 +23,18 @@ function formatCurrency(value) {
 }
 
 function isIncomeTransaction(transaction) {
+  if (transaction.movement_source === 'initial_balance') {
+    return true;
+  }
+
   return transaction.transaction_type?.ty_name?.toLowerCase() === 'entrada';
 }
 
 function formatTransactionAmount(transaction) {
+  if (transaction.movement_source === 'initial_balance') {
+    return `+${formatCurrency(transaction.abh_change_amount)}`;
+  }
+
   const amount = formatCurrency(transaction.tr_amount);
 
   return isIncomeTransaction(transaction) ? `+${amount}` : `-${amount}`;
@@ -49,6 +57,10 @@ function getActiveRelation(transaction) {
 }
 
 function getTransactionCategory(transaction) {
+  if (transaction.movement_source === 'initial_balance') {
+    return 'Balance inicial';
+  }
+
   const relation = getActiveRelation(transaction);
   const categoryName = relation?.subcategory?.category?.ct_name;
   const subcategoryName = relation?.subcategory?.sct_name;
@@ -61,20 +73,24 @@ function getTransactionCategory(transaction) {
 }
 
 function TransactionCard({ transaction, onEdit, onDelete }) {
+  const isInitialBalance = transaction.movement_source === 'initial_balance';
+
   return (
-    <article className="transaction-card">
+    <article
+      className={`transaction-card ${
+        isInitialBalance ? 'transaction-card-initial-balance' : ''
+      }`}
+    >
       <div className="transaction-card-header">
         <div>
-          <h3>{transaction.tr_name}</h3>
-          <p>{formatDate(transaction.tr_date)}</p>
+          <h3>{isInitialBalance ? 'Balance inicial' : transaction.tr_name}</h3>
+          <p>{formatDate(transaction.tr_date || transaction.created_at?.slice(0, 10))}</p>
         </div>
 
-        <span
-          className={`status-tag ${
-            isIncomeTransaction(transaction) ? 'income' : 'expense'
-          }`}
-        >
-          {transaction.transaction_type?.ty_name || 'Sin tipo'}
+        <span className={`status-tag ${isInitialBalance ? 'initial' : isIncomeTransaction(transaction) ? 'income' : 'expense'}`}>
+          {isInitialBalance
+            ? 'Inicial'
+            : transaction.transaction_type?.ty_name || 'Sin tipo'}
         </span>
       </div>
 
@@ -83,34 +99,33 @@ function TransactionCard({ transaction, onEdit, onDelete }) {
           <strong>Categoría:</strong> {getTransactionCategory(transaction)}
         </p>
 
-        {transaction.tr_description && (
-          <p>
-            <strong>Descripción:</strong> {transaction.tr_description}
-          </p>
-        )}
+        <p>
+          <strong>Descripción:</strong>{' '}
+          {isInitialBalance
+            ? transaction.abh_description || 'Balance inicial de la cuenta'
+            : transaction.tr_description || 'Sin descripción'}
+        </p>
       </div>
 
       <div className="transaction-card-footer">
-        <strong
-          className={
-            isIncomeTransaction(transaction) ? 'amount-positive' : 'amount-negative'
-          }
-        >
+        <strong className={isInitialBalance ? 'amount-neutral' : isIncomeTransaction(transaction) ? 'amount-positive' : 'amount-negative'}>
           {formatTransactionAmount(transaction)}
         </strong>
 
-        <div className="transaction-actions">
-          <button type="button" onClick={() => onEdit(transaction)}>
-            Editar
-          </button>
-          <button
-            type="button"
-            className="danger-button"
-            onClick={() => onDelete(transaction)}
-          >
-            Eliminar
-          </button>
-        </div>
+        {!isInitialBalance && (
+          <div className="transaction-actions">
+            <button type="button" onClick={() => onEdit(transaction)}>
+              Editar
+            </button>
+            <button
+              type="button"
+              className="danger-button"
+              onClick={() => onDelete(transaction)}
+            >
+              Eliminar
+            </button>
+          </div>
+        )}
       </div>
     </article>
   );
@@ -181,7 +196,9 @@ export default function TransactionsPage() {
     [activeAccounts, selectedAccountId]
   );
 
-  const transactionCount = transactions.length;
+  const transactionCount = transactions.filter(
+    (transaction) => transaction.movement_source !== 'initial_balance'
+  ).length;
 
   useEffect(() => {
     if (!clientId) {
@@ -227,7 +244,7 @@ export default function TransactionsPage() {
           : '';
 
       const transactionsData = nextSelectedAccountId
-        ? await getActiveTransactionsByAccountId(nextSelectedAccountId)
+        ? await getAccountTransactionsWithInitialBalance(nextSelectedAccountId)
         : [];
 
       setAccounts(accountsData);
@@ -465,7 +482,7 @@ function handleCancelEdit() {
             ) : (
               transactions.map((transaction) => (
                 <TransactionCard
-                  key={transaction.tr_id}
+                  key={`${transaction.movement_source}-${transaction.tr_id || transaction.abh_id}`}
                   transaction={transaction}
                   onEdit={handleEdit}
                   onDelete={handleDelete}

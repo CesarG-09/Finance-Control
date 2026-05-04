@@ -38,6 +38,24 @@ const TRANSACTION_SELECT = `
   )
 `;
 
+const INITIAL_BALANCE_TRANSACTION_SELECT = `
+  abh_id,
+  ac_id,
+  tr_id,
+  abh_previous_balance,
+  abh_change_amount,
+  abh_new_balance,
+  abh_movement_type,
+  abh_description,
+  created_at,
+  account:account (
+    ac_id,
+    ac_name,
+    ac_balance,
+    ac_is_active
+  )
+`;
+
 function validateTransactionPayload(transaction) {
   if (!transaction.ac_id) {
     throw new Error('Debes seleccionar una cuenta.');
@@ -137,6 +155,62 @@ export async function getActiveTransactionsByAccountId(accountId) {
   }
 
   return data ?? [];
+}
+
+export async function getInitialBalanceByAccountId(accountId) {
+  if (!accountId) {
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .schema('ctrl_finance')
+    .from('account_balance_history')
+    .select(INITIAL_BALANCE_TRANSACTION_SELECT)
+    .eq('ac_id', accountId)
+    .eq('abh_movement_type', 'initial_balance')
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  if (!data) {
+    return null;
+  }
+
+  return {
+    ...data,
+    movement_source: 'initial_balance',
+  };
+}
+
+export async function getAccountTransactionsWithInitialBalance(accountId) {
+  if (!accountId) {
+    return [];
+  }
+
+  const [initialBalance, transactions] = await Promise.all([
+    getInitialBalanceByAccountId(accountId),
+    getActiveTransactionsByAccountId(accountId),
+  ]);
+
+  const normalizedTransactions = transactions.map((transaction) => ({
+    ...transaction,
+    movement_source: 'transaction',
+  }));
+
+  const result = initialBalance
+    ? [initialBalance, ...normalizedTransactions]
+    : normalizedTransactions;
+
+  return result.sort((a, b) => {
+    const dateA = new Date(a.tr_date || a.created_at).getTime();
+    const dateB = new Date(b.tr_date || b.created_at).getTime();
+
+    return dateB - dateA;
+  });
 }
 
 export async function getTransactionById(transactionId) {
