@@ -2,9 +2,7 @@ import { Navigate, Route, Routes } from 'react-router';
 
 import PublicRoute from './PublicRoute';
 import ProtectedRoute from './ProtectedRoute';
-
 import AppLayout from '../layouts/AppLayout';
-
 import LoginPage from '../pages/LoginPage';
 import RegisterPage from '../pages/RegisterPage';
 import ProfilePage from '../pages/ProfilePage';
@@ -12,6 +10,7 @@ import DashboardPage from '../pages/DashboardPage';
 import AccountsPage from '../pages/AccountsPage';
 import TransactionsPage from '../pages/TransactionsPage';
 import MovementsPage from '../pages/MovementsPage';
+import ProfileSettingsPage from '../pages/ProfileSettingsPage';
 
 export default function AppRoutes() {
   return (
@@ -56,6 +55,7 @@ export default function AppRoutes() {
         <Route path="/cuentas" element={<AccountsPage />} />
         <Route path="/transacciones" element={<TransactionsPage />} />
         <Route path="/movimientos" element={<MovementsPage />} />
+        <Route path="/mi-perfil" element={<ProfileSettingsPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/dashboard" replace />} />

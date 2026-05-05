@@ -69,8 +69,10 @@ export default function AppLayout() {
   const isDashboardPage = location.pathname.startsWith('/dashboard');
   const isMovementsPage = location.pathname.startsWith('/movimientos');
 
+  const isProfilePage = location.pathname.startsWith('/mi-perfil');
+
   const isScrollablePage =
-    isTransactionsPage || isDashboardPage || isMovementsPage;
+    isTransactionsPage || isDashboardPage || isMovementsPage || isProfilePage;
 
   const userDisplayName = getUserDisplayName(clientProfile);
   const userInitials = getInitials(clientProfile);
@@ -153,14 +155,19 @@ export default function AppLayout() {
         </nav>
 
         <div className="sidebar-footer">
-          <div className="sidebar-user-card" title={userDisplayName}>
+          <button
+            type="button"
+            className="sidebar-user-card sidebar-user-card-button"
+            title="Ir a mi perfil"
+            onClick={() => navigate('/mi-perfil')}
+          >
             <div className="sidebar-user-avatar">{userInitials}</div>
 
             <div className="sidebar-user-info">
               <strong>{userDisplayName}</strong>
               <span>Perfil activo</span>
             </div>
-          </div>
+          </button>
 
           <button
             type="button"
