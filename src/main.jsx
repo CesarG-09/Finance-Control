@@ -6,7 +6,7 @@ import { Analytics } from '@vercel/analytics/react';
 import App from './App';
 import { AuthProvider } from './context/AuthContext';
 
-import './styles/global.css';
+import './styles/index.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
