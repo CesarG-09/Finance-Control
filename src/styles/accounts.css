@@ -17,3 +17,23 @@
 .accounts-scroll-list{
   overscroll-behavior:contain;
 }
+
+.accounts-workspace-panel.accounts-workspace-form{
+  width:min(620px,100%);
+  max-width:620px;
+  min-height:auto;
+  flex:none;
+  align-self:center;
+}
+
+.accounts-workspace-form .accounts-form-view{
+  padding:24px;
+}
+
+@media(max-width:850px){
+  .accounts-workspace-panel.accounts-workspace-form{
+    width:100%;
+    max-width:100%;
+    align-self:stretch;
+  }
+}
