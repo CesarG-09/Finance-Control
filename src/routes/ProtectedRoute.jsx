@@ -12,6 +12,10 @@ export default function ProtectedRoute({ children, requireProfile = true }) {
     return <Navigate to="/login" replace />;
   }
 
+  if (clientProfile && !clientProfile.cl_is_active) {
+    return <Navigate to="/login" replace />;
+  }
+
   if (requireProfile && !clientProfile) {
     return <Navigate to="/perfil" replace />;
   }

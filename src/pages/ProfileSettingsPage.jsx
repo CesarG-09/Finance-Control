@@ -1,13 +1,18 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router';
+import ConfirmModal from '../components/ui/ConfirmModal';
 import { useAuth } from '../context/AuthContext';
 import {
+  deactivateClientProfile,
   updateClientProfile,
   updateUserEmail,
   updateUserPassword,
 } from '../services/profileService';
 
+
 export default function ProfileSettingsPage() {
-  const { user, clientProfile, refreshProfile } = useAuth();
+  const navigate = useNavigate();
+  const { user, clientProfile, refreshProfile, logout } = useAuth();
 
   const [profileForm, setProfileForm] = useState({
     cl_first_name: '',
@@ -31,6 +36,9 @@ export default function ProfileSettingsPage() {
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingEmail, setSavingEmail] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
+
+  const [deactivateModalOpen, setDeactivateModalOpen] = useState(false);
+  const [deactivatingProfile, setDeactivatingProfile] = useState(false);
 
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -189,6 +197,35 @@ export default function ProfileSettingsPage() {
       setError(currentError.message);
     } finally {
       setSavingPassword(false);
+    }
+  }
+
+  function handleOpenDeactivateModal() {
+    setDeactivateModalOpen(true);
+    setError('');
+    setSuccess('');
+  }
+
+  function handleCloseDeactivateModal() {
+    if (deactivatingProfile) return;
+    setDeactivateModalOpen(false);
+  }
+
+  async function handleConfirmDeactivateProfile() {
+    try {
+      setDeactivatingProfile(true);
+      setError('');
+      setSuccess('');
+
+      await deactivateClientProfile(clientProfile.cl_id);
+      await logout();
+
+      navigate('/login', { replace: true });
+    } catch (currentError) {
+      setError(currentError.message);
+      setDeactivateModalOpen(false);
+    } finally {
+      setDeactivatingProfile(false);
     }
   }
 
@@ -364,8 +401,39 @@ export default function ProfileSettingsPage() {
               </button>
             </div>
           </form>
+
+          <hr className="profile-settings-divider" />
+
+          <div className="danger-zone">
+            <h3>Zona peligrosa</h3>
+            <p>
+              Al desactivar tu perfil, cerrarás sesión y no podrás acceder nuevamente con
+              este perfil hasta que sea reactivado.
+            </p>
+
+            <button
+              type="button"
+              className="danger-button"
+              onClick={handleOpenDeactivateModal}
+              disabled={deactivatingProfile}
+            >
+              {deactivatingProfile ? 'Desactivando...' : 'Desactivar mi perfil'}
+            </button>
+          </div>
         </section>
       </div>
+
+      <ConfirmModal
+        open={deactivateModalOpen}
+        title="Desactivar perfil"
+        message="¿Seguro que deseas desactivar tu perfil? Se cerrará tu sesión y no podrás acceder nuevamente hasta que el perfil sea reactivado."
+        confirmText="Desactivar perfil"
+        danger
+        loading={deactivatingProfile}
+        onConfirm={handleConfirmDeactivateProfile}
+        onCancel={handleCloseDeactivateModal}
+      />
+
     </section>
   );
 }

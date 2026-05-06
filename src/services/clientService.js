@@ -17,7 +17,6 @@ export async function getClientByAuthId(authId) {
       cl_is_active
     `)
     .eq('id_auth', authId)
-    .eq('cl_is_active', true)
     .maybeSingle();
 
   if (error) {

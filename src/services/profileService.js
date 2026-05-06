@@ -60,3 +60,23 @@ export async function updateUserPassword(password) {
 
   return data;
 }
+
+export async function deactivateClientProfile(clientId) {
+  if (!clientId) {
+    throw new Error('No existe perfil de cliente para desactivar.');
+  }
+
+  const { data, error } = await supabase
+    .schema('ctrl_finance')
+    .from('client')
+    .update({
+      cl_is_active: false,
+    })
+    .eq('cl_id', clientId)
+    .select(CLIENT_SELECT)
+    .single();
+
+  if (error) throw error;
+
+  return data;
+}

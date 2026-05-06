@@ -36,6 +36,16 @@ export function AuthProvider({ children }) {
 
     const profile = await loadClientProfile(data.user);
 
+    if (profile && !profile.cl_is_active) {
+      await supabase.auth.signOut();
+
+      setSession(null);
+      setUser(null);
+      setClientProfile(null);
+
+      throw new Error('Este perfil está desactivado. Contacta soporte para reactivarlo.');
+    }
+
     return {
       user: data.user,
       session: data.session,
