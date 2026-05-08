@@ -149,6 +149,7 @@ async function getInitialBalanceMovementsByClientId(clientId, filters = {}, date
     .from('account_balance_history')
     .select(INITIAL_BALANCE_SELECT)
     .eq('account.cl_id', clientId)
+    .eq('account.ac_is_active', true)
     .eq('abh_movement_type', 'initial_balance')
     .gte('created_at', `${dateRange.startDate}T00:00:00`)
     .lte('created_at', `${dateRange.endDate}T23:59:59`);
@@ -183,6 +184,7 @@ export async function getMonthMovementsByClientId(clientId, filters = {}) {
     .select(MOVEMENT_SELECT)
     .eq('tr_is_active', true)
     .eq('account.cl_id', clientId)
+    .eq('account.ac_is_active', true)
     .gte('tr_date', startDate)
     .lte('tr_date', endDate);
 
@@ -211,11 +213,20 @@ export async function getMonthMovementsByClientId(clientId, filters = {}) {
     dateRange
   );
 
+  const sortDirection = filters.sortDirection === 'asc' ? 'asc' : 'desc';
+
   const movements = [...transactions, ...initialBalances].sort((a, b) => {
     const dateA = new Date(a.tr_date || a.created_at).getTime();
     const dateB = new Date(b.tr_date || b.created_at).getTime();
 
-    return dateB - dateA;
+    if (dateA !== dateB) {
+      return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
+    }
+
+    const createdA = new Date(a.created_at).getTime();
+    const createdB = new Date(b.created_at).getTime();
+
+    return sortDirection === 'asc' ? createdA - createdB : createdB - createdA;
   });
 
   if (filters.limit) {
@@ -236,10 +247,12 @@ export async function getDashboardSummary(clientId) {
     };
   }
 
-  const [accounts, typeTransactions, movements] = await Promise.all([
+  const [accounts, typeTransactions, monthlyMovements] = await Promise.all([
     getAccountsByClientId(clientId),
     getActiveTypeTransactions(),
-    getMonthMovementsByClientId(clientId, { limit: 10 }),
+    getMonthMovementsByClientId(clientId, {
+      sortDirection: 'desc',
+    }),
   ]);
 
   const activeAccounts = accounts.filter((account) => account.ac_is_active);
@@ -249,11 +262,15 @@ export async function getDashboardSummary(clientId) {
     0
   );
 
-  const monthlyIncome = movements
+  const transactionMovements = monthlyMovements.filter(
+    (movement) => movement.movement_source !== 'initial_balance'
+  );
+
+  const monthlyIncome = transactionMovements
     .filter(isIncomeTransaction)
     .reduce((total, transaction) => total + Number(transaction.tr_amount ?? 0), 0);
 
-  const monthlyExpense = movements
+  const monthlyExpense = transactionMovements
     .filter(isExpenseTransaction)
     .reduce((total, transaction) => total + Number(transaction.tr_amount ?? 0), 0);
 
@@ -262,7 +279,7 @@ export async function getDashboardSummary(clientId) {
     monthlyIncome,
     monthlyExpense,
     monthlyNet: monthlyIncome - monthlyExpense,
-    latestMovements: movements,
+    latestMovements: monthlyMovements.slice(0, 10),
     typeTransactions,
   };
 }

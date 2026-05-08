@@ -31,10 +31,30 @@ export function AuthProvider({ children }) {
       throw error;
     }
 
+    if (!data.session || !data.user) {
+      throw new Error('No se pudo iniciar sesión correctamente.');
+    }
+
+    await supabase.auth.setSession({
+      access_token: data.session.access_token,
+      refresh_token: data.session.refresh_token,
+    });
+
+    const profile = await getClientByAuthId(data.user.id);
+
+    if (profile && !profile.cl_is_active) {
+      await supabase.auth.signOut();
+
+      setSession(null);
+      setUser(null);
+      setClientProfile(null);
+
+      throw new Error('Este perfil está desactivado. Contacta soporte para reactivarlo.');
+    }
+
     setSession(data.session);
     setUser(data.user);
-
-    const profile = await loadClientProfile(data.user);
+    setClientProfile(profile);
 
     return {
       user: data.user,
@@ -107,6 +127,19 @@ export function AuthProvider({ children }) {
 
         if (currentUser) {
           const profile = await getClientByAuthId(currentUser.id);
+
+          if (profile && !profile.cl_is_active) {
+            await supabase.auth.signOut();
+
+            if (isMounted) {
+              setSession(null);
+              setUser(null);
+              setClientProfile(null);
+            }
+
+            return;
+          }
+
           if (isMounted) {
             setClientProfile(profile);
           }
@@ -122,18 +155,21 @@ export function AuthProvider({ children }) {
 
     initSession();
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      const currentUser = newSession?.user ?? null;
+  const {
+    data: { subscription },
+  } = supabase.auth.onAuthStateChange((event, newSession) => {
+    if (event === 'SIGNED_OUT') {
+      setSession(null);
+      setUser(null);
+      setClientProfile(null);
+      return;
+    }
 
+    if (event === 'TOKEN_REFRESHED') {
       setSession(newSession);
-      setUser(currentUser);
-
-      if (!currentUser) {
-        setClientProfile(null);
-      }
-    });
+      setUser(newSession?.user ?? null);
+    }
+  });
 
     return () => {
       isMounted = false;

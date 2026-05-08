@@ -48,6 +48,7 @@ export default function MovementsPage() {
     accountId: '',
     typeId: '',
     month: currentMonth,
+    sortDirection: 'desc',
   });
 
   const [loading, setLoading] = useState(true);
@@ -92,7 +93,7 @@ export default function MovementsPage() {
     }
 
     loadMovements();
-  }, [clientId, filters.accountId, filters.typeId, filters.month]);
+  }, [clientId, filters.accountId, filters.typeId, filters.month, filters.sortDirection]);
 
   async function loadInitialData() {
     try {
@@ -104,7 +105,7 @@ export default function MovementsPage() {
         getActiveTypeTransactions(),
       ]);
 
-      setAccounts(accountsData);
+      setAccounts(accountsData.filter((account) => account.ac_is_active));
       setTypeTransactions(typeTransactionsData);
     } catch (currentError) {
       setError(currentError.message);
@@ -141,6 +142,7 @@ export default function MovementsPage() {
       accountId: '',
       typeId: '',
       month: currentMonth,
+      sortDirection: 'desc',
     });
   }
 
@@ -200,11 +202,10 @@ export default function MovementsPage() {
               value={filters.accountId}
               onChange={handleFilterChange}
             >
-              <option value="">Todas las cuentas</option>
+              <option value="">Todas las cuentas activas</option>
               {accounts.map((account) => (
                 <option key={account.ac_id} value={account.ac_id}>
                   {account.ac_name}
-                  {!account.ac_is_active ? ' (inactiva)' : ''}
                 </option>
               ))}
             </select>
@@ -223,6 +224,18 @@ export default function MovementsPage() {
                   {typeTransaction.ty_name}
                 </option>
               ))}
+            </select>
+          </label>
+
+          <label className="filter-field filter-field-order">
+            Orden
+            <select
+              name="sortDirection"
+              value={filters.sortDirection}
+              onChange={handleFilterChange}
+            >
+              <option value="desc">Más recientes primero</option>
+              <option value="asc">Más antiguos primero</option>
             </select>
           </label>
 

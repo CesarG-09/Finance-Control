@@ -2085,3 +2085,62 @@ select:disabled {
 .amount-neutral {
   color: #4b5563;
 }
+
+/* ============================================================
+   PROFILE SETTINGS
+============================================================ */
+
+.profile-settings-page {
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-bottom: 24px;
+}
+
+.profile-settings-page > .error-message,
+.profile-settings-page > .info-message {
+  margin-bottom: 16px;
+}
+
+.profile-settings-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.65fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.profile-settings-panel h2 {
+  margin-bottom: 16px;
+}
+
+.profile-settings-divider {
+  margin: 24px 0;
+  border: none;
+  border-top: 1px solid var(--color-border);
+}
+
+@media (max-width: 1050px) {
+  .profile-settings-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sidebar-user-card-button {
+  width: 100%;
+  text-align: left;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+}
+
+.sidebar-user-card-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: none;
+  box-shadow: none;
+}
+
+.sidebar-collapsed .sidebar-user-card-button {
+  width: 52px;
+  height: 52px;
+  padding: 0;
+}

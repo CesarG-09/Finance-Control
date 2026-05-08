@@ -1,6 +1,7 @@
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { getUnreadNotificationCount } from '../services/notificationService';
 
 const menuSections = [
   {
@@ -17,6 +18,13 @@ const menuSections = [
         description: 'Movimientos del mes',
         path: '/movimientos',
         icon: 'M',
+      },
+      {
+        label: 'Notificaciones',
+        description: 'Avisos y cambios',
+        path: '/notificaciones',
+        icon: 'N',
+        showBadge: true,
       },
     ],
   },
@@ -64,16 +72,39 @@ export default function AppLayout() {
   const { logout, clientProfile } = useAuth();
 
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
 
   const isTransactionsPage = location.pathname.startsWith('/transacciones');
   const isDashboardPage = location.pathname.startsWith('/dashboard');
   const isMovementsPage = location.pathname.startsWith('/movimientos');
 
+  const isProfilePage = location.pathname.startsWith('/mi-perfil');
+  const isNotificationsPage = location.pathname.startsWith('/notificaciones');
+
   const isScrollablePage =
-    isTransactionsPage || isDashboardPage || isMovementsPage;
+    isTransactionsPage ||
+    isDashboardPage ||
+    isMovementsPage ||
+    isProfilePage ||
+    isNotificationsPage;
 
   const userDisplayName = getUserDisplayName(clientProfile);
   const userInitials = getInitials(clientProfile);
+
+  useEffect(() => {
+    if (!clientProfile?.cl_id) return;
+
+    loadUnreadNotifications();
+  }, [clientProfile?.cl_id, location.pathname]);
+
+  async function loadUnreadNotifications() {
+    try {
+      const count = await getUnreadNotificationCount(clientProfile.cl_id);
+      setUnreadNotifications(count);
+    } catch {
+      setUnreadNotifications(0);
+    }
+  }
 
   function handleToggleSidebar() {
     setIsSidebarExpanded((currentValue) => !currentValue);
@@ -139,7 +170,15 @@ export default function AppLayout() {
                       `sidebar-link ${isActive ? 'active' : ''}`
                     }
                   >
-                    <span className="sidebar-link-icon">{item.icon}</span>
+                    <span className="sidebar-link-icon">
+                      {item.icon}
+
+                      {item.showBadge && unreadNotifications > 0 && (
+                        <span className="sidebar-notification-badge">
+                          {unreadNotifications > 9 ? '9+' : unreadNotifications}
+                        </span>
+                      )}
+                    </span>
 
                     <span className="sidebar-link-text">
                       <strong>{item.label}</strong>
@@ -153,14 +192,19 @@ export default function AppLayout() {
         </nav>
 
         <div className="sidebar-footer">
-          <div className="sidebar-user-card" title={userDisplayName}>
+          <button
+            type="button"
+            className="sidebar-user-card sidebar-user-card-button"
+            title="Ir a mi perfil"
+            onClick={() => navigate('/mi-perfil')}
+          >
             <div className="sidebar-user-avatar">{userInitials}</div>
 
             <div className="sidebar-user-info">
               <strong>{userDisplayName}</strong>
               <span>Perfil activo</span>
             </div>
-          </div>
+          </button>
 
           <button
             type="button"

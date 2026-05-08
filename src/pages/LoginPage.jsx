@@ -59,7 +59,7 @@ export default function LoginPage() {
           </div>
 
           <div className="auth-hero-footer">
-            <span>MVP</span>
+            <span>v1.0</span>
             <strong>Finance Control</strong>
           </div>
         </aside>
