@@ -11,7 +11,6 @@ import AccountsPage from '../pages/AccountsPage';
 import TransactionsPage from '../pages/TransactionsPage';
 import MovementsPage from '../pages/MovementsPage';
 import ProfileSettingsPage from '../pages/ProfileSettingsPage';
-import NotificationsPage from '../pages/NotificationsPage';
 
 export default function AppRoutes() {
   return (
@@ -56,7 +55,6 @@ export default function AppRoutes() {
         <Route path="/cuentas" element={<AccountsPage />} />
         <Route path="/transacciones" element={<TransactionsPage />} />
         <Route path="/movimientos" element={<MovementsPage />} />
-        <Route path="/notificaciones" element={<NotificationsPage />} />
         <Route path="/mi-perfil" element={<ProfileSettingsPage />} />
       </Route>
 
