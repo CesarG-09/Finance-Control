@@ -1,7 +1,6 @@
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { getUnreadNotificationCount } from '../services/notificationService';
 
 const menuSections = [
   {
@@ -18,13 +17,6 @@ const menuSections = [
         description: 'Movimientos del mes',
         path: '/movimientos',
         icon: 'M',
-      },
-      {
-        label: 'Notificaciones',
-        description: 'Avisos y cambios',
-        path: '/notificaciones',
-        icon: 'N',
-        showBadge: true,
       },
     ],
   },
@@ -72,39 +64,21 @@ export default function AppLayout() {
   const { logout, clientProfile } = useAuth();
 
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
-  const [unreadNotifications, setUnreadNotifications] = useState(0);
 
   const isTransactionsPage = location.pathname.startsWith('/transacciones');
   const isDashboardPage = location.pathname.startsWith('/dashboard');
   const isMovementsPage = location.pathname.startsWith('/movimientos');
 
   const isProfilePage = location.pathname.startsWith('/mi-perfil');
-  const isNotificationsPage = location.pathname.startsWith('/notificaciones');
 
   const isScrollablePage =
     isTransactionsPage ||
     isDashboardPage ||
     isMovementsPage ||
-    isProfilePage ||
-    isNotificationsPage;
+    isProfilePage;
 
   const userDisplayName = getUserDisplayName(clientProfile);
   const userInitials = getInitials(clientProfile);
-
-  useEffect(() => {
-    if (!clientProfile?.cl_id) return;
-
-    loadUnreadNotifications();
-  }, [clientProfile?.cl_id, location.pathname]);
-
-  async function loadUnreadNotifications() {
-    try {
-      const count = await getUnreadNotificationCount(clientProfile.cl_id);
-      setUnreadNotifications(count);
-    } catch {
-      setUnreadNotifications(0);
-    }
-  }
 
   function handleToggleSidebar() {
     setIsSidebarExpanded((currentValue) => !currentValue);
@@ -173,11 +147,6 @@ export default function AppLayout() {
                     <span className="sidebar-link-icon">
                       {item.icon}
 
-                      {item.showBadge && unreadNotifications > 0 && (
-                        <span className="sidebar-notification-badge">
-                          {unreadNotifications > 9 ? '9+' : unreadNotifications}
-                        </span>
-                      )}
                     </span>
 
                     <span className="sidebar-link-text">
