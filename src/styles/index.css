@@ -8,38 +8,3 @@
 @import './transactions.css';
 @import './movements.css';
 @import './modal.css';
-
-/* ============================================================
-   SIDEBAR FOOTER ALIGNMENT FIX
-   Keeps profile avatar and logout icon aligned with sidebar nav icons.
-============================================================ */
-
-.sidebar-user-card {
-  grid-template-columns: 52px minmax(0, 1fr);
-  gap: 12px;
-  padding: 0;
-  position: static;
-}
-
-.sidebar-user-avatar {
-  position: static;
-  left: auto;
-  top: auto;
-  transform: none;
-  justify-self: center;
-}
-
-.sidebar-logout-button {
-  grid-template-columns: 52px minmax(0, 1fr);
-  gap: 12px;
-  padding: 0;
-  position: static;
-}
-
-.sidebar-logout-icon {
-  position: static;
-  left: auto;
-  top: auto;
-  transform: none;
-  justify-self: center;
-}
