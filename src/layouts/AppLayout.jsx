@@ -143,7 +143,6 @@ export default function AppLayout() {
     <div className="app-layout">
       <aside className="sidebar">
         <div className="sidebar-top">
-          
           <div className="sidebar-brand">
             <div className="sidebar-logo">FC</div>
 

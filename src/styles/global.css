@@ -459,6 +459,27 @@ select:disabled {
   transform: translateX(0);
 }
 
+@media (hover: none) {
+  .app-layout {
+    grid-template-columns: var(--sidebar-expanded-width) minmax(0, 1fr);
+  }
+
+  .sidebar {
+    width: var(--sidebar-expanded-width);
+  }
+
+  .sidebar-brand-text,
+  .sidebar-brand small,
+  .sidebar-section-title,
+  .sidebar-link-text,
+  .sidebar-user-info,
+  .sidebar-logout-text {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+  }
+}
+
 .sidebar-brand h2 {
   margin: 0;
   font-size: 18px;
@@ -605,11 +626,11 @@ select:disabled {
   width: 100%;
   height: 52px;
   min-width: 0;
-  position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 12px;
   align-items: center;
-  padding: 0 0 0 56px;
+  padding: 0;
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -629,10 +650,7 @@ select:disabled {
 .sidebar-user-avatar {
   width: var(--sidebar-icon-size);
   height: var(--sidebar-icon-size);
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
+  justify-self: center;
   border-radius: 999px;
   display: grid;
   place-items: center;
@@ -659,11 +677,11 @@ select:disabled {
 .sidebar-logout-button {
   width: 100%;
   height: 52px;
-  position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 12px;
   align-items: center;
-  padding: 0 0 0 56px;
+  padding: 0;
   background: rgba(220, 38, 38, 0.14);
   color: #fecaca;
   border: 1px solid rgba(248, 113, 113, 0.24);
@@ -677,10 +695,7 @@ select:disabled {
 .sidebar-logout-icon {
   width: var(--sidebar-icon-size);
   height: var(--sidebar-icon-size);
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
+  justify-self: center;
   display: grid;
   place-items: center;
 }
@@ -1644,13 +1659,12 @@ select:disabled {
     overflow: auto;
   }
 
-  .app-layout,
-  .app-layout.sidebar-collapsed-layout,
-  .app-layout.sidebar-expanded-layout {
+  .app-layout {
     min-height: 100vh;
     height: auto;
     display: block;
     overflow: visible;
+    grid-template-columns: none;
   }
 
   .sidebar {
@@ -1661,32 +1675,28 @@ select:disabled {
     align-items: stretch;
   }
 
-  .sidebar-collapsed .sidebar-brand {
-    display: grid;
+  .sidebar-brand-text,
+  .sidebar-brand small,
+  .sidebar-section-title,
+  .sidebar-link-text,
+  .sidebar-user-info,
+  .sidebar-logout-text {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
   }
 
-  .sidebar-collapsed .sidebar-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .sidebar-collapsed .sidebar-nav {
+  .sidebar-nav {
     margin-top: 18px;
   }
 
-  .sidebar-collapsed .sidebar-nav-links {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    justify-items: stretch;
+  .sidebar-nav-links {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .sidebar-collapsed .sidebar-link {
-    width: 100%;
-  }
-
-  .sidebar-collapsed .sidebar-footer {
-    display: none;
+  .sidebar-footer {
+    grid-template-columns: 1fr 1fr;
+    align-items: stretch;
   }
 
   .main-content {
@@ -1787,124 +1797,6 @@ select:disabled {
   .movements-summary-grid {
     grid-template-columns: 1fr;
   }
-}
-
-/* ============================================================
-   AJUSTE VISUAL SIDEBAR COLAPSADO
-============================================================ */
-
-/* Botón hamburguesa más limpio */
-.sidebar-toggle-button {
-  width: 42px;
-  height: 42px;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  border-radius: 12px;
-  background: transparent;
-  border: 1px solid transparent;
-  box-shadow: none;
-}
-
-.sidebar-toggle-button:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.12);
-  transform: none;
-  box-shadow: none;
-}
-
-.sidebar-toggle-button span {
-  width: 22px;
-  height: 2px;
-  display: block;
-  border-radius: 999px;
-  background: #e5e7eb;
-}
-
-/* Centrar correctamente los botones del menú colapsado */
-.sidebar-collapsed .sidebar-top {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-}
-
-.sidebar-collapsed .sidebar-nav {
-  width: 100%;
-  justify-items: center;
-}
-
-.sidebar-collapsed .sidebar-nav-section {
-  width: 100%;
-}
-
-.sidebar-collapsed .sidebar-nav-links {
-  width: 100%;
-  display: grid;
-  justify-items: center;
-  gap: 12px;
-}
-
-.sidebar-collapsed .sidebar-link {
-  width: 52px;
-  height: 52px;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 16px;
-}
-
-.sidebar-collapsed .sidebar-link-icon {
-  width: 38px;
-  height: 38px;
-  margin: 0;
-  display: grid;
-  place-items: center;
-}
-
-/* Estado activo más centrado y limpio */
-.sidebar-collapsed .sidebar-link.active {
-  background: rgba(37, 99, 235, 0.18);
-  border-color: rgba(96, 165, 250, 0.28);
-}
-
-.sidebar-collapsed .sidebar-link.active .sidebar-link-icon {
-  background: var(--color-primary);
-  color: white;
-}
-
-/* Footer colapsado también centrado */
-.sidebar-collapsed .sidebar-footer {
-  width: 100%;
-  justify-items: center;
-}
-
-.sidebar-collapsed .sidebar-user-card,
-.sidebar-collapsed .sidebar-logout-button {
-  width: 52px;
-  height: 52px;
-  padding: 0;
-  position: static;
-  grid-template-columns: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0;
-}
-
-.sidebar-collapsed .sidebar-user-info,
-.sidebar-collapsed .sidebar-logout-text {
-  display: none;
-}
-
-.sidebar-collapsed .sidebar-user-avatar {
-  width: 38px;
-  height: 38px;
-  position: static;
-  transform: none;
 }
 
 /* ============================================================
@@ -2085,28 +1977,4 @@ select:disabled {
   .profile-settings-layout {
     grid-template-columns: 1fr;
   }
-}
-
-.sidebar-user-card-button {
-  width: 100%;
-  text-align: left;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  cursor: pointer;
-}
-
-.sidebar-user-card-button:hover {
-  background: rgba(255, 255, 255, 0.1);
-  transform: none;
-  box-shadow: none;
-}
-
-.sidebar-collapsed .sidebar-user-card-button {
-  width: 52px;
-  height: 52px;
-  padding: 0;
-}
-
-.sidebar-collapsed .sidebar-logout-icon {
-  position: static;
-  transform: none;
 }
