@@ -152,11 +152,15 @@ export default function DashboardPage() {
               </thead>
 
               <tbody>
-                {summary.latestMovements.map((movement) => {
+                {summary.latestMovements.map((movement, index) => {
                   const signedAmount = getMovementSignedAmount(movement);
+                  const movementKey =
+                    movement.tr_id ??
+                    movement.abh_id ??
+                    `${movement.movement_source ?? 'movement'}-${movement.created_at ?? movement.tr_date ?? index}`;
 
                   return (
-                    <tr key={movement.tr_id}>
+                    <tr key={movementKey}>
                       <td>{formatDate(movement.tr_date)}</td>
                       <td>{movement.account?.ac_name || 'Sin cuenta'}</td>
                       <td>{movement.transaction_type?.ty_name || 'Sin tipo'}</td>
