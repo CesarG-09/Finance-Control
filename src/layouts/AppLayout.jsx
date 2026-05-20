@@ -1,4 +1,10 @@
-import { NavLink, Outlet, useLocation, useNavigate } from 'react-router';
+import {
+  NavLink,
+  Outlet,
+  useLocation,
+  useNavigate,
+} from 'react-router';
+import { useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 
 const menuSections = [
@@ -118,6 +124,7 @@ export default function AppLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { logout, clientProfile } = useAuth();
+  const sidebarRef = useRef(null);
 
   const isTransactionsPage = location.pathname.startsWith('/transacciones');
   const isDashboardPage = location.pathname.startsWith('/dashboard');
@@ -134,6 +141,14 @@ export default function AppLayout() {
   const userDisplayName = getUserDisplayName(clientProfile);
   const userInitials = getInitials(clientProfile);
 
+  useEffect(() => {
+    const activeElement = document.activeElement;
+
+    if (sidebarRef.current?.contains(activeElement)) {
+      activeElement.blur();
+    }
+  }, [location.pathname]);
+
   async function handleLogout() {
     await logout();
     navigate('/login', { replace: true });
@@ -141,7 +156,7 @@ export default function AppLayout() {
 
   return (
     <div className="app-layout">
-      <aside className="sidebar">
+      <aside className="sidebar" ref={sidebarRef}>
         <div className="sidebar-top">
           <div className="sidebar-brand">
             <div className="sidebar-logo">FC</div>
@@ -166,6 +181,7 @@ export default function AppLayout() {
                     key={item.path}
                     to={item.path}
                     title={item.label}
+                    onClick={(event) => event.currentTarget.blur()}
                     className={({ isActive }) =>
                       `sidebar-link ${isActive ? 'active' : ''}`
                     }
@@ -190,7 +206,10 @@ export default function AppLayout() {
             type="button"
             className="sidebar-user-card sidebar-user-card-button"
             title="Ir a mi perfil"
-            onClick={() => navigate('/mi-perfil')}
+            onClick={(event) => {
+              event.currentTarget.blur();
+              navigate('/mi-perfil');
+            }}
           >
             <div className="sidebar-user-avatar">{userInitials}</div>
 
@@ -203,7 +222,10 @@ export default function AppLayout() {
           <button
             type="button"
             className="sidebar-logout-button"
-            onClick={handleLogout}
+            onClick={(event) => {
+              event.currentTarget.blur();
+              handleLogout();
+            }}
             title="Cerrar sesión"
           >
             <span className="sidebar-logout-icon">
