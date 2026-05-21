@@ -4,7 +4,7 @@
 
 .account-form-layout {
   display: grid;
-  grid-template-columns: 220px 1fr;
+  grid-template-columns: 260px 1fr;
   gap: 24px;
   align-items: start;
 }
@@ -184,7 +184,7 @@
 
 /* El contenedor del form necesita ancho generoso para el preview */
 .accounts-form-centered {
-  max-width: 720px !important;
+  max-width: 920px !important;
 }
 
 @media (max-width: 850px) {
@@ -458,5 +458,76 @@
   .account-action {
     padding: 8px 10px;
     font-size: 11px;
+  }
+}
+
+/* ================================================================
+   ACCOUNTS — Layout de navegación lateral (tabs verticales)
+================================================================ */
+
+.accounts-tab-layout {
+  flex-direction: row;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.accounts-tabs {
+  flex-shrink: 0;
+  width: 172px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 0;
+  position: sticky;
+  top: 0;
+}
+
+.accounts-view-tab {
+  width: 100%;
+  justify-content: flex-start;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 13px;
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+}
+
+.accounts-workspace-panel {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.accounts-workspace-panel.accounts-workspace-form {
+  width: 100%;
+  max-width: none;
+  min-height: 0;
+  flex: 1;
+  align-self: stretch;
+}
+
+@media (max-width: 960px) {
+  .accounts-tab-layout {
+    flex-direction: column;
+  }
+
+  .accounts-tabs {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    position: static;
+  }
+
+  .accounts-view-tab {
+    flex: 1;
+    min-width: 100px;
+    justify-content: center;
+    text-transform: uppercase;
+    letter-spacing: 0.01em;
+    font-size: 12px;
+  }
+
+  .account-form-layout {
+    grid-template-columns: 1fr;
   }
 }
