@@ -1506,6 +1506,10 @@ select:disabled {
   padding-bottom: 32px;
 }
 
+.dashboard-page {
+  overflow: visible;
+}
+
 .dashboard-cards-grid,
 .movements-summary-grid {
   display: grid;
