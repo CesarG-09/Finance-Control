@@ -482,6 +482,7 @@ export default function MovementsPage() {
               <thead>
                 <tr>
                   <th>Fecha</th>
+                  <th>Hora</th>
                   <th>Cuenta</th>
                   <th>Tipo</th>
                   <th>Categoría</th>
@@ -493,6 +494,9 @@ export default function MovementsPage() {
               <tbody>
                 {filteredMovements.map((movement) => {
                   const signedAmount = getMovementSignedAmount(movement);
+                  const timeStr = movement.tr_time
+                    ? String(movement.tr_time).slice(0, 5)
+                    : null;
 
                   return (
                     <tr
@@ -500,6 +504,7 @@ export default function MovementsPage() {
                       className={movement.movement_source === 'initial_balance' ? 'initial-balance-row' : ''}
                     >
                       <td>{formatDate(movement.tr_date || movement.created_at?.slice(0, 10))}</td>
+                      <td className="movement-time-cell">{timeStr || '—'}</td>
                       <td>{movement.account?.ac_name || 'Sin cuenta'}</td>
                       <td>
                         {movement.movement_source === 'initial_balance'

@@ -1,26 +1,30 @@
-/**
- * Calcula resumen de un conjunto de movimientos
- */
-export function calculateMovementsSummary(movements) {
-  const income = movements
-    .filter((m) => m.type === 'income' || m.amount > 0)
-    .reduce((sum, m) => sum + parseFloat(m.amount) || 0, 0);
+function getSignedAmount(m) {
+  if (m.movement_source === 'initial_balance') {
+    return Number(m.abh_change_amount ?? 0);
+  }
+  const amount = Number(m.tr_amount ?? 0);
+  const typeName = m.transaction_type?.ty_name?.toLowerCase() ?? '';
+  return typeName === 'salida' ? -amount : amount;
+}
 
-  const expenses = movements
-    .filter((m) => m.type === 'expense' || m.amount < 0)
-    .reduce((sum, m) => sum + Math.abs(parseFloat(m.amount) || 0), 0);
+export function calculateMovementsSummary(movements) {
+  let income = 0;
+  let expenses = 0;
+
+  for (const m of movements) {
+    const signed = getSignedAmount(m);
+    if (signed >= 0) income += signed;
+    else expenses += Math.abs(signed);
+  }
 
   return {
     income: Math.round(income * 100) / 100,
     expenses: Math.round(expenses * 100) / 100,
     net: Math.round((income - expenses) * 100) / 100,
-    count: movements.length,
+    count: movements.filter((m) => m.movement_source !== 'initial_balance').length,
   };
 }
 
-/**
- * Compara resúmenes de dos períodos
- */
 export function compareMovements(currentMovements, previousMovements) {
   const current = calculateMovementsSummary(currentMovements);
   const previous = calculateMovementsSummary(previousMovements);
@@ -40,74 +44,4 @@ export function compareMovements(currentMovements, previousMovements) {
     incomeChange: Math.round(changeIncome * 100) / 100,
     expensesChange: Math.round(changeExpenses * 100) / 100,
   };
-}
-
-/**
- * Ordena movimientos por campo
- */
-export function sortMovements(movements, field = 'date', direction = 'desc') {
-  const sorted = [...movements];
-  sorted.sort((a, b) => {
-    let aVal = a[field];
-    let bVal = b[field];
-
-    if (typeof aVal === 'string') {
-      aVal = aVal.toLowerCase();
-      bVal = bVal.toLowerCase();
-    }
-
-    if (direction === 'asc') {
-      return aVal > bVal ? 1 : -1;
-    }
-    return aVal < bVal ? 1 : -1;
-  });
-
-  return sorted;
-}
-
-/**
- * Calcula tendencia simple (últimos N valores)
- */
-export function calculateTrend(values) {
-  if (values.length < 2) return 0;
-
-  const first = values[0];
-  const last = values[values.length - 1];
-
-  if (first === 0) return 0;
-  return ((last - first) / Math.abs(first)) * 100;
-}
-
-/**
- * Agrupa movimientos por mes
- */
-export function groupMovementsByMonth(movements) {
-  return movements.reduce((acc, movement) => {
-    const date = new Date(movement.date);
-    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
-      2,
-      '0'
-    )}`;
-
-    if (!acc[monthKey]) {
-      acc[monthKey] = [];
-    }
-    acc[monthKey].push(movement);
-    return acc;
-  }, {});
-}
-
-/**
- * Calcula balance acumulado
- */
-export function calculateAccumulatedBalance(movements) {
-  let balance = 0;
-  return movements.map((movement) => {
-    const amount = parseFloat(movement.amount) || 0;
-    balance += amount;
-    return {
-      ...movement,
-      accumulatedBalance: balance,
-    };
-  });
 }

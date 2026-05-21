@@ -1,3 +1,12 @@
+function getSignedAmount(m) {
+  if (m.movement_source === 'initial_balance') {
+    return Number(m.abh_change_amount ?? 0);
+  }
+  const amount = Number(m.tr_amount ?? 0);
+  const typeName = m.transaction_type?.ty_name?.toLowerCase() ?? '';
+  return typeName === 'salida' ? -amount : amount;
+}
+
 export function HealthScore({ score = 75, movements = [] }) {
   const getScoreColor = (s) => {
     if (s >= 80) return '#047857';
@@ -16,14 +25,15 @@ export function HealthScore({ score = 75, movements = [] }) {
   const color = getScoreColor(score);
   const label = getScoreLabel(score);
 
-  // Calculate key metrics
-  const totalIncome = movements
-    .filter((m) => m.type === 'income' || m.amount > 0)
-    .reduce((sum, m) => sum + parseFloat(m.amount || 0), 0);
+  let totalIncome = 0;
+  let totalExpenses = 0;
 
-  const totalExpenses = movements
-    .filter((m) => m.type === 'expense' || m.amount < 0)
-    .reduce((sum, m) => sum + Math.abs(parseFloat(m.amount || 0)), 0);
+  for (const m of movements) {
+    if (m.movement_source === 'initial_balance') continue;
+    const signed = getSignedAmount(m);
+    if (signed >= 0) totalIncome += signed;
+    else totalExpenses += Math.abs(signed);
+  }
 
   const ratio = totalIncome === 0 ? 0 : (totalExpenses / totalIncome) * 100;
 
