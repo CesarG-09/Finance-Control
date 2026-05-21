@@ -459,18 +459,16 @@ function handleCancelEdit() {
         <section className="panel transaction-form-panel">
           <h2>{editingTransaction ? 'Editar transacción' : 'Nueva transacción'}</h2>
 
-          <div className="transaction-form-scroll">
-            <TransactionForm
-              typeTransactions={typeTransactions}
-              subcategories={subcategories}
-              selectedAccountId={selectedAccountId}
-              selectedAccountName={selectedAccount?.ac_name || ''}
-              initialData={editingTransaction}
-              saving={saving}
-              onSubmit={handleSubmit}
-              onCancel={handleCancelEdit}
-            />
-          </div>
+          <TransactionForm
+            typeTransactions={typeTransactions}
+            subcategories={subcategories}
+            selectedAccountId={selectedAccountId}
+            selectedAccountName={selectedAccount?.ac_name || ''}
+            initialData={editingTransaction}
+            saving={saving}
+            onSubmit={handleSubmit}
+            onCancel={handleCancelEdit}
+          />
         </section>
 
         <section className="panel transactions-section">
