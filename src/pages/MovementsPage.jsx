@@ -7,7 +7,13 @@ import {
   getMovementCategory,
   getMovementSignedAmount,
   getMonthMovementsByClientId,
+  getMonthRange,
 } from '../services/dashboardService';
+import { SearchBox } from '../components/ui/SearchBox';
+import { DateRangeSelector } from '../components/ui/DateRangeSelector';
+import { PillTag } from '../components/ui/PillTag';
+import { useDebounce } from '../hooks/useDebounce';
+import { filterByAmountRange, searchMovements } from '../services/filterService';
 
 function formatCurrency(value) {
   return new Intl.NumberFormat('es-PA', {
@@ -51,13 +57,59 @@ export default function MovementsPage() {
     sortDirection: 'desc',
   });
 
+  const [advancedFilters, setAdvancedFilters] = useState({
+    searchTerm: '',
+    minAmount: '',
+    maxAmount: '',
+    startDate: '',
+    endDate: '',
+  });
+
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const debouncedSearchTerm = useDebounce(advancedFilters.searchTerm, 300);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   const clientId = clientProfile?.cl_id;
 
+  // Apply advanced filters to movements
+  const filteredMovements = useMemo(() => {
+    let filtered = [...movements];
+
+    // Apply search filter
+    if (debouncedSearchTerm) {
+      filtered = searchMovements(filtered, debouncedSearchTerm);
+    }
+
+    // Apply amount range filter
+    const minAmount = advancedFilters.minAmount
+      ? parseFloat(advancedFilters.minAmount)
+      : null;
+    const maxAmount = advancedFilters.maxAmount
+      ? parseFloat(advancedFilters.maxAmount)
+      : null;
+
+    if (minAmount !== null || maxAmount !== null) {
+      filtered = filterByAmountRange(filtered, minAmount, maxAmount);
+    }
+
+    // Apply date range filter (if using advanced date picker)
+    if (advancedFilters.startDate || advancedFilters.endDate) {
+      filtered = filtered.filter((m) => {
+        const date = m.tr_date || m.created_at?.slice(0, 10);
+        if (advancedFilters.startDate && date < advancedFilters.startDate)
+          return false;
+        if (advancedFilters.endDate && date > advancedFilters.endDate)
+          return false;
+        return true;
+      });
+    }
+
+    return filtered;
+  }, [movements, debouncedSearchTerm, advancedFilters]);
+
   const totals = useMemo(() => {
-    return movements.reduce(
+    return filteredMovements.reduce(
       (accumulator, movement) => {
         const signedAmount = getMovementSignedAmount(movement);
 
@@ -77,7 +129,7 @@ export default function MovementsPage() {
         net: 0,
       }
     );
-  }, [movements]);
+  }, [filteredMovements]);
 
   useEffect(() => {
     if (!clientId) {
@@ -144,6 +196,27 @@ export default function MovementsPage() {
       month: currentMonth,
       sortDirection: 'desc',
     });
+    setAdvancedFilters({
+      searchTerm: '',
+      minAmount: '',
+      maxAmount: '',
+      startDate: '',
+      endDate: '',
+    });
+  }
+
+  function handleAdvancedFilterChange(newFilters) {
+    setAdvancedFilters(newFilters);
+  }
+
+  function hasActiveAdvancedFilters() {
+    return (
+      advancedFilters.searchTerm ||
+      advancedFilters.minAmount ||
+      advancedFilters.maxAmount ||
+      advancedFilters.startDate ||
+      advancedFilters.endDate
+    );
   }
 
   return (
@@ -251,6 +324,159 @@ export default function MovementsPage() {
         </div>
       </section>
 
+      {/* Advanced Filters Section */}
+      <section className="panel movements-advanced-filters-panel">
+        <div className="advanced-filters-header">
+          <button
+            type="button"
+            className="advanced-filters-toggle"
+            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+            aria-expanded={showAdvancedFilters}
+          >
+            <span className="toggle-chevron">{showAdvancedFilters ? '▼' : '▶'}</span>
+            Filtros avanzados
+            {hasActiveAdvancedFilters() && (
+              <span className="active-filter-badge">{Object.values(advancedFilters).filter(v => v).length}</span>
+            )}
+          </button>
+        </div>
+
+        {showAdvancedFilters && (
+          <div className="advanced-filters-content">
+            <div className="advanced-filters-grid">
+              <div className="search-filter-container">
+                <label>Buscar por descripción o categoría</label>
+                <SearchBox
+                  placeholder="Ej: Comida, Salario..."
+                  value={advancedFilters.searchTerm}
+                  onSearchChange={(value) =>
+                    handleAdvancedFilterChange({
+                      ...advancedFilters,
+                      searchTerm: value,
+                    })
+                  }
+                  debounceDelay={300}
+                  clearable={true}
+                />
+              </div>
+
+              <div className="amount-filters-row">
+                <div className="amount-filter">
+                  <label htmlFor="min-amount">Monto mínimo</label>
+                  <input
+                    id="min-amount"
+                    type="number"
+                    placeholder="0.00"
+                    value={advancedFilters.minAmount}
+                    onChange={(e) =>
+                      handleAdvancedFilterChange({
+                        ...advancedFilters,
+                        minAmount: e.target.value,
+                      })
+                    }
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+
+                <div className="amount-filter">
+                  <label htmlFor="max-amount">Monto máximo</label>
+                  <input
+                    id="max-amount"
+                    type="number"
+                    placeholder="9999.99"
+                    value={advancedFilters.maxAmount}
+                    onChange={(e) =>
+                      handleAdvancedFilterChange({
+                        ...advancedFilters,
+                        maxAmount: e.target.value,
+                      })
+                    }
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+              </div>
+
+              <div className="date-filters-container">
+                <DateRangeSelector
+                  startDate={advancedFilters.startDate}
+                  endDate={advancedFilters.endDate}
+                  onDateChange={(start, end) =>
+                    handleAdvancedFilterChange({
+                      ...advancedFilters,
+                      startDate: start,
+                      endDate: end,
+                    })
+                  }
+                  label="Rango de fechas personalizado"
+                />
+              </div>
+            </div>
+
+            {hasActiveAdvancedFilters() && (
+              <div className="active-filters-tags">
+                {advancedFilters.searchTerm && (
+                  <PillTag
+                    label={`Busca: "${advancedFilters.searchTerm}"`}
+                    onRemove={() =>
+                      handleAdvancedFilterChange({
+                        ...advancedFilters,
+                        searchTerm: '',
+                      })
+                    }
+                  />
+                )}
+                {advancedFilters.minAmount && (
+                  <PillTag
+                    label={`Mín: $${advancedFilters.minAmount}`}
+                    onRemove={() =>
+                      handleAdvancedFilterChange({
+                        ...advancedFilters,
+                        minAmount: '',
+                      })
+                    }
+                  />
+                )}
+                {advancedFilters.maxAmount && (
+                  <PillTag
+                    label={`Máx: $${advancedFilters.maxAmount}`}
+                    onRemove={() =>
+                      handleAdvancedFilterChange({
+                        ...advancedFilters,
+                        maxAmount: '',
+                      })
+                    }
+                  />
+                )}
+                {advancedFilters.startDate && (
+                  <PillTag
+                    label={`Desde: ${advancedFilters.startDate}`}
+                    onRemove={() =>
+                      handleAdvancedFilterChange({
+                        ...advancedFilters,
+                        startDate: '',
+                      })
+                    }
+                  />
+                )}
+                {advancedFilters.endDate && (
+                  <PillTag
+                    label={`Hasta: ${advancedFilters.endDate}`}
+                    onRemove={() =>
+                      handleAdvancedFilterChange({
+                        ...advancedFilters,
+                        endDate: '',
+                      })
+                    }
+                  />
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </section>
+
       <section className="panel movements-table-panel">
         <div className="section-header">
           <div>
@@ -261,7 +487,7 @@ export default function MovementsPage() {
 
         {loading ? (
           <p>Cargando movimientos...</p>
-        ) : movements.length === 0 ? (
+        ) : filteredMovements.length === 0 ? (
           <p className="empty-message">
             No hay movimientos para los filtros seleccionados.
           </p>
@@ -280,7 +506,7 @@ export default function MovementsPage() {
               </thead>
 
               <tbody>
-                {movements.map((movement) => {
+                {filteredMovements.map((movement) => {
                   const signedAmount = getMovementSignedAmount(movement);
 
                   return (
