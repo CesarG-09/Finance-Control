@@ -1,4 +1,187 @@
-/* Transactions Search Container */
+/* ================================================================
+   TRANSACTION FORM — estilos mejorados
+================================================================ */
+
+/* Botones de tipo (Entrada / Salida) */
+.transaction-type-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.type-option-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  border: 2px solid transparent;
+}
+
+.type-option-button.unselected {
+  background: var(--color-surface-soft);
+  color: var(--color-muted);
+  border-color: var(--color-border);
+}
+
+.type-option-button.unselected:hover:not(:disabled) {
+  background: var(--color-primary-soft);
+  color: var(--color-primary-dark);
+  border-color: var(--color-primary);
+  transform: translateY(-1px);
+}
+
+.type-option-button.selected-income {
+  background: var(--color-success-soft);
+  color: var(--color-success);
+  border-color: var(--color-success);
+  box-shadow: 0 0 0 3px rgba(4, 120, 87, 0.1);
+}
+
+.type-option-button.selected-expense {
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+  border-color: var(--color-danger);
+  box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.1);
+}
+
+.type-btn-icon {
+  font-size: 18px;
+  font-weight: 900;
+}
+
+/* Monto con color contextual */
+.amount-label-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.amount-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.currency-prefix {
+  position: absolute;
+  left: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-muted);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.amount-number-input {
+  padding-left: 28px !important;
+  font-size: 18px !important;
+  font-weight: 700;
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+
+.amount-income .amount-number-input,
+.amount-income .currency-prefix {
+  color: var(--color-success);
+}
+
+.amount-income .amount-number-input {
+  border-color: var(--color-success);
+}
+
+.amount-income .amount-number-input:focus {
+  box-shadow: 0 0 0 3px rgba(4, 120, 87, 0.12);
+}
+
+.amount-expense .amount-number-input,
+.amount-expense .currency-prefix {
+  color: var(--color-danger);
+}
+
+.amount-expense .amount-number-input {
+  border-color: var(--color-danger);
+}
+
+.amount-expense .amount-number-input:focus {
+  box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.12);
+}
+
+/* Categoría + Subcategoría en fila */
+.category-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.category-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Fecha con botón "Hoy" */
+.date-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.date-input-wrap input {
+  flex: 1;
+}
+
+.today-btn {
+  background: var(--color-surface-soft);
+  border: 1px solid var(--color-border);
+  color: var(--color-muted);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.18s ease;
+  flex-shrink: 0;
+}
+
+.today-btn:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: var(--color-primary-soft);
+  transform: none;
+  box-shadow: none;
+}
+
+.today-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Responsive del formulario */
+@media (max-width: 700px) {
+  .category-row {
+    grid-template-columns: 1fr;
+  }
+
+  .type-option-button {
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+
+  .amount-number-input {
+    font-size: 16px !important;
+  }
+}
+
+/* ================================================================
+   Transactions Search Container */
 .transactions-search-container {
   padding: 12px 0;
   border-bottom: 1px solid var(--color-border);

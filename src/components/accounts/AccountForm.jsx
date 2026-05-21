@@ -7,6 +7,21 @@ const emptyForm = {
   ac_balance: '0',
 };
 
+function getAccountIcon(typeName) {
+  const n = (typeName || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  if (n.includes('ahorr')) return '🏦';
+  if (n.includes('tarjeta')) return '💳';
+  if (n.includes('efectivo')) return '💵';
+  if (n.includes('inversi')) return '📈';
+  return '🤑';
+}
+
+function formatPreviewBalance(raw) {
+  const num = Number(raw ?? 0);
+  if (!Number.isFinite(num)) return '$0.00';
+  return new Intl.NumberFormat('es-PA', { style: 'currency', currency: 'USD' }).format(num);
+}
+
 export default function AccountForm({
   typeAccounts,
   initialData,
@@ -19,6 +34,8 @@ export default function AccountForm({
 
   const isEditing = Boolean(initialData);
 
+  const selectedType = typeAccounts.find((t) => String(t.ta_id) === String(form.ta_id));
+
   useEffect(() => {
     if (initialData) {
       setForm({
@@ -30,17 +47,12 @@ export default function AccountForm({
     } else {
       setForm(emptyForm);
     }
-
     setError('');
   }, [initialData]);
 
   function handleChange(event) {
     const { name, value } = event.target;
-
-    setForm((currentForm) => ({
-      ...currentForm,
-      [name]: value,
-    }));
+    setForm((prev) => ({ ...prev, [name]: value }));
   }
 
   async function handleSubmit(event) {
@@ -58,17 +70,15 @@ export default function AccountForm({
     }
 
     if (!isEditing) {
-    const balance = Number(form.ac_balance);
-
-    if (!Number.isFinite(balance)) {
+      const balance = Number(form.ac_balance);
+      if (!Number.isFinite(balance)) {
         setError('El balance inicial debe ser un número válido.');
         return;
-    }
-
-    if (balance < 0) {
+      }
+      if (balance < 0) {
         setError('El balance inicial no puede ser negativo.');
         return;
-    }
+      }
     }
 
     await onSubmit(form);
@@ -79,96 +89,134 @@ export default function AccountForm({
   }
 
   return (
-    <form className="form account-form" onSubmit={handleSubmit}>
-      {error && <p className="error-message">{error}</p>}
+    <div className="account-form-layout">
+      {/* Live preview */}
+      <div className="account-form-preview">
+        <p className="preview-label">Vista previa</p>
+        <div className={`account-preview-card ${form.ta_id ? 'has-type' : ''}`}>
+          <div className="preview-icon-row">
+            <span className="preview-type-icon">
+              {getAccountIcon(selectedType?.ta_name)}
+            </span>
+            <span className="preview-type-name">
+              {selectedType?.ta_name || 'Tipo de cuenta'}
+            </span>
+          </div>
 
-      <label>
-        <span className="label-row">
-          Nombre de cuenta
-          <span className="required-tag">Obligatorio</span>
-        </span>
-        <input
-          type="text"
-          name="ac_name"
-          value={form.ac_name}
-          onChange={handleChange}
-          placeholder="Ej: Cuenta de ahorros principal"
-        />
-      </label>
+          <p className="preview-name">
+            {form.ac_name.trim() || 'Nombre de la cuenta'}
+          </p>
 
-      <label>
-        <span className="label-row">
-          Tipo de cuenta
-          <span className="required-tag">Obligatorio</span>
-        </span>
-        <select name="ta_id" value={form.ta_id} onChange={handleChange}>
-          <option value="">Selecciona un tipo</option>
-          {typeAccounts.map((typeAccount) => (
-            <option key={typeAccount.ta_id} value={typeAccount.ta_id}>
-              {typeAccount.ta_name}
-            </option>
-          ))}
-        </select>
-      </label>
+          {form.ac_description && (
+            <p className="preview-description">{form.ac_description}</p>
+          )}
 
-      <label>
-        <span className="label-row">
-          Descripción
-          <span className="optional-tag">Opcional</span>
-        </span>
-        <input
-          type="text"
-          name="ac_description"
-          value={form.ac_description}
-          onChange={handleChange}
-          placeholder="Ej: Cuenta para gastos mensuales"
-        />
-      </label>
+          {!isEditing && (
+            <div className="preview-balance">
+              <small>Balance inicial</small>
+              <strong>{formatPreviewBalance(form.ac_balance)}</strong>
+            </div>
+          )}
 
-      {!isEditing && (
+          {isEditing && (
+            <div className="preview-balance">
+              <small>Balance actual</small>
+              <strong>{formatPreviewBalance(initialData?.ac_balance)}</strong>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Form */}
+      <form className="form account-form" onSubmit={handleSubmit}>
+        {error && <p className="error-message">{error}</p>}
+
         <label>
           <span className="label-row">
-            Balance inicial
+            Nombre de cuenta
             <span className="required-tag">Obligatorio</span>
           </span>
           <input
-            type="number"
-            name="ac_balance"
-            value={form.ac_balance}
+            type="text"
+            name="ac_name"
+            value={form.ac_name}
             onChange={handleChange}
-            step="0.01"
-            placeholder="0.00"
+            placeholder="Ej: Cuenta de ahorros principal"
+            autoComplete="off"
           />
         </label>
-      )}
 
-      {isEditing && (
-        <p className="info-message">
-          El balance no se edita desde aquí. El balance se actualiza con movimientos
-          e historial para mantener consistencia.
-        </p>
-      )}
+        <label>
+          <span className="label-row">
+            Tipo de cuenta
+            <span className="required-tag">Obligatorio</span>
+          </span>
+          <select name="ta_id" value={form.ta_id} onChange={handleChange}>
+            <option value="">Selecciona un tipo</option>
+            {typeAccounts.map((typeAccount) => (
+              <option key={typeAccount.ta_id} value={typeAccount.ta_id}>
+                {typeAccount.ta_name}
+              </option>
+            ))}
+          </select>
+        </label>
 
-      <div className="form-actions">
-        <button type="submit" disabled={saving}>
-          {saving
-            ? 'Guardando...'
-            : isEditing
-              ? 'Guardar cambios'
-              : 'Crear cuenta'}
-        </button>
+        <label>
+          <span className="label-row">
+            Descripción
+            <span className="optional-tag">Opcional</span>
+          </span>
+          <input
+            type="text"
+            name="ac_description"
+            value={form.ac_description}
+            onChange={handleChange}
+            placeholder="Ej: Cuenta para gastos mensuales"
+            autoComplete="off"
+          />
+        </label>
+
+        {!isEditing && (
+          <label>
+            <span className="label-row">
+              Balance inicial
+              <span className="required-tag">Obligatorio</span>
+            </span>
+            <input
+              type="number"
+              name="ac_balance"
+              value={form.ac_balance}
+              onChange={handleChange}
+              step="0.01"
+              min="0"
+              placeholder="0.00"
+            />
+          </label>
+        )}
 
         {isEditing && (
-          <button
-            type="button"
-            className="secondary-button"
-            onClick={onCancel}
-            disabled={saving}
-          >
-            Cancelar edición
-          </button>
+          <p className="info-message">
+            El balance no se edita desde aquí. Se actualiza automáticamente con cada movimiento.
+          </p>
         )}
-      </div>
-    </form>
+
+        <div className="form-actions">
+          <button type="submit" disabled={saving}>
+            {saving ? 'Guardando...' : isEditing ? 'Guardar cambios' : 'Crear cuenta'}
+          </button>
+
+          {isEditing && (
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={onCancel}
+              disabled={saving}
+            >
+              Cancelar
+            </button>
+          )}
+        </div>
+      </form>
+    </div>
   );
 }

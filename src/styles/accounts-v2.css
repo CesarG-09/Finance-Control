@@ -1,3 +1,125 @@
+/* ================================================================
+   ACCOUNT FORM — Layout con preview live
+================================================================ */
+
+.account-form-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+/* Preview card */
+.preview-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin: 0 0 10px 0;
+}
+
+.account-preview-card {
+  background: var(--color-surface-soft);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: all 0.2s ease;
+  min-height: 140px;
+}
+
+.account-preview-card.has-type {
+  border-style: solid;
+  border-color: var(--color-primary);
+  background: white;
+  box-shadow: 0 0 0 3px var(--color-primary-soft);
+}
+
+.preview-icon-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.preview-type-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.preview-type-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.preview-name {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text);
+  word-break: break-word;
+}
+
+.preview-description {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-muted);
+  line-height: 1.4;
+}
+
+.preview-balance {
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.preview-balance small {
+  font-size: 11px;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  font-weight: 600;
+}
+
+.preview-balance strong {
+  font-size: 20px;
+  color: var(--color-primary);
+}
+
+/* El contenedor del form necesita ancho generoso para el preview */
+.accounts-form-centered {
+  max-width: 720px !important;
+}
+
+@media (max-width: 850px) {
+  .account-form-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .account-preview-card {
+    min-height: auto;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 12px 16px;
+  }
+
+  .preview-balance {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+    margin-left: auto;
+    align-items: flex-end;
+  }
+}
+
 /* Enhanced Account Card */
 .enhanced-account-card {
   display: flex;

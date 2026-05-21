@@ -7,20 +7,11 @@ import {
   getMovementCategory,
   getMovementSignedAmount,
   getMonthMovementsByClientId,
-  getMonthRange,
 } from '../services/dashboardService';
 import { ComparisonSection } from '../components/dashboard/ComparisonSection';
 import { HealthScore } from '../components/dashboard/HealthScore';
-import {
-  compareMovements,
-  groupMovementsByMonth,
-  calculateMovementsSummary,
-} from '../services/analysisService';
-import {
-  calculatePercentageChange,
-  getTopCategories,
-  calculateHealthScore,
-} from '../services/chartService';
+import { compareMovements } from '../services/analysisService';
+import { getTopCategories, calculateHealthScore } from '../services/chartService';
 
 function formatCurrency(value) {
   return new Intl.NumberFormat('es-PA', {

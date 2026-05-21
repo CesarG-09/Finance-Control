@@ -255,9 +255,26 @@ export default function MovementsPage() {
       </section>
 
       <section className="panel movements-filters-panel">
-        <h2>Filtros básicos</h2>
+        <div className="movements-filters-header">
+          <div>
+            <h2>Filtros</h2>
+          </div>
 
-        <div className="filters-grid movements-filters-grid">
+          <div className="movements-filters-actions-row">
+            {(hasActiveAdvancedFilters() || filters.accountId || filters.typeId) && (
+              <button
+                type="button"
+                className="secondary-button movements-clear-btn"
+                onClick={handleClearFilters}
+              >
+                Limpiar todo
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Filtros básicos */}
+        <div className="movements-filters-basic">
           <label className="filter-field filter-field-month">
             Mes
             <input
@@ -275,7 +292,7 @@ export default function MovementsPage() {
               value={filters.accountId}
               onChange={handleFilterChange}
             >
-              <option value="">Todas las cuentas activas</option>
+              <option value="">Todas las cuentas</option>
               {accounts.map((account) => (
                 <option key={account.ac_id} value={account.ac_id}>
                   {account.ac_name}
@@ -311,105 +328,94 @@ export default function MovementsPage() {
               <option value="asc">Más antiguos primero</option>
             </select>
           </label>
-
-          <div className="filters-actions movements-filter-actions">
-            <button
-              type="button"
-              className="secondary-button"
-              onClick={handleClearFilters}
-            >
-              Limpiar filtros
-            </button>
-          </div>
         </div>
-      </section>
 
-      {/* Advanced Filters Section */}
-      <section className="panel movements-advanced-filters-panel">
-        <div className="advanced-filters-header">
+        {/* Separador y toggle filtros avanzados */}
+        <div className="movements-filters-divider">
           <button
             type="button"
-            className="advanced-filters-toggle"
+            className="movements-advanced-toggle"
             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
             aria-expanded={showAdvancedFilters}
           >
-            <span className="toggle-chevron">{showAdvancedFilters ? '▼' : '▶'}</span>
-            Filtros avanzados
+            <span className={`toggle-chevron-icon ${showAdvancedFilters ? 'open' : ''}`}>›</span>
+            Más filtros
             {hasActiveAdvancedFilters() && (
-              <span className="active-filter-badge">{Object.values(advancedFilters).filter(v => v).length}</span>
+              <span className="advanced-badge">{Object.values(advancedFilters).filter(v => v).length} activos</span>
             )}
           </button>
         </div>
 
+        {/* Filtros avanzados expandibles */}
         {showAdvancedFilters && (
-          <div className="advanced-filters-content">
-            <div className="advanced-filters-grid">
-              <div className="search-filter-container">
-                <label>Buscar por descripción o categoría</label>
+          <div className="movements-filters-advanced">
+            <div className="advanced-fields-grid">
+              <div className="advanced-field-full">
+                <label className="filter-field-label">Buscar por nombre o descripción</label>
                 <SearchBox
-                  placeholder="Ej: Comida, Salario..."
+                  placeholder="Ej: Comida, Salario, Renta..."
                   value={advancedFilters.searchTerm}
                   onSearchChange={(value) =>
-                    handleAdvancedFilterChange({
-                      ...advancedFilters,
-                      searchTerm: value,
-                    })
+                    handleAdvancedFilterChange({ ...advancedFilters, searchTerm: value })
                   }
                   debounceDelay={300}
                   clearable={true}
                 />
               </div>
 
-              <div className="amount-filters-row">
-                <div className="amount-filter">
-                  <label htmlFor="min-amount">Monto mínimo</label>
-                  <input
-                    id="min-amount"
-                    type="number"
-                    placeholder="0.00"
-                    value={advancedFilters.minAmount}
-                    onChange={(e) =>
-                      handleAdvancedFilterChange({
-                        ...advancedFilters,
-                        minAmount: e.target.value,
-                      })
-                    }
-                    min="0"
-                    step="0.01"
-                  />
-                </div>
-
-                <div className="amount-filter">
-                  <label htmlFor="max-amount">Monto máximo</label>
-                  <input
-                    id="max-amount"
-                    type="number"
-                    placeholder="9999.99"
-                    value={advancedFilters.maxAmount}
-                    onChange={(e) =>
-                      handleAdvancedFilterChange({
-                        ...advancedFilters,
-                        maxAmount: e.target.value,
-                      })
-                    }
-                    min="0"
-                    step="0.01"
-                  />
-                </div>
+              <div className="advanced-field">
+                <label htmlFor="min-amount" className="filter-field-label">Monto mínimo</label>
+                <input
+                  id="min-amount"
+                  type="number"
+                  placeholder="0.00"
+                  value={advancedFilters.minAmount}
+                  onChange={(e) =>
+                    handleAdvancedFilterChange({ ...advancedFilters, minAmount: e.target.value })
+                  }
+                  min="0"
+                  step="0.01"
+                />
               </div>
 
-              <div className="date-filters-container">
-                <DateRangeSelector
-                  startDate={advancedFilters.startDate}
-                  endDate={advancedFilters.endDate}
-                  onDateChange={(start, end) =>
-                    handleAdvancedFilterChange({
-                      ...advancedFilters,
-                      startDate: start,
-                      endDate: end,
-                    })
+              <div className="advanced-field">
+                <label htmlFor="max-amount" className="filter-field-label">Monto máximo</label>
+                <input
+                  id="max-amount"
+                  type="number"
+                  placeholder="9,999.99"
+                  value={advancedFilters.maxAmount}
+                  onChange={(e) =>
+                    handleAdvancedFilterChange({ ...advancedFilters, maxAmount: e.target.value })
                   }
-                  label="Rango de fechas personalizado"
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+
+              <div className="advanced-field">
+                <label htmlFor="adv-start-date" className="filter-field-label">Desde (fecha)</label>
+                <input
+                  id="adv-start-date"
+                  type="date"
+                  value={advancedFilters.startDate}
+                  onChange={(e) =>
+                    handleAdvancedFilterChange({ ...advancedFilters, startDate: e.target.value })
+                  }
+                  max={advancedFilters.endDate || undefined}
+                />
+              </div>
+
+              <div className="advanced-field">
+                <label htmlFor="adv-end-date" className="filter-field-label">Hasta (fecha)</label>
+                <input
+                  id="adv-end-date"
+                  type="date"
+                  value={advancedFilters.endDate}
+                  onChange={(e) =>
+                    handleAdvancedFilterChange({ ...advancedFilters, endDate: e.target.value })
+                  }
+                  min={advancedFilters.startDate || undefined}
                 />
               </div>
             </div>
@@ -418,57 +424,37 @@ export default function MovementsPage() {
               <div className="active-filters-tags">
                 {advancedFilters.searchTerm && (
                   <PillTag
-                    label={`Busca: "${advancedFilters.searchTerm}"`}
-                    onRemove={() =>
-                      handleAdvancedFilterChange({
-                        ...advancedFilters,
-                        searchTerm: '',
-                      })
-                    }
+                    label={`"${advancedFilters.searchTerm}"`}
+                    variant="primary"
+                    onRemove={() => handleAdvancedFilterChange({ ...advancedFilters, searchTerm: '' })}
                   />
                 )}
                 {advancedFilters.minAmount && (
                   <PillTag
-                    label={`Mín: $${advancedFilters.minAmount}`}
-                    onRemove={() =>
-                      handleAdvancedFilterChange({
-                        ...advancedFilters,
-                        minAmount: '',
-                      })
-                    }
+                    label={`Mín $${advancedFilters.minAmount}`}
+                    variant="default"
+                    onRemove={() => handleAdvancedFilterChange({ ...advancedFilters, minAmount: '' })}
                   />
                 )}
                 {advancedFilters.maxAmount && (
                   <PillTag
-                    label={`Máx: $${advancedFilters.maxAmount}`}
-                    onRemove={() =>
-                      handleAdvancedFilterChange({
-                        ...advancedFilters,
-                        maxAmount: '',
-                      })
-                    }
+                    label={`Máx $${advancedFilters.maxAmount}`}
+                    variant="default"
+                    onRemove={() => handleAdvancedFilterChange({ ...advancedFilters, maxAmount: '' })}
                   />
                 )}
                 {advancedFilters.startDate && (
                   <PillTag
-                    label={`Desde: ${advancedFilters.startDate}`}
-                    onRemove={() =>
-                      handleAdvancedFilterChange({
-                        ...advancedFilters,
-                        startDate: '',
-                      })
-                    }
+                    label={`Desde ${advancedFilters.startDate}`}
+                    variant="default"
+                    onRemove={() => handleAdvancedFilterChange({ ...advancedFilters, startDate: '' })}
                   />
                 )}
                 {advancedFilters.endDate && (
                   <PillTag
-                    label={`Hasta: ${advancedFilters.endDate}`}
-                    onRemove={() =>
-                      handleAdvancedFilterChange({
-                        ...advancedFilters,
-                        endDate: '',
-                      })
-                    }
+                    label={`Hasta ${advancedFilters.endDate}`}
+                    variant="default"
+                    onRemove={() => handleAdvancedFilterChange({ ...advancedFilters, endDate: '' })}
                   />
                 )}
               </div>
