@@ -4,7 +4,7 @@
 
 .account-form-layout {
   display: grid;
-  grid-template-columns: 220px 1fr;
+  grid-template-columns: 260px 1fr;
   gap: 24px;
   align-items: start;
 }
@@ -47,24 +47,56 @@
 }
 
 .account-form .account-form-actions {
-  margin-top: 6px;
+  margin-top: 8px;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 10px;
 }
 
-.account-form .account-form-actions .secondary-button {
-  background: #eef2f7;
-  color: #334155;
-  border: 1px solid #cbd5e1;
+.account-form-ghost-btn {
+  background: transparent;
+  color: var(--color-muted);
+  border: 1px solid var(--color-border);
+  margin-right: auto;
+  font-size: 13px;
+  padding: 9px 16px;
 }
 
-.account-form .account-form-actions .secondary-button:hover {
-  background: #e2e8f0;
+.account-form-ghost-btn:hover {
+  background: var(--color-surface-soft);
+  border-color: #94a3b8;
+  color: var(--color-text);
+  box-shadow: none;
+  transform: none;
 }
 
-.account-form .account-form-actions .primary-action {
-  margin-left: auto;
+.account-form-submit-btn {
+  background: var(--color-primary);
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 10px 24px;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+}
+
+.account-form-submit-btn:hover {
+  background: var(--color-primary-dark);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
+}
+
+.account-form-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+/* Two-column form fields layout */
+.account-form-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
 }
 
 /* Preview card */
@@ -152,11 +184,15 @@
 
 /* El contenedor del form necesita ancho generoso para el preview */
 .accounts-form-centered {
-  max-width: 720px !important;
+  max-width: 920px !important;
 }
 
 @media (max-width: 850px) {
   .account-form-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .account-form-two-col {
     grid-template-columns: 1fr;
   }
 
@@ -182,9 +218,10 @@
     align-items: stretch;
   }
 
-  .account-form .account-form-actions button {
+  .account-form-ghost-btn,
+  .account-form-submit-btn {
     width: 100%;
-    margin-left: 0;
+    margin-right: 0;
   }
 }
 
@@ -421,5 +458,76 @@
   .account-action {
     padding: 8px 10px;
     font-size: 11px;
+  }
+}
+
+/* ================================================================
+   ACCOUNTS — Layout de navegación lateral (tabs verticales)
+================================================================ */
+
+.accounts-tab-layout {
+  flex-direction: row;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.accounts-tabs {
+  flex-shrink: 0;
+  width: 172px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 0;
+  position: sticky;
+  top: 0;
+}
+
+.accounts-view-tab {
+  width: 100%;
+  justify-content: flex-start;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 13px;
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+}
+
+.accounts-workspace-panel {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.accounts-workspace-panel.accounts-workspace-form {
+  width: 100%;
+  max-width: none;
+  min-height: 0;
+  flex: 1;
+  align-self: stretch;
+}
+
+@media (max-width: 960px) {
+  .accounts-tab-layout {
+    flex-direction: column;
+  }
+
+  .accounts-tabs {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    position: static;
+  }
+
+  .accounts-view-tab {
+    flex: 1;
+    min-width: 100px;
+    justify-content: center;
+    text-transform: uppercase;
+    letter-spacing: 0.01em;
+    font-size: 12px;
+  }
+
+  .account-form-layout {
+    grid-template-columns: 1fr;
   }
 }
