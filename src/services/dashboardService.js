@@ -10,6 +10,7 @@ const MOVEMENT_SELECT = `
   tr_description,
   tr_amount,
   tr_date,
+  tr_time,
   tr_is_active,
   created_at,
   account:account!inner (
@@ -216,11 +217,18 @@ export async function getMonthMovementsByClientId(clientId, filters = {}) {
   const sortDirection = filters.sortDirection === 'asc' ? 'asc' : 'desc';
 
   const movements = [...transactions, ...initialBalances].sort((a, b) => {
-    const dateA = new Date(a.tr_date || a.created_at).getTime();
-    const dateB = new Date(b.tr_date || b.created_at).getTime();
+    const dateA = a.tr_date ? String(a.tr_date).slice(0, 10) : a.created_at.slice(0, 10);
+    const dateB = b.tr_date ? String(b.tr_date).slice(0, 10) : b.created_at.slice(0, 10);
 
     if (dateA !== dateB) {
-      return sortDirection === 'asc' ? dateA - dateB : dateB - dateA;
+      return sortDirection === 'asc' ? dateA.localeCompare(dateB) : dateB.localeCompare(dateA);
+    }
+
+    const timeA = a.tr_time ?? '99:99:99';
+    const timeB = b.tr_time ?? '99:99:99';
+
+    if (timeA !== timeB) {
+      return sortDirection === 'asc' ? timeA.localeCompare(timeB) : timeB.localeCompare(timeA);
     }
 
     const createdA = new Date(a.created_at).getTime();

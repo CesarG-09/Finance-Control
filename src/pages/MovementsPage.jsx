@@ -30,15 +30,14 @@ function formatSignedCurrency(value) {
 }
 
 function formatDate(value) {
-  if (!value) {
-    return '-';
-  }
-
+  if (!value) return '-';
+  const s = String(value);
+  const dateStr = s.includes('T') || s.includes(' ') ? s : `${s}T00:00:00`;
   return new Intl.DateTimeFormat('es-PA', {
     year: 'numeric',
     month: 'short',
     day: '2-digit',
-  }).format(new Date(`${value}T00:00:00`));
+  }).format(new Date(dateStr));
 }
 
 export default function MovementsPage() {

@@ -4,6 +4,11 @@ function getTodayDate() {
   return new Date().toISOString().slice(0, 10);
 }
 
+function getNowTime() {
+  const now = new Date();
+  return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+}
+
 const emptyForm = {
   ty_id: '',
   ct_id: '',
@@ -12,6 +17,7 @@ const emptyForm = {
   tr_description: '',
   tr_amount: '',
   tr_date: getTodayDate(),
+  tr_time: getNowTime(),
 };
 
 function getActiveSubcategoryData(transaction) {
@@ -84,7 +90,12 @@ export default function TransactionForm({
         tr_name: initialData.tr_name ?? '',
         tr_description: initialData.tr_description ?? '',
         tr_amount: String(initialData.tr_amount ?? ''),
-        tr_date: initialData.tr_date ?? getTodayDate(),
+        tr_date: initialData.tr_date
+          ? String(initialData.tr_date).slice(0, 10)
+          : getTodayDate(),
+        tr_time: initialData.tr_time
+          ? String(initialData.tr_time).slice(0, 5)
+          : getNowTime(),
       });
     } else {
       setForm(emptyForm);
@@ -105,8 +116,8 @@ export default function TransactionForm({
     setForm((prev) => ({ ...prev, ty_id: String(typeId) }));
   }
 
-  function setToday() {
-    setForm((prev) => ({ ...prev, tr_date: getTodayDate() }));
+  function setNow() {
+    setForm((prev) => ({ ...prev, tr_date: getTodayDate(), tr_time: getNowTime() }));
   }
 
   async function handleSubmit(event) {
@@ -276,10 +287,10 @@ export default function TransactionForm({
         />
       </label>
 
-      {/* Fecha */}
-      <label>
+      {/* Fecha y hora */}
+      <div className="form-field">
         <span className="label-row">
-          Fecha
+          Fecha y hora
           <span className="required-tag">Obligatorio</span>
         </span>
         <div className="date-input-wrap">
@@ -290,17 +301,25 @@ export default function TransactionForm({
             onChange={handleChange}
             disabled={!hasSelectedAccount || saving}
           />
+          <input
+            type="time"
+            name="tr_time"
+            value={form.tr_time}
+            onChange={handleChange}
+            disabled={!hasSelectedAccount || saving}
+            className="time-input"
+          />
           <button
             type="button"
             className="today-btn"
-            onClick={setToday}
+            onClick={setNow}
             disabled={!hasSelectedAccount || saving}
-            title="Usar fecha de hoy"
+            title="Usar fecha y hora actuales"
           >
-            Hoy
+            Ahora
           </button>
         </div>
-      </label>
+      </div>
 
       <div className="form-actions">
         <button type="submit" disabled={saving || !hasSelectedAccount}>
