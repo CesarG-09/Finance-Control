@@ -131,68 +131,81 @@ export default function AccountForm({
       <form className="form account-form" onSubmit={handleSubmit}>
         {error && <p className="error-message">{error}</p>}
 
-        <label>
-          <span className="label-row">
-            Nombre de cuenta
-            <span className="required-tag">Obligatorio</span>
-          </span>
-          <input
-            type="text"
-            name="ac_name"
-            value={form.ac_name}
-            onChange={handleChange}
-            placeholder="Ej: Cuenta de ahorros principal"
-            autoComplete="off"
-          />
-        </label>
+        <div className="account-form-section">
+          <p className="account-form-section-title">Datos básicos</p>
 
-        <label>
-          <span className="label-row">
-            Tipo de cuenta
-            <span className="required-tag">Obligatorio</span>
-          </span>
-          <select name="ta_id" value={form.ta_id} onChange={handleChange}>
-            <option value="">Selecciona un tipo</option>
-            {typeAccounts.map((typeAccount) => (
-              <option key={typeAccount.ta_id} value={typeAccount.ta_id}>
-                {typeAccount.ta_name}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label>
-          <span className="label-row">
-            Descripción
-            <span className="optional-tag">Opcional</span>
-          </span>
-          <input
-            type="text"
-            name="ac_description"
-            value={form.ac_description}
-            onChange={handleChange}
-            placeholder="Ej: Cuenta para gastos mensuales"
-            autoComplete="off"
-          />
-        </label>
-
-        {!isEditing && (
           <label>
             <span className="label-row">
-              Balance inicial
+              Nombre de cuenta
               <span className="required-tag">Obligatorio</span>
             </span>
             <input
-              type="number"
-              name="ac_balance"
-              value={form.ac_balance}
+              type="text"
+              name="ac_name"
+              value={form.ac_name}
               onChange={handleChange}
-              step="0.01"
-              min="0"
-              placeholder="0.00"
+              placeholder="Ej: Cuenta de ahorros principal"
+              autoComplete="off"
             />
           </label>
-        )}
+
+          <label>
+            <span className="label-row">
+              Descripción
+              <span className="optional-tag">Opcional</span>
+            </span>
+            <input
+              type="text"
+              name="ac_description"
+              value={form.ac_description}
+              onChange={handleChange}
+              placeholder="Ej: Cuenta para gastos mensuales"
+              autoComplete="off"
+            />
+          </label>
+        </div>
+
+        <div className="account-form-section">
+          <p className="account-form-section-title">Saldo</p>
+          {!isEditing && (
+            <label>
+              <span className="label-row">
+                Balance inicial
+                <span className="required-tag">Obligatorio</span>
+              </span>
+              <input
+                type="number"
+                name="ac_balance"
+                value={form.ac_balance}
+                onChange={handleChange}
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+              />
+              <small className="field-help">Solo se usa al crear la cuenta. Luego se actualiza con movimientos.</small>
+            </label>
+          )}
+        </div>
+
+        <div className="account-form-section">
+          <p className="account-form-section-title">Tipo y estado</p>
+
+          <label>
+            <span className="label-row">
+              Tipo de cuenta
+              <span className="required-tag">Obligatorio</span>
+            </span>
+            <select name="ta_id" value={form.ta_id} onChange={handleChange}>
+              <option value="">Selecciona un tipo</option>
+              {typeAccounts.map((typeAccount) => (
+                <option key={typeAccount.ta_id} value={typeAccount.ta_id}>
+                  {typeAccount.ta_name}
+                </option>
+              ))}
+            </select>
+            <small className="field-help">El tipo ayuda a clasificar reportes y métricas automáticamente.</small>
+          </label>
+        </div>
 
         {isEditing && (
           <p className="info-message">
@@ -200,11 +213,7 @@ export default function AccountForm({
           </p>
         )}
 
-        <div className="form-actions">
-          <button type="submit" disabled={saving}>
-            {saving ? 'Guardando...' : isEditing ? 'Guardar cambios' : 'Crear cuenta'}
-          </button>
-
+        <div className="form-actions account-form-actions">
           {isEditing && (
             <button
               type="button"
@@ -215,6 +224,16 @@ export default function AccountForm({
               Cancelar
             </button>
           )}
+
+          {!isEditing && (
+            <button type="button" className="secondary-button" onClick={() => setForm(emptyForm)} disabled={saving}>
+              Limpiar
+            </button>
+          )}
+
+          <button type="submit" className="primary-action" disabled={saving}>
+            {saving ? 'Guardando...' : isEditing ? 'Guardar cambios' : 'Crear cuenta'}
+          </button>
         </div>
       </form>
     </div>
