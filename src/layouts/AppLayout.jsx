@@ -163,7 +163,7 @@ export default function AppLayout() {
 
             <div className="sidebar-brand-text">
               <h2>Finance Control</h2>
-              <span>Personal Finance MVP</span>
+              <span>Personal Finance v1.0</span>
             </div>
 
             <small>v1.0</small>
