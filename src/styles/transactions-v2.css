@@ -131,8 +131,13 @@
   gap: 8px;
 }
 
-.date-input-wrap input {
+.date-input-wrap input[type="date"] {
   flex: 1;
+}
+
+.date-input-wrap .time-input {
+  width: 108px;
+  flex-shrink: 0;
 }
 
 .today-btn {
@@ -235,6 +240,18 @@
   margin: 0;
   font-size: 12px;
   color: var(--color-muted);
+}
+
+.transaction-time-tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: var(--color-surface-soft);
+  border: 1px solid var(--color-border);
+  font-size: 11px;
+  color: var(--color-muted);
+  font-variant-numeric: tabular-nums;
 }
 
 .status-tag {

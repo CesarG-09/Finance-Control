@@ -44,15 +44,19 @@ function formatTransactionAmount(transaction) {
 }
 
 function formatDate(value) {
-  if (!value) {
-    return '-';
-  }
-
+  if (!value) return '-';
+  const s = String(value);
+  const dateStr = s.includes('T') || s.includes(' ') ? s : `${s}T00:00:00`;
   return new Intl.DateTimeFormat('es-PA', {
     year: 'numeric',
     month: 'short',
     day: '2-digit',
-  }).format(new Date(`${value}T00:00:00`));
+  }).format(new Date(dateStr));
+}
+
+function formatTime(value) {
+  if (!value) return null;
+  return String(value).slice(0, 5);
 }
 
 function getActiveRelation(transaction) {
@@ -87,7 +91,12 @@ function TransactionCard({ transaction, onEdit, onDelete }) {
       <div className="transaction-card-header">
         <div>
           <h3>{isInitialBalance ? 'Balance inicial' : transaction.tr_name}</h3>
-          <p>{formatDate(transaction.tr_date || transaction.created_at?.slice(0, 10))}</p>
+          <p>
+            {formatDate(transaction.tr_date || transaction.created_at?.slice(0, 10))}
+            {formatTime(transaction.tr_time) && (
+              <span className="transaction-time-tag">{formatTime(transaction.tr_time)}</span>
+            )}
+          </p>
         </div>
 
         <span className={`status-tag ${isInitialBalance ? 'initial' : isIncomeTransaction(transaction) ? 'income' : 'expense'}`}>
