@@ -1498,8 +1498,7 @@ select:disabled {
   overflow-x: hidden;
 }
 
-.dashboard-page,
-.movements-page {
+.dashboard-page {
   min-height: 100%;
   display: flex;
   flex-direction: column;
