@@ -4,6 +4,9 @@ import TransactionForm from '../components/transactions/TransactionForm';
 import { useAuth } from '../context/AuthContext';
 import { getAccountsByClientId } from '../services/accountService';
 import ConfirmModal from '../components/ui/ConfirmModal';
+import { SearchBox } from '../components/ui/SearchBox';
+import { useDebounce } from '../hooks/useDebounce';
+import { searchMovements } from '../services/filterService';
 import {
   createTransaction,
   deactivateTransaction,
@@ -173,11 +176,14 @@ export default function TransactionsPage() {
   const [transactions, setTransactions] = useState([]);
   const [selectedAccountId, setSelectedAccountId] = useState('');
   const [editingTransaction, setEditingTransaction] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   const messageRef = useRef(null);
 
@@ -195,6 +201,11 @@ export default function TransactionsPage() {
       ),
     [activeAccounts, selectedAccountId]
   );
+
+  const filteredTransactions = useMemo(() => {
+    if (!debouncedSearchTerm) return transactions;
+    return searchMovements(transactions, debouncedSearchTerm);
+  }, [transactions, debouncedSearchTerm]);
 
   const transactionCount = transactions.filter(
     (transaction) => transaction.movement_source !== 'initial_balance'
@@ -464,11 +475,30 @@ function handleCancelEdit() {
 
         <section className="panel transactions-section">
           <div className="transactions-list-header">
-            <h2>Transacciones de la cuenta</h2>
-            <p>
-              Solo se muestran transacciones activas de la cuenta seleccionada.
-            </p>
+            <div>
+              <h2>Transacciones de la cuenta</h2>
+              <p>
+                Solo se muestran transacciones activas de la cuenta seleccionada.
+              </p>
+            </div>
           </div>
+
+          {selectedAccountId && transactions.length > 0 && (
+            <div className="transactions-search-container">
+              <SearchBox
+                placeholder="Buscar por descripción o categoría..."
+                value={searchTerm}
+                onSearchChange={setSearchTerm}
+                debounceDelay={300}
+                clearable={true}
+              />
+              {debouncedSearchTerm && (
+                <small className="search-results-count">
+                  Mostrando {filteredTransactions.length} de {transactions.length} transacciones
+                </small>
+              )}
+            </div>
+          )}
 
           <div className="transactions-scroll-list">
             {!selectedAccountId ? (
@@ -479,8 +509,12 @@ function handleCancelEdit() {
               <p className="empty-message">
                 Esta cuenta aún no tiene transacciones activas.
               </p>
+            ) : filteredTransactions.length === 0 ? (
+              <p className="empty-message">
+                No hay transacciones que coincidan con la búsqueda.
+              </p>
             ) : (
-              transactions.map((transaction) => (
+              filteredTransactions.map((transaction) => (
                 <TransactionCard
                   key={`${transaction.movement_source}-${transaction.tr_id || transaction.abh_id}`}
                   transaction={transaction}
