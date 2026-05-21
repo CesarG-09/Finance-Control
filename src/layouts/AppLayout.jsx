@@ -128,13 +128,15 @@ export default function AppLayout() {
 
   const isTransactionsPage = location.pathname.startsWith('/transacciones');
   const isMovementsPage = location.pathname.startsWith('/movimientos');
+  const isDashboardPage = location.pathname.startsWith('/dashboard');
 
   const isProfilePage = location.pathname.startsWith('/mi-perfil');
 
   const isScrollablePage =
     isTransactionsPage ||
     isMovementsPage ||
-    isProfilePage;
+    isProfilePage ||
+    isDashboardPage;
 
   const userDisplayName = getUserDisplayName(clientProfile);
   const userInitials = getInitials(clientProfile);

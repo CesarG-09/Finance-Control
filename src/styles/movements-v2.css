@@ -3,8 +3,8 @@
 ================================================================ */
 
 .movements-filters-panel {
-  margin-bottom: 18px;
-  padding: 20px 24px;
+  margin-bottom: 14px;
+  padding: 14px 18px;
 }
 
 /* Cabecera del panel */
@@ -12,7 +12,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 18px;
+  margin-bottom: 12px;
 }
 
 .movements-filters-header h2 {

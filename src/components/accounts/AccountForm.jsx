@@ -132,22 +132,39 @@ export default function AccountForm({
         {error && <p className="error-message">{error}</p>}
 
         <div className="account-form-section">
-          <p className="account-form-section-title">Datos básicos</p>
+          <p className="account-form-section-title">Información de la cuenta</p>
 
-          <label>
-            <span className="label-row">
-              Nombre de cuenta
-              <span className="required-tag">Obligatorio</span>
-            </span>
-            <input
-              type="text"
-              name="ac_name"
-              value={form.ac_name}
-              onChange={handleChange}
-              placeholder="Ej: Cuenta de ahorros principal"
-              autoComplete="off"
-            />
-          </label>
+          <div className="account-form-two-col">
+            <label>
+              <span className="label-row">
+                Nombre de cuenta
+                <span className="required-tag">Obligatorio</span>
+              </span>
+              <input
+                type="text"
+                name="ac_name"
+                value={form.ac_name}
+                onChange={handleChange}
+                placeholder="Ej: Cuenta de ahorros"
+                autoComplete="off"
+              />
+            </label>
+
+            <label>
+              <span className="label-row">
+                Tipo de cuenta
+                <span className="required-tag">Obligatorio</span>
+              </span>
+              <select name="ta_id" value={form.ta_id} onChange={handleChange}>
+                <option value="">Selecciona un tipo</option>
+                {typeAccounts.map((typeAccount) => (
+                  <option key={typeAccount.ta_id} value={typeAccount.ta_id}>
+                    {typeAccount.ta_name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
 
           <label>
             <span className="label-row">
@@ -165,12 +182,12 @@ export default function AccountForm({
           </label>
         </div>
 
-        <div className="account-form-section">
-          <p className="account-form-section-title">Saldo</p>
-          {!isEditing && (
+        {!isEditing && (
+          <div className="account-form-section">
+            <p className="account-form-section-title">Balance inicial</p>
             <label>
               <span className="label-row">
-                Balance inicial
+                Monto inicial
                 <span className="required-tag">Obligatorio</span>
               </span>
               <input
@@ -182,30 +199,10 @@ export default function AccountForm({
                 min="0"
                 placeholder="0.00"
               />
-              <small className="field-help">Solo se usa al crear la cuenta. Luego se actualiza con movimientos.</small>
+              <small className="field-help">Se registra automáticamente en el historial. No puede modificarse luego.</small>
             </label>
-          )}
-        </div>
-
-        <div className="account-form-section">
-          <p className="account-form-section-title">Tipo y estado</p>
-
-          <label>
-            <span className="label-row">
-              Tipo de cuenta
-              <span className="required-tag">Obligatorio</span>
-            </span>
-            <select name="ta_id" value={form.ta_id} onChange={handleChange}>
-              <option value="">Selecciona un tipo</option>
-              {typeAccounts.map((typeAccount) => (
-                <option key={typeAccount.ta_id} value={typeAccount.ta_id}>
-                  {typeAccount.ta_name}
-                </option>
-              ))}
-            </select>
-            <small className="field-help">El tipo ayuda a clasificar reportes y métricas automáticamente.</small>
-          </label>
-        </div>
+          </div>
+        )}
 
         {isEditing && (
           <p className="info-message">
@@ -214,24 +211,27 @@ export default function AccountForm({
         )}
 
         <div className="form-actions account-form-actions">
-          {isEditing && (
+          {isEditing ? (
             <button
               type="button"
-              className="secondary-button"
+              className="account-form-ghost-btn"
               onClick={onCancel}
               disabled={saving}
             >
               Cancelar
             </button>
-          )}
-
-          {!isEditing && (
-            <button type="button" className="secondary-button" onClick={() => setForm(emptyForm)} disabled={saving}>
-              Limpiar
+          ) : (
+            <button
+              type="button"
+              className="account-form-ghost-btn"
+              onClick={() => setForm(emptyForm)}
+              disabled={saving}
+            >
+              Limpiar campos
             </button>
           )}
 
-          <button type="submit" className="primary-action" disabled={saving}>
+          <button type="submit" className="account-form-submit-btn" disabled={saving}>
             {saving ? 'Guardando...' : isEditing ? 'Guardar cambios' : 'Crear cuenta'}
           </button>
         </div>
