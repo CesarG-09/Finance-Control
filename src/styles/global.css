@@ -27,9 +27,21 @@
   --shadow-sm: 0 6px 16px rgba(15, 23, 42, 0.06);
   --shadow-md: 0 12px 28px rgba(15, 23, 42, 0.08);
 
-  --radius-sm: 10px;
-  --radius-md: 14px;
-  --radius-lg: 18px;
+  --radius-sm: var(--content-radius-sm);
+  --radius-md: var(--content-radius-md);
+  --radius-lg: var(--content-radius-lg);
+
+  --ui-scale-desktop: 0.8;
+  --ui-scale-mobile: 1;
+  --content-font-size-desktop: calc(16px * var(--ui-scale-desktop));
+  --content-font-size-mobile: calc(16px * var(--ui-scale-mobile));
+  --content-space-xs: 6px;
+  --content-space-sm: 8px;
+  --content-space-md: 12px;
+  --content-space-lg: 16px;
+  --content-radius-sm: 8px;
+  --content-radius-md: 11px;
+  --content-radius-lg: 14px;
 
   /* Category Colors */
   --category-alimentacion: #f87171;
@@ -66,7 +78,7 @@ button,
   cursor: pointer;
   border: none;
   border-radius: var(--radius-sm);
-  padding: 10px 14px;
+  padding: var(--content-space-md) var(--content-space-lg);
   background: var(--color-primary);
   color: white;
   font-weight: 700;
@@ -94,7 +106,7 @@ button:disabled {
 input,
 select {
   width: 100%;
-  padding: 11px 12px;
+  padding: 10px var(--content-space-md);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   background: white;
@@ -191,7 +203,7 @@ select:disabled {
 .auth-hero h1 {
   margin: 0;
   max-width: 480px;
-  font-size: 30px;
+  font-size: clamp(24px, 1.7rem, 30px);
   line-height: 1.08;
   letter-spacing: -0.9px;
 }
@@ -773,7 +785,7 @@ select:disabled {
 
 .page-header h1 {
   margin: 0 0 6px;
-  font-size: 30px;
+  font-size: clamp(24px, 1.7rem, 30px);
   line-height: 1.1;
   letter-spacing: -0.7px;
 }
