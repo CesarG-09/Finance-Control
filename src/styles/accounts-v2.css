@@ -9,6 +9,64 @@
   align-items: start;
 }
 
+.account-form.account-form {
+  gap: 18px;
+}
+
+.account-form .account-form-section {
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-soft);
+}
+
+.account-form .account-form-section-title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.account-form label,
+.account-form .form-field {
+  gap: 5px;
+}
+
+.account-form .label-row {
+  font-size: 13px;
+}
+
+.account-form .field-help {
+  font-size: 12px;
+  color: var(--color-muted);
+  line-height: 1.3;
+}
+
+.account-form .account-form-actions {
+  margin-top: 6px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.account-form .account-form-actions .secondary-button {
+  background: #eef2f7;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+}
+
+.account-form .account-form-actions .secondary-button:hover {
+  background: #e2e8f0;
+}
+
+.account-form .account-form-actions .primary-action {
+  margin-left: auto;
+}
+
 /* Preview card */
 .preview-label {
   font-size: 11px;
@@ -117,6 +175,16 @@
     border-top: none;
     margin-left: auto;
     align-items: flex-end;
+  }
+
+  .account-form .account-form-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .account-form .account-form-actions button {
+    width: 100%;
+    margin-left: 0;
   }
 }
 
