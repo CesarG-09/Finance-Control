@@ -9,6 +9,7 @@ const TRANSACTION_SELECT = `
   tr_description,
   tr_amount,
   tr_date,
+  tr_time,
   tr_is_active,
   created_at,
   modified_at,
@@ -95,6 +96,7 @@ function validateTransactionPayload(transaction) {
     tr_description: transaction.tr_description?.trim() || null,
     tr_amount: amount,
     tr_date: transaction.tr_date,
+    tr_time: transaction.tr_time ? `${transaction.tr_time}:00` : null,
   };
 }
 
@@ -148,6 +150,7 @@ export async function getActiveTransactionsByAccountId(accountId) {
     .eq('ac_id', accountId)
     .eq('tr_is_active', true)
     .order('tr_date', { ascending: false })
+    .order('tr_time', { ascending: false, nullsFirst: false })
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -242,6 +245,7 @@ export async function createTransaction(transaction) {
       tr_description: payload.tr_description,
       tr_amount: payload.tr_amount,
       tr_date: payload.tr_date,
+      tr_time: payload.tr_time,
       tr_is_active: true,
     })
     .select('tr_id')
@@ -284,6 +288,7 @@ export async function updateTransaction(transactionId, transaction) {
       tr_description: payload.tr_description,
       tr_amount: payload.tr_amount,
       tr_date: payload.tr_date,
+      tr_time: payload.tr_time,
     })
     .eq('tr_id', transactionId);
 

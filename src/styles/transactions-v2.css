@@ -1,0 +1,404 @@
+/* ================================================================
+   TRANSACTION FORM — estilos mejorados
+================================================================ */
+
+/* Botones de tipo (Entrada / Salida) */
+.transaction-type-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.type-option-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  border: 2px solid transparent;
+}
+
+.type-option-button.unselected {
+  background: var(--color-surface-soft);
+  color: var(--color-muted);
+  border-color: var(--color-border);
+}
+
+.type-option-button.unselected:hover:not(:disabled) {
+  background: var(--color-primary-soft);
+  color: var(--color-primary-dark);
+  border-color: var(--color-primary);
+  transform: translateY(-1px);
+}
+
+.type-option-button.selected-income {
+  background: var(--color-success-soft);
+  color: var(--color-success);
+  border-color: var(--color-success);
+  box-shadow: 0 0 0 3px rgba(4, 120, 87, 0.1);
+}
+
+.type-option-button.selected-expense {
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+  border-color: var(--color-danger);
+  box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.1);
+}
+
+.type-btn-icon {
+  font-size: 18px;
+  font-weight: 900;
+}
+
+/* Monto con color contextual */
+.amount-label-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.amount-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.currency-prefix {
+  position: absolute;
+  left: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-muted);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.amount-number-input {
+  padding-left: 28px !important;
+  font-size: 18px !important;
+  font-weight: 700;
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+
+.amount-income .amount-number-input,
+.amount-income .currency-prefix {
+  color: var(--color-success);
+}
+
+.amount-income .amount-number-input {
+  border-color: var(--color-success);
+}
+
+.amount-income .amount-number-input:focus {
+  box-shadow: 0 0 0 3px rgba(4, 120, 87, 0.12);
+}
+
+.amount-expense .amount-number-input,
+.amount-expense .currency-prefix {
+  color: var(--color-danger);
+}
+
+.amount-expense .amount-number-input {
+  border-color: var(--color-danger);
+}
+
+.amount-expense .amount-number-input:focus {
+  box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.12);
+}
+
+/* Categoría + Subcategoría en fila */
+.category-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.category-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Fecha con botón "Hoy" */
+.date-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.date-input-wrap input[type="date"] {
+  flex: 1;
+}
+
+.date-input-wrap .time-input {
+  width: 108px;
+  flex-shrink: 0;
+}
+
+.today-btn {
+  background: var(--color-surface-soft);
+  border: 1px solid var(--color-border);
+  color: var(--color-muted);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.18s ease;
+  flex-shrink: 0;
+}
+
+.today-btn:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: var(--color-primary-soft);
+  transform: none;
+  box-shadow: none;
+}
+
+.today-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Responsive del formulario */
+@media (max-width: 700px) {
+  .category-row {
+    grid-template-columns: 1fr;
+  }
+
+  .type-option-button {
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+
+  .amount-number-input {
+    font-size: 16px !important;
+  }
+}
+
+/* ================================================================
+   Sort toggle button */
+.transactions-list-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.sort-toggle-btn {
+  flex-shrink: 0;
+  background: var(--color-surface-soft);
+  border: 1px solid var(--color-border);
+  color: var(--color-muted);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 7px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.18s ease;
+}
+
+.sort-toggle-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+/* ================================================================
+   Transactions Search Container */
+.transactions-search-container {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.transactions-search-container .search-box {
+  width: 100%;
+}
+
+.search-results-count {
+  font-size: 12px;
+  color: var(--color-muted);
+  font-style: italic;
+  padding: 0 4px;
+}
+
+/* Enhanced Transaction Card (if using cards) */
+.transaction-card {
+  transition: all 0.2s ease;
+}
+
+.transaction-card:hover {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.transaction-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.transaction-card-header > div {
+  flex: 1;
+}
+
+.transaction-card-header h3 {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.transaction-card-header p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
+.transaction-time-tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: var(--color-surface-soft);
+  border: 1px solid var(--color-border);
+  font-size: 11px;
+  color: var(--color-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.status-tag {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-tag.initial {
+  background: var(--color-surface-soft);
+  color: var(--color-muted);
+  border: 1px solid var(--color-border);
+}
+
+.status-tag.income {
+  background: var(--color-success-soft);
+  color: var(--color-success);
+}
+
+.status-tag.expense {
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+
+.transaction-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 12px;
+  background: var(--color-surface-soft);
+  border-radius: var(--radius-sm);
+}
+
+.transaction-card-body p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--color-text);
+}
+
+.transaction-card-body strong {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.transaction-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+}
+
+.transaction-card-footer strong {
+  font-size: 16px;
+  min-width: 80px;
+  text-align: right;
+}
+
+.transaction-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.transaction-actions button {
+  padding: 6px 10px;
+  font-size: 11px;
+  border-radius: var(--radius-sm);
+}
+
+.transaction-card-initial-balance {
+  opacity: 0.8;
+  background: var(--color-surface-soft);
+}
+
+/* Responsive */
+@media (max-width: 700px) {
+  .transactions-search-container {
+    padding: 12px 0;
+    gap: 8px;
+  }
+
+  .transaction-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .transaction-card-header > div {
+    width: 100%;
+  }
+
+  .status-tag {
+    align-self: flex-start;
+  }
+
+  .transaction-card-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .transaction-card-footer strong {
+    width: 100%;
+    text-align: left;
+  }
+
+  .transaction-actions {
+    width: 100%;
+  }
+
+  .transaction-actions button {
+    flex: 1;
+  }
+}

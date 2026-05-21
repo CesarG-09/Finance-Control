@@ -4,6 +4,9 @@ import TransactionForm from '../components/transactions/TransactionForm';
 import { useAuth } from '../context/AuthContext';
 import { getAccountsByClientId } from '../services/accountService';
 import ConfirmModal from '../components/ui/ConfirmModal';
+import { SearchBox } from '../components/ui/SearchBox';
+import { useDebounce } from '../hooks/useDebounce';
+import { searchMovements } from '../services/filterService';
 import {
   createTransaction,
   deactivateTransaction,
@@ -41,15 +44,19 @@ function formatTransactionAmount(transaction) {
 }
 
 function formatDate(value) {
-  if (!value) {
-    return '-';
-  }
-
+  if (!value) return '-';
+  const s = String(value);
+  const dateStr = s.includes('T') || s.includes(' ') ? s : `${s}T00:00:00`;
   return new Intl.DateTimeFormat('es-PA', {
     year: 'numeric',
     month: 'short',
     day: '2-digit',
-  }).format(new Date(`${value}T00:00:00`));
+  }).format(new Date(dateStr));
+}
+
+function formatTime(value) {
+  if (!value) return null;
+  return String(value).slice(0, 5);
 }
 
 function getActiveRelation(transaction) {
@@ -84,7 +91,12 @@ function TransactionCard({ transaction, onEdit, onDelete }) {
       <div className="transaction-card-header">
         <div>
           <h3>{isInitialBalance ? 'Balance inicial' : transaction.tr_name}</h3>
-          <p>{formatDate(transaction.tr_date || transaction.created_at?.slice(0, 10))}</p>
+          <p>
+            {formatDate(transaction.tr_date || transaction.created_at?.slice(0, 10))}
+            {formatTime(transaction.tr_time) && (
+              <span className="transaction-time-tag">{formatTime(transaction.tr_time)}</span>
+            )}
+          </p>
         </div>
 
         <span className={`status-tag ${isInitialBalance ? 'initial' : isIncomeTransaction(transaction) ? 'income' : 'expense'}`}>
@@ -173,11 +185,15 @@ export default function TransactionsPage() {
   const [transactions, setTransactions] = useState([]);
   const [selectedAccountId, setSelectedAccountId] = useState('');
   const [editingTransaction, setEditingTransaction] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortDirection, setSortDirection] = useState('desc');
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   const messageRef = useRef(null);
 
@@ -195,6 +211,32 @@ export default function TransactionsPage() {
       ),
     [activeAccounts, selectedAccountId]
   );
+
+  const filteredTransactions = useMemo(() => {
+    const list = debouncedSearchTerm
+      ? searchMovements(transactions, debouncedSearchTerm)
+      : transactions;
+
+    return [...list].sort((a, b) => {
+      const dateA = a.tr_date ? String(a.tr_date).slice(0, 10) : a.created_at?.slice(0, 10) ?? '';
+      const dateB = b.tr_date ? String(b.tr_date).slice(0, 10) : b.created_at?.slice(0, 10) ?? '';
+
+      if (dateA !== dateB) {
+        return sortDirection === 'asc' ? dateA.localeCompare(dateB) : dateB.localeCompare(dateA);
+      }
+
+      const timeA = a.tr_time ?? '00:00:00';
+      const timeB = b.tr_time ?? '00:00:00';
+
+      if (timeA !== timeB) {
+        return sortDirection === 'asc' ? timeA.localeCompare(timeB) : timeB.localeCompare(timeA);
+      }
+
+      const createdA = new Date(a.created_at ?? 0).getTime();
+      const createdB = new Date(b.created_at ?? 0).getTime();
+      return sortDirection === 'asc' ? createdA - createdB : createdB - createdA;
+    });
+  }, [transactions, debouncedSearchTerm, sortDirection]);
 
   const transactionCount = transactions.filter(
     (transaction) => transaction.movement_source !== 'initial_balance'
@@ -448,27 +490,55 @@ function handleCancelEdit() {
         <section className="panel transaction-form-panel">
           <h2>{editingTransaction ? 'Editar transacción' : 'Nueva transacción'}</h2>
 
-          <div className="transaction-form-scroll">
-            <TransactionForm
-              typeTransactions={typeTransactions}
-              subcategories={subcategories}
-              selectedAccountId={selectedAccountId}
-              selectedAccountName={selectedAccount?.ac_name || ''}
-              initialData={editingTransaction}
-              saving={saving}
-              onSubmit={handleSubmit}
-              onCancel={handleCancelEdit}
-            />
-          </div>
+          <TransactionForm
+            typeTransactions={typeTransactions}
+            subcategories={subcategories}
+            selectedAccountId={selectedAccountId}
+            selectedAccountName={selectedAccount?.ac_name || ''}
+            initialData={editingTransaction}
+            saving={saving}
+            onSubmit={handleSubmit}
+            onCancel={handleCancelEdit}
+          />
         </section>
 
         <section className="panel transactions-section">
           <div className="transactions-list-header">
-            <h2>Transacciones de la cuenta</h2>
-            <p>
-              Solo se muestran transacciones activas de la cuenta seleccionada.
-            </p>
+            <div>
+              <h2>Transacciones de la cuenta</h2>
+              <p>
+                Solo se muestran transacciones activas de la cuenta seleccionada.
+              </p>
+            </div>
+
+            {transactions.length > 0 && (
+              <button
+                type="button"
+                className="sort-toggle-btn"
+                onClick={() => setSortDirection((d) => d === 'desc' ? 'asc' : 'desc')}
+                title={sortDirection === 'desc' ? 'Orden: más recientes primero' : 'Orden: más antiguos primero'}
+              >
+                {sortDirection === 'desc' ? '↓ Más recientes' : '↑ Más antiguos'}
+              </button>
+            )}
           </div>
+
+          {selectedAccountId && transactions.length > 0 && (
+            <div className="transactions-search-container">
+              <SearchBox
+                placeholder="Buscar por descripción o categoría..."
+                value={searchTerm}
+                onSearchChange={setSearchTerm}
+                debounceDelay={300}
+                clearable={true}
+              />
+              {debouncedSearchTerm && (
+                <small className="search-results-count">
+                  Mostrando {filteredTransactions.length} de {transactions.length} transacciones
+                </small>
+              )}
+            </div>
+          )}
 
           <div className="transactions-scroll-list">
             {!selectedAccountId ? (
@@ -479,8 +549,12 @@ function handleCancelEdit() {
               <p className="empty-message">
                 Esta cuenta aún no tiene transacciones activas.
               </p>
+            ) : filteredTransactions.length === 0 ? (
+              <p className="empty-message">
+                No hay transacciones que coincidan con la búsqueda.
+              </p>
             ) : (
-              transactions.map((transaction) => (
+              filteredTransactions.map((transaction) => (
                 <TransactionCard
                   key={`${transaction.movement_source}-${transaction.tr_id || transaction.abh_id}`}
                   transaction={transaction}

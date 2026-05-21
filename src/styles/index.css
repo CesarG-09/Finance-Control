@@ -1,10 +1,15 @@
 @import './base.css';
 @import './layout.css';
 @import './global.css';
+@import './components.css';
 @import './auth.css';
 @import './profile-settings.css';
 @import './dashboard.css';
+@import './dashboard-v2.css';
 @import './accounts.css';
+@import './accounts-v2.css';
 @import './transactions.css';
+@import './transactions-v2.css';
 @import './movements.css';
+@import './movements-v2.css';
 @import './modal.css';

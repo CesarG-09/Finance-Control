@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import AccountForm from '../components/accounts/AccountForm';
+import { EnhancedAccountCard } from '../components/accounts/EnhancedAccountCard';
 import { useAuth } from '../context/AuthContext';
 import ConfirmModal from '../components/ui/ConfirmModal';
 import {
@@ -49,60 +50,6 @@ function AccountViewButton({
   );
 }
 
-function AccountCard({ account, onEdit, onDeactivate, onReactivate }) {
-  return (
-    <article
-      className={`account-card ${
-        account.ac_is_active
-          ? 'account-card-active'
-          : 'account-card-inactive'
-      }`}
-    >
-      <div>
-        <h3>{account.ac_name}</h3>
-        <p>{account.account_type?.ta_name || 'Sin tipo'}</p>
-
-        <span
-          className={`account-status-pill ${
-            account.ac_is_active ? 'active' : 'inactive'
-          }`}
-        >
-          {account.ac_is_active ? 'Activa' : 'Inactiva'}
-        </span>
-
-        {account.ac_description && (
-          <p className="muted-text">{account.ac_description}</p>
-        )}
-      </div>
-
-      <div className="account-card-footer">
-        <strong>{formatCurrency(account.ac_balance)}</strong>
-
-        <div className="account-actions">
-          {account.ac_is_active ? (
-            <>
-              <button type="button" onClick={() => onEdit(account)}>
-                Editar
-              </button>
-
-              <button
-                type="button"
-                className="danger-button"
-                onClick={() => onDeactivate(account)}
-              >
-                Desactivar
-              </button>
-            </>
-          ) : (
-            <button type="button" onClick={() => onReactivate(account)}>
-              Reactivar
-            </button>
-          )}
-        </div>
-      </div>
-    </article>
-  );
-}
 
 export default function AccountsPage() {
   const { clientProfile } = useAuth();
@@ -327,7 +274,7 @@ export default function AccountsPage() {
             <p className="empty-message">{emptyMessage}</p>
           ) : (
             accountsToRender.map((account) => (
-              <AccountCard
+              <EnhancedAccountCard
                 key={account.ac_id}
                 account={account}
                 onEdit={handleEdit}

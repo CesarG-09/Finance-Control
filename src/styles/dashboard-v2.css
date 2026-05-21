@@ -1,0 +1,352 @@
+/* Trend Card */
+.trend-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 0.2s ease;
+}
+
+.trend-card:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-soft);
+}
+
+.trend-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+}
+
+.trend-icon {
+  font-size: 20px;
+}
+
+.trend-label {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.trend-body {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.trend-value {
+  font-size: 24px;
+  color: var(--color-text);
+  min-width: 120px;
+}
+
+.trend-indicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.trend-indicator.trend-positive {
+  background: var(--color-success-soft);
+  color: var(--color-success);
+}
+
+.trend-indicator.trend-negative {
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+
+.trend-arrow {
+  font-size: 16px;
+}
+
+.trend-comparison {
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
+.trend-line-container {
+  height: 32px;
+  background: var(--color-surface-soft);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.trend-line {
+  height: 100%;
+  background: linear-gradient(90deg,
+    var(--color-primary-soft) 0%,
+    var(--color-primary) 50%,
+    var(--color-primary-soft) 100%);
+  animation: trendPulse 2s ease-in-out infinite;
+}
+
+@keyframes trendPulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* Comparison Section */
+.comparison-section {
+  margin-top: 20px;
+}
+
+.comparison-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.top-categories {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--color-border);
+}
+
+.top-categories h3 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.categories-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.category-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: var(--color-surface-soft);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--color-primary);
+}
+
+.category-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.category-rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: var(--color-primary);
+  color: white;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.category-name {
+  font-weight: 600;
+  color: var(--color-text);
+  min-width: 100px;
+}
+
+.category-count {
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
+.category-amount {
+  color: var(--color-danger);
+  min-width: 80px;
+  text-align: right;
+}
+
+/* Health Score Card */
+.health-score-card {
+  margin-top: 20px;
+  background: linear-gradient(135deg,
+    var(--color-surface) 0%,
+    var(--color-surface-soft) 100%);
+}
+
+.health-header {
+  margin-bottom: 16px;
+}
+
+.health-header h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.health-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: center;
+}
+
+.health-score-display {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.health-score-circle {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.health-score-inner {
+  width: 90px;
+  height: 90px;
+  background: white;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.health-score-inner strong {
+  font-size: 32px;
+  color: var(--color-text);
+  line-height: 1;
+}
+
+.health-score-inner small {
+  font-size: 12px;
+  color: var(--color-muted);
+  margin-top: 2px;
+}
+
+.health-info {
+  flex: 1;
+}
+
+.health-label {
+  margin: 0 0 6px 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.health-description {
+  margin: 0 0 8px 0;
+  font-size: 13px;
+  color: var(--color-text);
+  line-height: 1.4;
+}
+
+.health-warning {
+  margin: 8px 0 0 0;
+  font-size: 12px;
+  color: var(--color-warning);
+  line-height: 1.4;
+}
+
+.health-success {
+  margin: 8px 0 0 0;
+  font-size: 12px;
+  color: var(--color-success);
+  line-height: 1.4;
+}
+
+.health-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.health-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  background: var(--color-surface);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  text-align: center;
+}
+
+.metric-label {
+  font-size: 12px;
+  color: var(--color-muted);
+  font-weight: 500;
+}
+
+.health-metric strong {
+  font-size: 16px;
+  color: var(--color-text);
+}
+
+/* Responsive */
+@media (max-width: 1100px) {
+  .comparison-grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+
+  .health-body {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .comparison-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .trend-body {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .trend-value {
+    min-width: auto;
+  }
+
+  .health-score-display {
+    gap: 16px;
+  }
+
+  .health-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .category-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .category-amount {
+    min-width: auto;
+    width: 100%;
+    text-align: left;
+  }
+}

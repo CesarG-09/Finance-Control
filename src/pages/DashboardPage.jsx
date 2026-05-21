@@ -6,7 +6,12 @@ import {
   getDashboardSummary,
   getMovementCategory,
   getMovementSignedAmount,
+  getMonthMovementsByClientId,
 } from '../services/dashboardService';
+import { ComparisonSection } from '../components/dashboard/ComparisonSection';
+import { HealthScore } from '../components/dashboard/HealthScore';
+import { compareMovements } from '../services/analysisService';
+import { getTopCategories, calculateHealthScore } from '../services/chartService';
 
 function formatCurrency(value) {
   return new Intl.NumberFormat('es-PA', {
@@ -23,15 +28,14 @@ function formatSignedCurrency(value) {
 }
 
 function formatDate(value) {
-  if (!value) {
-    return '-';
-  }
-
+  if (!value) return '-';
+  const s = String(value);
+  const dateStr = s.includes('T') || s.includes(' ') ? s : `${s}T00:00:00`;
   return new Intl.DateTimeFormat('es-PA', {
     year: 'numeric',
     month: 'short',
     day: '2-digit',
-  }).format(new Date(`${value}T00:00:00`));
+  }).format(new Date(dateStr));
 }
 
 export default function DashboardPage() {
@@ -45,6 +49,14 @@ export default function DashboardPage() {
     latestMovements: [],
   });
 
+  const [comparison, setComparison] = useState({
+    current: { income: 0, expenses: 0, net: 0, count: 0 },
+    previous: { income: 0, expenses: 0, net: 0, count: 0 },
+  });
+
+  const [topCategories, setTopCategories] = useState([]);
+  const [healthScore, setHealthScore] = useState(75);
+  const [currentMovements, setCurrentMovements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -63,8 +75,36 @@ export default function DashboardPage() {
       setLoading(true);
       setError('');
 
+      // Get current month data
       const dashboardData = await getDashboardSummary(clientId);
       setSummary(dashboardData);
+
+      // Get movements for comparisons and analysis
+      const currentDate = new Date();
+      const currentMovements = await getMonthMovementsByClientId(clientId, {
+        sortDirection: 'desc',
+      });
+      setCurrentMovements(currentMovements);
+
+      // Get previous month data
+      const previousDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1);
+      const previousMonthStr = `${previousDate.getFullYear()}-${String(previousDate.getMonth() + 1).padStart(2, '0')}`;
+      const previousMovements = await getMonthMovementsByClientId(clientId, {
+        month: previousMonthStr,
+        sortDirection: 'desc',
+      });
+
+      // Calculate comparisons
+      const comparisonData = compareMovements(currentMovements, previousMovements);
+      setComparison(comparisonData);
+
+      // Calculate top categories
+      const categories = getTopCategories(currentMovements, 3);
+      setTopCategories(categories);
+
+      // Calculate health score
+      const score = calculateHealthScore(currentMovements);
+      setHealthScore(score);
     } catch (currentError) {
       setError(currentError.message);
     } finally {
@@ -126,6 +166,14 @@ export default function DashboardPage() {
           <small>Entradas menos salidas</small>
         </article>
       </section>
+
+      <ComparisonSection
+        current={comparison.current}
+        previous={comparison.previous}
+        topCategories={topCategories}
+      />
+
+      <HealthScore score={healthScore} movements={currentMovements} />
 
       <section className="panel dashboard-table-panel">
         <div className="section-header">

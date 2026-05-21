@@ -252,8 +252,21 @@
 .main-content {
   height: 100vh;
   min-width: 0;
-  padding: 32px;
+  padding: 24px;
   overflow: hidden;
+  font-size: var(--content-font-size-desktop);
+}
+
+.main-content :is(.panel, .summary-card, .dashboard-card, .trend-card, .category-item) {
+  border-radius: var(--radius-md);
+}
+
+.main-content :is(.panel, .summary-card, .dashboard-card, .trend-card) {
+  padding: var(--content-space-lg);
+}
+
+.main-content :is(.form, .dashboard-cards-grid, .movements-summary-grid, .comparison-grid) {
+  gap: var(--content-space-md);
 }
 
 .scrollable-main-content,
@@ -365,4 +378,19 @@
 
 .sidebar-link-icon {
   position: relative;
+}
+
+
+@media (max-width: 900px) {
+  .main-content {
+    font-size: var(--content-font-size-mobile);
+    padding: 20px;
+  }
+}
+
+@media (max-width: 700px) {
+  .main-content {
+    font-size: var(--content-font-size-mobile);
+    padding: 16px;
+  }
 }

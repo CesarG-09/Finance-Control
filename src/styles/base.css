@@ -20,9 +20,20 @@
   --color-border: #e5e7eb;
   --shadow-sm: 0 6px 16px rgba(15, 23, 42, 0.06);
   --shadow-md: 0 12px 28px rgba(15, 23, 42, 0.08);
-  --radius-sm: 10px;
-  --radius-md: 14px;
-  --radius-lg: 18px;
+  --radius-sm: var(--content-radius-sm);
+  --radius-md: var(--content-radius-md);
+  --radius-lg: var(--content-radius-lg);
+  --ui-scale-desktop: 0.8;
+  --ui-scale-mobile: 1;
+  --content-font-size-desktop: calc(16px * var(--ui-scale-desktop));
+  --content-font-size-mobile: calc(16px * var(--ui-scale-mobile));
+  --content-space-xs: 6px;
+  --content-space-sm: 8px;
+  --content-space-md: 12px;
+  --content-space-lg: 16px;
+  --content-radius-sm: 8px;
+  --content-radius-md: 11px;
+  --content-radius-lg: 14px;
 }
 
 html,
@@ -49,7 +60,7 @@ button,
   cursor: pointer;
   border: none;
   border-radius: var(--radius-sm);
-  padding: 10px 14px;
+  padding: var(--content-space-md) var(--content-space-lg);
   background: var(--color-primary);
   color: white;
   font-weight: 700;
@@ -74,7 +85,7 @@ button:disabled {
 input,
 select {
   width: 100%;
-  padding: 11px 12px;
+  padding: 10px var(--content-space-md);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   background: white;
@@ -99,7 +110,7 @@ select:disabled {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  padding: 20px;
+  padding: var(--content-space-lg);
   box-shadow: var(--shadow-sm);
 }
 
@@ -110,8 +121,8 @@ select:disabled {
 
 .form {
   display: grid;
-  gap: 14px;
-  margin-top: 20px;
+  gap: var(--content-space-md);
+  margin-top: var(--content-space-lg);
 }
 
 .form label,
@@ -124,7 +135,7 @@ select:disabled {
 .form-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: var(--content-space-sm);
   margin-top: 4px;
 }
 

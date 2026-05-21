@@ -1,0 +1,225 @@
+/* ================================================================
+   MOVEMENTS FILTERS — panel unificado
+================================================================ */
+
+.movements-filters-panel {
+  margin-bottom: 14px;
+  padding: 14px 18px;
+}
+
+/* Cabecera del panel */
+.movements-filters-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.movements-filters-header h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.movements-clear-btn {
+  background: none;
+  border: 1px solid var(--color-border);
+  color: var(--color-muted);
+  font-size: 12px;
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  height: auto;
+}
+
+.movements-clear-btn:hover {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+  background: var(--color-danger-soft);
+  transform: none;
+  box-shadow: none;
+}
+
+/* Fila de filtros básicos */
+.movements-filters-basic {
+  display: grid;
+  grid-template-columns: minmax(0, 200px) minmax(0, 1fr) minmax(0, 180px) minmax(0, 220px);
+  gap: 14px;
+  align-items: end;
+}
+
+/* Separador + toggle */
+.movements-filters-divider {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+}
+
+.movements-advanced-toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-muted);
+  transition: color 0.18s ease;
+}
+
+.movements-advanced-toggle:hover,
+.movements-advanced-toggle:hover .toggle-chevron-icon {
+  color: var(--color-primary);
+  background: none;
+  transform: none;
+  box-shadow: none;
+}
+
+.toggle-chevron-icon {
+  display: inline-block;
+  font-size: 18px;
+  line-height: 1;
+  transition: transform 0.2s ease;
+  color: var(--color-muted);
+}
+
+.toggle-chevron-icon.open {
+  transform: rotate(90deg);
+}
+
+.advanced-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  background: var(--color-primary-soft);
+  color: var(--color-primary-dark);
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  margin-left: 2px;
+}
+
+/* Área de filtros avanzados */
+.movements-filters-advanced {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px dashed var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  animation: filtersFadeIn 0.2s ease;
+}
+
+@keyframes filtersFadeIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Grid para los campos avanzados */
+.advanced-fields-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+  gap: 14px;
+  align-items: end;
+}
+
+.advanced-field-full {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.advanced-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.filter-field-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+/* SearchBox dentro de filtros */
+.movements-filters-advanced .search-box {
+  width: 100%;
+}
+
+.movements-filters-advanced .search-input {
+  padding: 10px 36px 10px 12px !important;
+  font-size: 13px;
+}
+
+/* Tags de filtros activos */
+.active-filters-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-top: 2px;
+}
+
+/* Responsive */
+@media (max-width: 1250px) {
+  .movements-filters-basic {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .advanced-fields-grid {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+
+  .advanced-field-full {
+    grid-column: span 3;
+  }
+}
+
+@media (max-width: 900px) {
+  .movements-filters-basic {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .advanced-fields-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .advanced-field-full {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 700px) {
+  .movements-filters-panel {
+    padding: 16px;
+  }
+
+  .movements-filters-basic {
+    grid-template-columns: 1fr;
+  }
+
+  .advanced-fields-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .advanced-field-full {
+    grid-column: span 1;
+  }
+
+  .movements-filters-header {
+    margin-bottom: 14px;
+  }
+}
+
+
+.movement-time-cell {
+  font-size: 12px;
+  color: var(--color-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}

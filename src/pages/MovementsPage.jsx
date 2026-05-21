@@ -7,7 +7,13 @@ import {
   getMovementCategory,
   getMovementSignedAmount,
   getMonthMovementsByClientId,
+  getMonthRange,
 } from '../services/dashboardService';
+import { SearchBox } from '../components/ui/SearchBox';
+import { DateRangeSelector } from '../components/ui/DateRangeSelector';
+import { PillTag } from '../components/ui/PillTag';
+import { useDebounce } from '../hooks/useDebounce';
+import { filterByAmountRange, searchMovements } from '../services/filterService';
 
 function formatCurrency(value) {
   return new Intl.NumberFormat('es-PA', {
@@ -24,15 +30,14 @@ function formatSignedCurrency(value) {
 }
 
 function formatDate(value) {
-  if (!value) {
-    return '-';
-  }
-
+  if (!value) return '-';
+  const s = String(value);
+  const dateStr = s.includes('T') || s.includes(' ') ? s : `${s}T00:00:00`;
   return new Intl.DateTimeFormat('es-PA', {
     year: 'numeric',
     month: 'short',
     day: '2-digit',
-  }).format(new Date(`${value}T00:00:00`));
+  }).format(new Date(dateStr));
 }
 
 export default function MovementsPage() {
@@ -51,13 +56,59 @@ export default function MovementsPage() {
     sortDirection: 'desc',
   });
 
+  const [advancedFilters, setAdvancedFilters] = useState({
+    searchTerm: '',
+    minAmount: '',
+    maxAmount: '',
+    startDate: '',
+    endDate: '',
+  });
+
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const debouncedSearchTerm = useDebounce(advancedFilters.searchTerm, 300);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   const clientId = clientProfile?.cl_id;
 
+  // Apply advanced filters to movements
+  const filteredMovements = useMemo(() => {
+    let filtered = [...movements];
+
+    // Apply search filter
+    if (debouncedSearchTerm) {
+      filtered = searchMovements(filtered, debouncedSearchTerm);
+    }
+
+    // Apply amount range filter
+    const minAmount = advancedFilters.minAmount
+      ? parseFloat(advancedFilters.minAmount)
+      : null;
+    const maxAmount = advancedFilters.maxAmount
+      ? parseFloat(advancedFilters.maxAmount)
+      : null;
+
+    if (minAmount !== null || maxAmount !== null) {
+      filtered = filterByAmountRange(filtered, minAmount, maxAmount);
+    }
+
+    // Apply date range filter (if using advanced date picker)
+    if (advancedFilters.startDate || advancedFilters.endDate) {
+      filtered = filtered.filter((m) => {
+        const date = m.tr_date || m.created_at?.slice(0, 10);
+        if (advancedFilters.startDate && date < advancedFilters.startDate)
+          return false;
+        if (advancedFilters.endDate && date > advancedFilters.endDate)
+          return false;
+        return true;
+      });
+    }
+
+    return filtered;
+  }, [movements, debouncedSearchTerm, advancedFilters]);
+
   const totals = useMemo(() => {
-    return movements.reduce(
+    return filteredMovements.reduce(
       (accumulator, movement) => {
         const signedAmount = getMovementSignedAmount(movement);
 
@@ -77,7 +128,7 @@ export default function MovementsPage() {
         net: 0,
       }
     );
-  }, [movements]);
+  }, [filteredMovements]);
 
   useEffect(() => {
     if (!clientId) {
@@ -144,6 +195,27 @@ export default function MovementsPage() {
       month: currentMonth,
       sortDirection: 'desc',
     });
+    setAdvancedFilters({
+      searchTerm: '',
+      minAmount: '',
+      maxAmount: '',
+      startDate: '',
+      endDate: '',
+    });
+  }
+
+  function handleAdvancedFilterChange(newFilters) {
+    setAdvancedFilters(newFilters);
+  }
+
+  function hasActiveAdvancedFilters() {
+    return (
+      advancedFilters.searchTerm ||
+      advancedFilters.minAmount ||
+      advancedFilters.maxAmount ||
+      advancedFilters.startDate ||
+      advancedFilters.endDate
+    );
   }
 
   return (
@@ -182,9 +254,26 @@ export default function MovementsPage() {
       </section>
 
       <section className="panel movements-filters-panel">
-        <h2>Filtros básicos</h2>
+        <div className="movements-filters-header">
+          <div>
+            <h2>Filtros</h2>
+          </div>
 
-        <div className="filters-grid movements-filters-grid">
+          <div className="movements-filters-actions-row">
+            {(hasActiveAdvancedFilters() || filters.accountId || filters.typeId) && (
+              <button
+                type="button"
+                className="secondary-button movements-clear-btn"
+                onClick={handleClearFilters}
+              >
+                Limpiar todo
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Filtros básicos */}
+        <div className="movements-filters-basic">
           <label className="filter-field filter-field-month">
             Mes
             <input
@@ -202,7 +291,7 @@ export default function MovementsPage() {
               value={filters.accountId}
               onChange={handleFilterChange}
             >
-              <option value="">Todas las cuentas activas</option>
+              <option value="">Todas las cuentas</option>
               {accounts.map((account) => (
                 <option key={account.ac_id} value={account.ac_id}>
                   {account.ac_name}
@@ -238,17 +327,139 @@ export default function MovementsPage() {
               <option value="asc">Más antiguos primero</option>
             </select>
           </label>
-
-          <div className="filters-actions movements-filter-actions">
-            <button
-              type="button"
-              className="secondary-button"
-              onClick={handleClearFilters}
-            >
-              Limpiar filtros
-            </button>
-          </div>
         </div>
+
+        {/* Separador y toggle filtros avanzados */}
+        <div className="movements-filters-divider">
+          <button
+            type="button"
+            className="movements-advanced-toggle"
+            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+            aria-expanded={showAdvancedFilters}
+          >
+            <span className={`toggle-chevron-icon ${showAdvancedFilters ? 'open' : ''}`}>›</span>
+            Más filtros
+            {hasActiveAdvancedFilters() && (
+              <span className="advanced-badge">{Object.values(advancedFilters).filter(v => v).length} activos</span>
+            )}
+          </button>
+        </div>
+
+        {/* Filtros avanzados expandibles */}
+        {showAdvancedFilters && (
+          <div className="movements-filters-advanced">
+            <div className="advanced-fields-grid">
+              <div className="advanced-field-full">
+                <label className="filter-field-label">Buscar por nombre o descripción</label>
+                <SearchBox
+                  placeholder="Ej: Comida, Salario, Renta..."
+                  value={advancedFilters.searchTerm}
+                  onSearchChange={(value) =>
+                    handleAdvancedFilterChange({ ...advancedFilters, searchTerm: value })
+                  }
+                  debounceDelay={300}
+                  clearable={true}
+                />
+              </div>
+
+              <div className="advanced-field">
+                <label htmlFor="min-amount" className="filter-field-label">Monto mínimo</label>
+                <input
+                  id="min-amount"
+                  type="number"
+                  placeholder="0.00"
+                  value={advancedFilters.minAmount}
+                  onChange={(e) =>
+                    handleAdvancedFilterChange({ ...advancedFilters, minAmount: e.target.value })
+                  }
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+
+              <div className="advanced-field">
+                <label htmlFor="max-amount" className="filter-field-label">Monto máximo</label>
+                <input
+                  id="max-amount"
+                  type="number"
+                  placeholder="9,999.99"
+                  value={advancedFilters.maxAmount}
+                  onChange={(e) =>
+                    handleAdvancedFilterChange({ ...advancedFilters, maxAmount: e.target.value })
+                  }
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+
+              <div className="advanced-field">
+                <label htmlFor="adv-start-date" className="filter-field-label">Desde (fecha)</label>
+                <input
+                  id="adv-start-date"
+                  type="date"
+                  value={advancedFilters.startDate}
+                  onChange={(e) =>
+                    handleAdvancedFilterChange({ ...advancedFilters, startDate: e.target.value })
+                  }
+                  max={advancedFilters.endDate || undefined}
+                />
+              </div>
+
+              <div className="advanced-field">
+                <label htmlFor="adv-end-date" className="filter-field-label">Hasta (fecha)</label>
+                <input
+                  id="adv-end-date"
+                  type="date"
+                  value={advancedFilters.endDate}
+                  onChange={(e) =>
+                    handleAdvancedFilterChange({ ...advancedFilters, endDate: e.target.value })
+                  }
+                  min={advancedFilters.startDate || undefined}
+                />
+              </div>
+            </div>
+
+            {hasActiveAdvancedFilters() && (
+              <div className="active-filters-tags">
+                {advancedFilters.searchTerm && (
+                  <PillTag
+                    label={`"${advancedFilters.searchTerm}"`}
+                    variant="primary"
+                    onRemove={() => handleAdvancedFilterChange({ ...advancedFilters, searchTerm: '' })}
+                  />
+                )}
+                {advancedFilters.minAmount && (
+                  <PillTag
+                    label={`Mín $${advancedFilters.minAmount}`}
+                    variant="default"
+                    onRemove={() => handleAdvancedFilterChange({ ...advancedFilters, minAmount: '' })}
+                  />
+                )}
+                {advancedFilters.maxAmount && (
+                  <PillTag
+                    label={`Máx $${advancedFilters.maxAmount}`}
+                    variant="default"
+                    onRemove={() => handleAdvancedFilterChange({ ...advancedFilters, maxAmount: '' })}
+                  />
+                )}
+                {advancedFilters.startDate && (
+                  <PillTag
+                    label={`Desde ${advancedFilters.startDate}`}
+                    variant="default"
+                    onRemove={() => handleAdvancedFilterChange({ ...advancedFilters, startDate: '' })}
+                  />
+                )}
+                {advancedFilters.endDate && (
+                  <PillTag
+                    label={`Hasta ${advancedFilters.endDate}`}
+                    variant="default"
+                    onRemove={() => handleAdvancedFilterChange({ ...advancedFilters, endDate: '' })}
+                  />
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </section>
 
       <section className="panel movements-table-panel">
@@ -261,7 +472,7 @@ export default function MovementsPage() {
 
         {loading ? (
           <p>Cargando movimientos...</p>
-        ) : movements.length === 0 ? (
+        ) : filteredMovements.length === 0 ? (
           <p className="empty-message">
             No hay movimientos para los filtros seleccionados.
           </p>
@@ -271,6 +482,7 @@ export default function MovementsPage() {
               <thead>
                 <tr>
                   <th>Fecha</th>
+                  <th>Hora</th>
                   <th>Cuenta</th>
                   <th>Tipo</th>
                   <th>Categoría</th>
@@ -280,8 +492,11 @@ export default function MovementsPage() {
               </thead>
 
               <tbody>
-                {movements.map((movement) => {
+                {filteredMovements.map((movement) => {
                   const signedAmount = getMovementSignedAmount(movement);
+                  const timeStr = movement.tr_time
+                    ? String(movement.tr_time).slice(0, 5)
+                    : null;
 
                   return (
                     <tr
@@ -289,6 +504,7 @@ export default function MovementsPage() {
                       className={movement.movement_source === 'initial_balance' ? 'initial-balance-row' : ''}
                     >
                       <td>{formatDate(movement.tr_date || movement.created_at?.slice(0, 10))}</td>
+                      <td className="movement-time-cell">{timeStr || '—'}</td>
                       <td>{movement.account?.ac_name || 'Sin cuenta'}</td>
                       <td>
                         {movement.movement_source === 'initial_balance'
