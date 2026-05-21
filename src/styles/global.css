@@ -30,6 +30,16 @@
   --radius-sm: 10px;
   --radius-md: 14px;
   --radius-lg: 18px;
+
+  /* Category Colors */
+  --category-alimentacion: #f87171;
+  --category-transporte: #fb923c;
+  --category-entretenimiento: #fbbf24;
+  --category-salud: #34d399;
+  --category-educacion: #60a5fa;
+  --category-vivienda: #a78bfa;
+  --category-compras: #f472b6;
+  --category-otro: #94a3b8;
 }
 
 html,
