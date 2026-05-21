@@ -103,7 +103,7 @@ export default function DashboardPage() {
       setTopCategories(categories);
 
       // Calculate health score
-      const score = calculateHealthScore(currentMovements, comparisonData.current.income);
+      const score = calculateHealthScore(currentMovements);
       setHealthScore(score);
     } catch (currentError) {
       setError(currentError.message);

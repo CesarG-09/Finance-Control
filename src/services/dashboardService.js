@@ -224,8 +224,8 @@ export async function getMonthMovementsByClientId(clientId, filters = {}) {
       return sortDirection === 'asc' ? dateA.localeCompare(dateB) : dateB.localeCompare(dateA);
     }
 
-    const timeA = a.tr_time ?? '99:99:99';
-    const timeB = b.tr_time ?? '99:99:99';
+    const timeA = a.tr_time ?? '00:00:00';
+    const timeB = b.tr_time ?? '00:00:00';
 
     if (timeA !== timeB) {
       return sortDirection === 'asc' ? timeA.localeCompare(timeB) : timeB.localeCompare(timeA);

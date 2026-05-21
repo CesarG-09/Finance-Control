@@ -186,6 +186,7 @@ export default function TransactionsPage() {
   const [selectedAccountId, setSelectedAccountId] = useState('');
   const [editingTransaction, setEditingTransaction] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortDirection, setSortDirection] = useState('desc');
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -212,9 +213,30 @@ export default function TransactionsPage() {
   );
 
   const filteredTransactions = useMemo(() => {
-    if (!debouncedSearchTerm) return transactions;
-    return searchMovements(transactions, debouncedSearchTerm);
-  }, [transactions, debouncedSearchTerm]);
+    const list = debouncedSearchTerm
+      ? searchMovements(transactions, debouncedSearchTerm)
+      : transactions;
+
+    return [...list].sort((a, b) => {
+      const dateA = a.tr_date ? String(a.tr_date).slice(0, 10) : a.created_at?.slice(0, 10) ?? '';
+      const dateB = b.tr_date ? String(b.tr_date).slice(0, 10) : b.created_at?.slice(0, 10) ?? '';
+
+      if (dateA !== dateB) {
+        return sortDirection === 'asc' ? dateA.localeCompare(dateB) : dateB.localeCompare(dateA);
+      }
+
+      const timeA = a.tr_time ?? '00:00:00';
+      const timeB = b.tr_time ?? '00:00:00';
+
+      if (timeA !== timeB) {
+        return sortDirection === 'asc' ? timeA.localeCompare(timeB) : timeB.localeCompare(timeA);
+      }
+
+      const createdA = new Date(a.created_at ?? 0).getTime();
+      const createdB = new Date(b.created_at ?? 0).getTime();
+      return sortDirection === 'asc' ? createdA - createdB : createdB - createdA;
+    });
+  }, [transactions, debouncedSearchTerm, sortDirection]);
 
   const transactionCount = transactions.filter(
     (transaction) => transaction.movement_source !== 'initial_balance'
@@ -488,6 +510,17 @@ function handleCancelEdit() {
                 Solo se muestran transacciones activas de la cuenta seleccionada.
               </p>
             </div>
+
+            {transactions.length > 0 && (
+              <button
+                type="button"
+                className="sort-toggle-btn"
+                onClick={() => setSortDirection((d) => d === 'desc' ? 'asc' : 'desc')}
+                title={sortDirection === 'desc' ? 'Orden: más recientes primero' : 'Orden: más antiguos primero'}
+              >
+                {sortDirection === 'desc' ? '↓ Más recientes' : '↑ Más antiguos'}
+              </button>
+            )}
           </div>
 
           {selectedAccountId && transactions.length > 0 && (
