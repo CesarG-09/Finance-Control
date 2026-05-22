@@ -17,6 +17,8 @@ import {
   getAccountTransactionsWithInitialBalance,
   getActiveTypeTransactions,
   updateTransaction,
+  updateRecurringTransactionInstanceOnly,
+  updateRecurringTransactionAndFuture,
 } from '../services/transactionService';
 import {
   createRecurringTransaction,
@@ -474,10 +476,6 @@ function handleCancelEdit() {
 }
 
 async function handleRecurringEditChoice(choice) {
-  const { updateRecurringTransactionInstanceOnly, updateRecurringTransactionAndFuture } = await import(
-    '../services/transactionService'
-  );
-
   try {
     setSaving(true);
     setError('');
@@ -721,15 +719,14 @@ async function handleRecurringTransactionDeactivate(rtrId) {
       )}
 
       {activeTab === 'recurring' && (
-        <div className="transactions-layout">
-          {creatingRecurringTransaction || editingRecurringTransaction ? (
+        creatingRecurringTransaction || editingRecurringTransaction ? (
+          <div className="transactions-layout">
             <section className="panel transaction-form-panel">
               <h2>
                 {editingRecurringTransaction
                   ? 'Editar transacción recurrente'
                   : 'Nueva transacción recurrente'}
               </h2>
-
               <RecurringTransactionForm
                 accounts={activeAccounts}
                 typeTransactions={typeTransactions}
@@ -741,18 +738,18 @@ async function handleRecurringTransactionDeactivate(rtrId) {
                 onCancel={handleCancelRecurringEdit}
               />
             </section>
-          ) : (
-            <section className="panel transactions-section" style={{ width: '100%' }}>
-              <RecurringTransactionList
-                recurringTransactions={recurringTransactions}
-                onEdit={handleRecurringTransactionEdit}
-                onDeactivate={handleRecurringTransactionDeactivate}
-                onCreateNew={() => setCreatingRecurringTransaction(true)}
-                loading={saving}
-              />
-            </section>
-          )}
-        </div>
+          </div>
+        ) : (
+          <section className="panel">
+            <RecurringTransactionList
+              recurringTransactions={recurringTransactions}
+              onEdit={handleRecurringTransactionEdit}
+              onDeactivate={handleRecurringTransactionDeactivate}
+              onCreateNew={() => setCreatingRecurringTransaction(true)}
+              loading={saving}
+            />
+          </section>
+        )
       )}
 
       {showRecurringEditDialog && editingTransaction?.rtr_id && (

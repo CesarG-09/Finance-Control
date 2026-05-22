@@ -49,10 +49,7 @@ export async function getFrequencies() {
     .eq('fr_is_active', true)
     .order('fr_id', { ascending: true });
 
-  if (error) {
-    throw error;
-  }
-
+  if (error) throw error;
   return data ?? [];
 }
 
@@ -62,12 +59,9 @@ export async function getActiveRecurringTransactions() {
     .from('recurrent_transaction')
     .select(RECURRING_TRANSACTION_SELECT)
     .eq('rtr_is_active', true)
-    .order('rtr_start_date', { ascending: false });
+    .order('created_at', { ascending: false });
 
-  if (error) {
-    throw error;
-  }
-
+  if (error) throw error;
   return data ?? [];
 }
 
@@ -79,57 +73,56 @@ export async function getRecurringTransactionById(rtrId) {
     .eq('rtr_id', rtrId)
     .single();
 
-  if (error) {
-    throw error;
-  }
-
+  if (error) throw error;
   return data;
 }
 
 function validateRecurringTransactionPayload(transaction) {
-  if (!transaction.ac_id) {
-    throw new Error('Debes seleccionar una cuenta.');
-  }
-
-  if (!transaction.ty_id) {
-    throw new Error('Debes seleccionar Entrada o Salida.');
-  }
-
-  if (!transaction.fr_id) {
-    throw new Error('Debes seleccionar una frecuencia.');
-  }
-
-  if (!transaction.rtr_name?.trim()) {
-    throw new Error('El nombre de la transacción recurrente es obligatorio.');
-  }
-
-  if (!transaction.rtr_start_date) {
-    throw new Error('La fecha de inicio es obligatoria.');
-  }
+  if (!transaction.ac_id) throw new Error('Debes seleccionar una cuenta.');
+  if (!transaction.ty_id) throw new Error('Debes seleccionar Entrada o Salida.');
+  if (!transaction.fr_id) throw new Error('Debes seleccionar una frecuencia.');
+  if (!transaction.rtr_name?.trim()) throw new Error('El nombre es obligatorio.');
+  if (!transaction.rtr_start_date) throw new Error('La fecha de inicio es obligatoria.');
 
   if (!Array.isArray(transaction.sct_ids) || transaction.sct_ids.length === 0) {
-    throw new Error('Debes seleccionar al menos una categoría/subcategoría.');
+    throw new Error('Debes seleccionar al menos una subcategoría.');
   }
 
   const amount = Number(transaction.rtr_estimated_amount);
+  if (!Number.isFinite(amount)) throw new Error('El monto debe ser un número válido.');
+  if (amount <= 0) throw new Error('El monto debe ser mayor a 0.');
 
-  if (!Number.isFinite(amount)) {
-    throw new Error('El monto debe ser un número válido.');
+  const freqName = transaction.fr_name;
+
+  // reference_day is required only for Semanal and Mensual
+  if (freqName === 'Semanal' || freqName === 'Mensual') {
+    const refDay = Number(transaction.rtr_reference_day);
+    if (!Number.isInteger(refDay)) throw new Error('El día de referencia es obligatorio.');
+
+    if (freqName === 'Semanal' && (refDay < 0 || refDay > 6)) {
+      throw new Error('El día de la semana debe estar entre 0 (domingo) y 6 (sábado).');
+    }
+    if (freqName === 'Mensual' && (refDay < 1 || refDay > 31)) {
+      throw new Error('El día del mes debe estar entre 1 y 31.');
+    }
   }
 
-  if (amount <= 0) {
-    throw new Error('El monto debe ser mayor a 0.');
-  }
-
-  const referenceDay = Number(transaction.rtr_reference_day);
-  if (!Number.isInteger(referenceDay) || referenceDay < 1 || referenceDay > 31) {
-    throw new Error('El día de referencia debe estar entre 1 y 31.');
-  }
+  // For Anual, Quincenal and Diaria, reference_day is derived from start_date or ignored
+  const referenceDay = (() => {
+    if (freqName === 'Semanal') return Number(transaction.rtr_reference_day);
+    if (freqName === 'Mensual') return Number(transaction.rtr_reference_day);
+    if (freqName === 'Anual') {
+      // Store the day-of-month from start_date so generation can use it
+      return new Date(transaction.rtr_start_date).getDate();
+    }
+    return 1; // unused for Diaria and Quincenal
+  })();
 
   return {
     ac_id: Number(transaction.ac_id),
     ty_id: Number(transaction.ty_id),
     fr_id: Number(transaction.fr_id),
+    fr_name: freqName,
     rtr_name: transaction.rtr_name.trim(),
     rtr_description: transaction.rtr_description?.trim() || null,
     rtr_estimated_amount: amount,
@@ -143,7 +136,7 @@ function validateRecurringTransactionPayload(transaction) {
 export async function createRecurringTransaction(transaction) {
   const payload = validateRecurringTransactionPayload(transaction);
 
-  const { data: newRecurringTransaction, error: rtrError } = await supabase
+  const { data: newRtr, error: rtrError } = await supabase
     .schema('ctrl_finance')
     .from('recurrent_transaction')
     .insert({
@@ -161,12 +154,10 @@ export async function createRecurringTransaction(transaction) {
     .select('rtr_id')
     .single();
 
-  if (rtrError) {
-    throw rtrError;
-  }
+  if (rtrError) throw rtrError;
 
   const subcategoryInserts = payload.sct_ids.map(sct_id => ({
-    rtr_id: newRecurringTransaction.rtr_id,
+    rtr_id: newRtr.rtr_id,
     sct_id,
     rts_is_active: true,
   }));
@@ -176,17 +167,13 @@ export async function createRecurringTransaction(transaction) {
     .from('recurrent_transaction_subcategory')
     .insert(subcategoryInserts);
 
-  if (subcategoryError) {
-    throw subcategoryError;
-  }
+  if (subcategoryError) throw subcategoryError;
 
-  return await getRecurringTransactionById(newRecurringTransaction.rtr_id);
+  return await getRecurringTransactionById(newRtr.rtr_id);
 }
 
 export async function updateRecurringTransaction(rtrId, transaction) {
-  if (!rtrId) {
-    throw new Error('Falta el ID de la transacción recurrente.');
-  }
+  if (!rtrId) throw new Error('Falta el ID de la transacción recurrente.');
 
   const payload = validateRecurringTransactionPayload(transaction);
 
@@ -206,19 +193,13 @@ export async function updateRecurringTransaction(rtrId, transaction) {
     })
     .eq('rtr_id', rtrId);
 
-  if (rtrError) {
-    throw rtrError;
-  }
+  if (rtrError) throw rtrError;
 
-  const { error: deactivateError } = await supabase
+  await supabase
     .schema('ctrl_finance')
     .from('recurrent_transaction_subcategory')
     .update({ rts_is_active: false })
     .eq('rtr_id', rtrId);
-
-  if (deactivateError) {
-    throw deactivateError;
-  }
 
   const subcategoryInserts = payload.sct_ids.map(sct_id => ({
     rtr_id,
@@ -231,17 +212,13 @@ export async function updateRecurringTransaction(rtrId, transaction) {
     .from('recurrent_transaction_subcategory')
     .insert(subcategoryInserts);
 
-  if (insertSubcategoryError) {
-    throw insertSubcategoryError;
-  }
+  if (insertSubcategoryError) throw insertSubcategoryError;
 
   return await getRecurringTransactionById(rtrId);
 }
 
 export async function deactivateRecurringTransaction(rtrId) {
-  if (!rtrId) {
-    throw new Error('Falta el ID de la transacción recurrente.');
-  }
+  if (!rtrId) throw new Error('Falta el ID de la transacción recurrente.');
 
   const { error } = await supabase
     .schema('ctrl_finance')
@@ -249,196 +226,241 @@ export async function deactivateRecurringTransaction(rtrId) {
     .update({ rtr_is_active: false })
     .eq('rtr_id', rtrId);
 
-  if (error) {
-    throw error;
-  }
+  if (error) throw error;
 }
 
+// ---------------------------------------------------------------------------
+// Date generation helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns all dates from startDate up to endDate (exclusive of future)
+ * for the given frequency. referenceDay semantics:
+ *   Semanal  → 0 (sun) … 6 (sat), JavaScript getDay() convention
+ *   Mensual  → 1 … 31  (day of month; clamped to last day of each month)
+ *   Anual    → stored as day-of-month from rtr_start_date (month from start_date)
+ *   Diaria   → unused
+ *   Quincenal→ unused (always 15-day intervals from startDate)
+ */
 function generateDatesForFrequency(frequency, startDate, referenceDay, endDate) {
   const dates = [];
-  const start = new Date(startDate);
-  const end = endDate ? new Date(endDate) : new Date();
+  const startTs = new Date(startDate);
+  startTs.setHours(0, 0, 0, 0);
+  const endTs = endDate ? new Date(endDate) : new Date();
+  endTs.setHours(23, 59, 59, 999);
+
+  if (startTs > endTs) return dates;
 
   if (frequency === 'Diaria') {
-    const current = new Date(start);
-    while (current <= end) {
-      dates.push(new Date(current));
-      current.setDate(current.getDate() + 1);
+    const cur = new Date(startTs);
+    while (cur <= endTs) {
+      dates.push(new Date(cur));
+      cur.setDate(cur.getDate() + 1);
     }
   } else if (frequency === 'Semanal') {
-    const targetDayOfWeek = referenceDay;
-    const current = new Date(start);
-    const startDayDiff = (targetDayOfWeek - current.getDay() + 7) % 7;
-    current.setDate(current.getDate() + (startDayDiff === 0 ? 0 : startDayDiff));
+    // Advance from startDate to first occurrence of targetDayOfWeek >= startDate
+    const target = Number(referenceDay); // 0-6
+    const cur = new Date(startTs);
+    const diff = (target - cur.getDay() + 7) % 7;
+    cur.setDate(cur.getDate() + diff);
 
-    while (current <= end) {
-      dates.push(new Date(current));
-      current.setDate(current.getDate() + 7);
+    while (cur <= endTs) {
+      dates.push(new Date(cur));
+      cur.setDate(cur.getDate() + 7);
     }
   } else if (frequency === 'Quincenal') {
-    const current = new Date(start);
-    while (current <= end) {
-      dates.push(new Date(current));
-      current.setDate(current.getDate() + 15);
+    const cur = new Date(startTs);
+    while (cur <= endTs) {
+      dates.push(new Date(cur));
+      cur.setDate(cur.getDate() + 15);
     }
   } else if (frequency === 'Mensual') {
-    const current = new Date(start.getFullYear(), start.getMonth(), referenceDay);
-    if (current < start) {
-      current.setMonth(current.getMonth() + 1);
-    }
+    const targetDay = Number(referenceDay); // 1-31
+    // Start from the month of startDate
+    const cur = new Date(startTs.getFullYear(), startTs.getMonth(), 1);
 
-    while (current <= end) {
-      dates.push(new Date(current));
-      current.setMonth(current.getMonth() + 1);
+    while (cur <= endTs) {
+      const lastDay = new Date(cur.getFullYear(), cur.getMonth() + 1, 0).getDate();
+      const day = Math.min(targetDay, lastDay);
+      const candidate = new Date(cur.getFullYear(), cur.getMonth(), day);
+      candidate.setHours(0, 0, 0, 0);
+
+      if (candidate >= startTs && candidate <= endTs) {
+        dates.push(candidate);
+      }
+
+      cur.setMonth(cur.getMonth() + 1);
     }
   } else if (frequency === 'Anual') {
-    const startMonth = start.getMonth();
-    const startDay = start.getDate();
-    const current = new Date(start.getFullYear(), startMonth, referenceDay);
+    // Repeat every year on the same month and day as the start_date
+    const originMonth = startTs.getMonth();
+    const originDay = startTs.getDate();
+    const cur = new Date(startTs.getFullYear(), originMonth, originDay);
+    cur.setHours(0, 0, 0, 0);
 
-    if (current < start) {
-      current.setFullYear(current.getFullYear() + 1);
-    }
-
-    while (current <= end) {
-      dates.push(new Date(current));
-      current.setFullYear(current.getFullYear() + 1);
+    while (cur <= endTs) {
+      if (cur >= startTs) {
+        dates.push(new Date(cur));
+      }
+      cur.setFullYear(cur.getFullYear() + 1);
     }
   }
 
   return dates;
 }
 
-function formatDateForDB(date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  const seconds = String(date.getSeconds()).padStart(2, '0');
-
-  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+function toDateOnlyString(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 }
 
 export async function generatePendingTransactions() {
   try {
     const recurringTransactions = await getActiveRecurringTransactions();
-
-    if (!recurringTransactions.length) {
-      return;
-    }
+    if (!recurringTransactions.length) return;
 
     for (const rtr of recurringTransactions) {
-      const frequency = rtr.frequency.fr_name;
+      const freqName = rtr.frequency?.fr_name;
+      if (!freqName) continue;
+
+      const activeSubcategories = (rtr.recurrent_transaction_subcategory ?? []).filter(
+        st => st.rts_is_active
+      );
+      if (!activeSubcategories.length) continue;
+
       const dates = generateDatesForFrequency(
-        frequency,
+        freqName,
         rtr.rtr_start_date,
         rtr.rtr_reference_day,
         rtr.rtr_finish_date
       );
 
-      const activeSubcategories = rtr.recurrent_transaction_subcategory.filter(
-        st => st.rts_is_active
-      );
-
-      if (activeSubcategories.length === 0) {
-        continue;
-      }
-
       for (const date of dates) {
-        const dateStr = formatDateForDB(date).split('T')[0];
-        const { data: existingTransaction, error: checkError } = await supabase
+        const dateStr = toDateOnlyString(date);
+
+        const { data: existing, error: checkError } = await supabase
           .schema('ctrl_finance')
           .from('transaction')
           .select('tr_id')
           .eq('rtr_id', rtr.rtr_id)
-          .eq('tr_date', dateStr)
+          .gte('tr_date', `${dateStr}T00:00:00`)
+          .lte('tr_date', `${dateStr}T23:59:59`)
           .limit(1)
           .maybeSingle();
 
         if (checkError) {
-          console.error('Error checking for existing transaction:', checkError);
+          console.error('Error checking existing transaction:', checkError);
           continue;
         }
 
-        if (!existingTransaction) {
-          const transactionData = {
-            ac_id: rtr.ac_id,
-            ty_id: rtr.ty_id,
-            rtr_id: rtr.rtr_id,
-            tr_name: rtr.rtr_name,
-            tr_description: rtr.rtr_description,
-            tr_amount: rtr.rtr_estimated_amount,
-            tr_date: formatDateForDB(date),
-            tr_time: '00:00:00',
-            tr_is_active: true,
-          };
-
-          const { data: newTransaction, error: transactionError } = await supabase
+        if (!existing) {
+          const { data: newTr, error: trError } = await supabase
             .schema('ctrl_finance')
             .from('transaction')
-            .insert(transactionData)
+            .insert({
+              ac_id: rtr.ac_id,
+              ty_id: rtr.ty_id,
+              rtr_id: rtr.rtr_id,
+              tr_name: rtr.rtr_name,
+              tr_description: rtr.rtr_description,
+              tr_amount: rtr.rtr_estimated_amount,
+              tr_date: `${dateStr}T00:00:00`,
+              tr_time: '00:00:00',
+              tr_is_active: true,
+            })
             .select('tr_id')
             .single();
 
-          if (transactionError) {
-            console.error('Error creating transaction:', transactionError);
+          if (trError) {
+            console.error('Error creating recurring instance:', trError);
             continue;
           }
 
-          for (const activeSct of activeSubcategories) {
-            const { error: subcategoryError } = await supabase
-              .schema('ctrl_finance')
-              .from('subcategories_transaction')
-              .insert({
-                tr_id: newTransaction.tr_id,
-                sct_id: activeSct.sct_id,
-                st_is_active: true,
-              });
+          const subcategoryInserts = activeSubcategories.map(s => ({
+            tr_id: newTr.tr_id,
+            sct_id: s.sct_id,
+            st_is_active: true,
+          }));
 
-            if (subcategoryError) {
-              console.error('Error creating subcategory relationship:', subcategoryError);
-            }
+          const { error: sctError } = await supabase
+            .schema('ctrl_finance')
+            .from('subcategories_transaction')
+            .insert(subcategoryInserts);
+
+          if (sctError) {
+            console.error('Error creating subcategory links:', sctError);
           }
         }
       }
     }
-  } catch (error) {
-    console.error('Error in generatePendingTransactions:', error);
+  } catch (err) {
+    console.error('generatePendingTransactions error:', err);
   }
 }
 
-export function calculateNextGenerationDate(frequency, referenceDay) {
+/**
+ * Returns the next date this recurring rule will generate a transaction,
+ * or null if it has already ended.
+ */
+export function calculateNextGenerationDate(freqName, referenceDay, startDate, finishDate) {
   const today = new Date();
-  const currentYear = today.getFullYear();
-  const currentMonth = today.getMonth();
-  const currentDay = today.getDate();
+  today.setHours(0, 0, 0, 0);
 
-  if (frequency === 'Diaria') {
-    const next = new Date(today);
-    next.setDate(next.getDate() + 1);
+  if (finishDate && new Date(finishDate) < today) return null;
+
+  const start = new Date(startDate);
+  start.setHours(0, 0, 0, 0);
+
+  if (freqName === 'Diaria') {
+    const next = today < start ? new Date(start) : new Date(today);
+    next.setDate(next.getDate() + (next.getTime() === today.getTime() ? 1 : 0));
     return next;
-  } else if (frequency === 'Semanal') {
-    const next = new Date(today);
-    const daysUntilTarget = (referenceDay - next.getDay() + 7) % 7 || 7;
-    next.setDate(next.getDate() + daysUntilTarget);
-    return next;
-  } else if (frequency === 'Quincenal') {
-    const next = new Date(today);
-    next.setDate(next.getDate() + 15);
-    return next;
-  } else if (frequency === 'Mensual') {
-    const next = new Date(currentYear, currentMonth, referenceDay);
-    if (next <= today) {
-      next.setMonth(next.getMonth() + 1);
+  }
+
+  if (freqName === 'Semanal') {
+    const target = Number(referenceDay); // 0-6
+    const cur = today < start ? new Date(start) : new Date(today);
+    const diff = (target - cur.getDay() + 7) % 7 || 7;
+    cur.setDate(cur.getDate() + diff);
+    return cur;
+  }
+
+  if (freqName === 'Quincenal') {
+    // Next occurrence = start + k*15 days where the candidate > today
+    const cur = new Date(start);
+    while (cur <= today) {
+      cur.setDate(cur.getDate() + 15);
     }
-    return next;
-  } else if (frequency === 'Anual') {
-    const next = new Date(currentYear, today.getMonth(), referenceDay);
-    if (next <= today) {
-      next.setFullYear(next.getFullYear() + 1);
+    return cur;
+  }
+
+  if (freqName === 'Mensual') {
+    const targetDay = Number(referenceDay);
+    const base = today < start ? new Date(start.getFullYear(), start.getMonth(), 1)
+                               : new Date(today.getFullYear(), today.getMonth(), 1);
+
+    for (let i = 0; i < 13; i++) {
+      const lastDay = new Date(base.getFullYear(), base.getMonth() + 1, 0).getDate();
+      const candidate = new Date(base.getFullYear(), base.getMonth(), Math.min(targetDay, lastDay));
+      if (candidate > today && candidate >= start) return candidate;
+      base.setMonth(base.getMonth() + 1);
     }
-    return next;
+    return null;
+  }
+
+  if (freqName === 'Anual') {
+    const originMonth = new Date(startDate).getMonth();
+    const originDay = new Date(startDate).getDate();
+    const base = today < start ? new Date(start.getFullYear(), originMonth, originDay)
+                               : new Date(today.getFullYear(), originMonth, originDay);
+
+    for (let i = 0; i < 5; i++) {
+      if (base > today && base >= start) return new Date(base);
+      base.setFullYear(base.getFullYear() + 1);
+    }
+    return null;
   }
 
   return null;

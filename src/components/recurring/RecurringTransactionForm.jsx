@@ -4,10 +4,34 @@ function getTodayDate() {
   return new Date().toISOString().slice(0, 10);
 }
 
+const WEEK_DAYS = [
+  { value: '1', label: 'Lunes' },
+  { value: '2', label: 'Martes' },
+  { value: '3', label: 'Miércoles' },
+  { value: '4', label: 'Jueves' },
+  { value: '5', label: 'Viernes' },
+  { value: '6', label: 'Sábado' },
+  { value: '0', label: 'Domingo' },
+];
+
+const MONTH_DAYS = Array.from({ length: 31 }, (_, i) => ({
+  value: String(i + 1),
+  label: String(i + 1),
+}));
+
+const FREQ_INFO = {
+  Diaria:    { icon: '📅', hint: 'Se generará una transacción cada día.' },
+  Semanal:   { icon: '📅', hint: 'Se generará una transacción cada semana el día seleccionado.' },
+  Quincenal: { icon: '📅', hint: 'Se generará una transacción cada 15 días desde la fecha de inicio.' },
+  Mensual:   { icon: '📅', hint: 'Se generará el día indicado de cada mes.' },
+  Anual:     { icon: '📅', hint: 'Se generará cada año en la misma fecha de inicio.' },
+};
+
 const emptyForm = {
   ac_id: '',
   ty_id: '',
   fr_id: '',
+  fr_name: '',
   ct_id: '',
   sct_ids: [],
   rtr_name: '',
@@ -19,12 +43,10 @@ const emptyForm = {
   hasFinishDate: false,
 };
 
-function getActiveSubcategoriesData(recurringTransaction) {
-  const activeRelations = recurringTransaction?.recurrent_transaction_subcategory?.filter(
-    (item) => item.rts_is_active
-  ) ?? [];
-
-  return activeRelations.map(rel => rel.sct_id);
+function getActiveSubcategoryIds(recurringTransaction) {
+  return (recurringTransaction?.recurrent_transaction_subcategory ?? [])
+    .filter(r => r.rts_is_active)
+    .map(r => String(r.sct_id));
 }
 
 export default function RecurringTransactionForm({
@@ -43,17 +65,14 @@ export default function RecurringTransactionForm({
   const isEditing = Boolean(initialData);
 
   const selectedType = useMemo(
-    () => typeTransactions.find((t) => String(t.ty_id) === String(form.ty_id)),
+    () => typeTransactions.find(t => String(t.ty_id) === String(form.ty_id)),
     [typeTransactions, form.ty_id]
   );
-
-  const isIncome = selectedType
-    ? selectedType.ty_name?.toLowerCase() === 'entrada'
-    : null;
+  const isIncome = selectedType ? selectedType.ty_name?.toLowerCase() === 'entrada' : null;
 
   const categories = useMemo(() => {
     const map = new Map();
-    subcategories.forEach((s) => {
+    subcategories.forEach(s => {
       const cat = s.category;
       if (cat?.ct_id) map.set(String(cat.ct_id), { ct_id: cat.ct_id, ct_name: cat.ct_name });
     });
@@ -61,35 +80,42 @@ export default function RecurringTransactionForm({
   }, [subcategories]);
 
   const filteredSubcategories = useMemo(
-    () => subcategories.filter((s) => String(s.ct_id) === String(form.ct_id)),
+    () => subcategories.filter(s => String(s.ct_id) === String(form.ct_id)),
     [subcategories, form.ct_id]
   );
 
-  const selectedFrequency = useMemo(
-    () => frequencies.find((f) => String(f.fr_id) === String(form.fr_id)),
+  const selectedFreq = useMemo(
+    () => frequencies.find(f => String(f.fr_id) === String(form.fr_id)),
     [frequencies, form.fr_id]
   );
 
-  const showReferenceDayInput = useMemo(() => {
-    const freqName = selectedFrequency?.fr_name;
-    return freqName && ['Semanal', 'Mensual', 'Anual'].includes(freqName);
-  }, [selectedFrequency]);
+  const freqName = selectedFreq?.fr_name ?? '';
+  const needsWeekDay  = freqName === 'Semanal';
+  const needsMonthDay = freqName === 'Mensual';
+  const freqInfo = FREQ_INFO[freqName];
 
   useEffect(() => {
     if (initialData) {
-      const sctIds = getActiveSubcategoriesData(initialData);
-      const finishDate = initialData.rtr_finish_date ? String(initialData.rtr_finish_date).slice(0, 10) : '';
+      const sctIds = getActiveSubcategoryIds(initialData);
+      const freqObj = frequencies.find(f => String(f.fr_id) === String(initialData.fr_id));
+      const freqN = freqObj?.fr_name ?? '';
+      const finishDate = initialData.rtr_finish_date
+        ? String(initialData.rtr_finish_date).slice(0, 10)
+        : '';
 
       setForm({
         ac_id: initialData.ac_id ? String(initialData.ac_id) : '',
         ty_id: initialData.ty_id ? String(initialData.ty_id) : '',
         fr_id: initialData.fr_id ? String(initialData.fr_id) : '',
-        ct_id: sctIds.length > 0 ? String(sctIds[0]) : '',
-        sct_ids: sctIds.map(id => String(id)),
+        fr_name: freqN,
+        ct_id: '',
+        sct_ids: sctIds,
         rtr_name: initialData.rtr_name ?? '',
         rtr_description: initialData.rtr_description ?? '',
         rtr_estimated_amount: String(initialData.rtr_estimated_amount ?? ''),
-        rtr_reference_day: String(initialData.rtr_reference_day ?? ''),
+        rtr_reference_day: initialData.rtr_reference_day != null
+          ? String(initialData.rtr_reference_day)
+          : '',
         rtr_start_date: initialData.rtr_start_date
           ? String(initialData.rtr_start_date).slice(0, 10)
           : getTodayDate(),
@@ -102,35 +128,42 @@ export default function RecurringTransactionForm({
     setError('');
   }, [initialData]);
 
-  function handleChange(event) {
-    const { name, value, type, checked } = event.target;
-    if (type === 'checkbox') {
-      setForm((prev) => ({ ...prev, [name]: checked }));
-    } else {
-      setForm((prev) => ({ ...prev, [name]: value }));
-    }
+  function handleChange(e) {
+    const { name, value, type, checked } = e.target;
+    setForm(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   }
 
-  function handleCategoryChange(event) {
-    setForm((prev) => ({ ...prev, ct_id: event.target.value, sct_ids: [] }));
+  function handleFreqChange(e) {
+    const id = e.target.value;
+    const obj = frequencies.find(f => String(f.fr_id) === id);
+    setForm(prev => ({
+      ...prev,
+      fr_id: id,
+      fr_name: obj?.fr_name ?? '',
+      rtr_reference_day: '',
+    }));
+  }
+
+  function handleCategoryChange(e) {
+    setForm(prev => ({ ...prev, ct_id: e.target.value, sct_ids: [] }));
   }
 
   function handleSubcategoryToggle(sctId) {
-    setForm((prev) => {
-      const sctIdStr = String(sctId);
-      const newSctIds = prev.sct_ids.includes(sctIdStr)
-        ? prev.sct_ids.filter(id => id !== sctIdStr)
-        : [...prev.sct_ids, sctIdStr];
-      return { ...prev, sct_ids: newSctIds };
-    });
+    const s = String(sctId);
+    setForm(prev => ({
+      ...prev,
+      sct_ids: prev.sct_ids.includes(s)
+        ? prev.sct_ids.filter(id => id !== s)
+        : [...prev.sct_ids, s],
+    }));
   }
 
   function handleTypeSelect(typeId) {
-    setForm((prev) => ({ ...prev, ty_id: String(typeId) }));
+    setForm(prev => ({ ...prev, ty_id: String(typeId) }));
   }
 
-  async function handleSubmit(event) {
-    event.preventDefault();
+  async function handleSubmit(e) {
+    e.preventDefault();
     setError('');
 
     if (!form.ac_id) { setError('Selecciona una cuenta.'); return; }
@@ -138,34 +171,26 @@ export default function RecurringTransactionForm({
     if (!form.fr_id) { setError('Selecciona una frecuencia.'); return; }
     if (!form.rtr_name.trim()) { setError('El nombre es obligatorio.'); return; }
     if (!form.rtr_start_date) { setError('La fecha de inicio es obligatoria.'); return; }
-
-    if (showReferenceDayInput && !form.rtr_reference_day) {
-      setError('Selecciona un día de referencia.');
-      return;
-    }
-
+    if (needsWeekDay && !form.rtr_reference_day) { setError('Selecciona el día de la semana.'); return; }
+    if (needsMonthDay && !form.rtr_reference_day) { setError('Selecciona el día del mes.'); return; }
     if (form.sct_ids.length === 0) { setError('Selecciona al menos una subcategoría.'); return; }
 
     const amount = Number(form.rtr_estimated_amount);
-    if (!Number.isFinite(amount)) { setError('El monto debe ser un número válido.'); return; }
-    if (amount <= 0) { setError('El monto debe ser mayor a 0.'); return; }
-
-    if (form.hasFinishDate && !form.rtr_finish_date) {
-      setError('Especifica una fecha de fin.');
-      return;
-    }
+    if (!Number.isFinite(amount) || amount <= 0) { setError('El monto debe ser mayor a 0.'); return; }
+    if (form.hasFinishDate && !form.rtr_finish_date) { setError('Especifica una fecha de fin.'); return; }
 
     const payload = {
       ac_id: form.ac_id,
       ty_id: form.ty_id,
       fr_id: form.fr_id,
+      fr_name: freqName,
       rtr_name: form.rtr_name.trim(),
       rtr_description: form.rtr_description?.trim() || null,
       rtr_estimated_amount: amount,
-      rtr_reference_day: form.rtr_reference_day ? Number(form.rtr_reference_day) : 1,
+      rtr_reference_day: form.rtr_reference_day !== '' ? Number(form.rtr_reference_day) : 1,
       rtr_start_date: form.rtr_start_date,
       rtr_finish_date: form.hasFinishDate ? form.rtr_finish_date : null,
-      sct_ids: form.sct_ids.map(id => Number(id)),
+      sct_ids: form.sct_ids.map(Number),
     };
 
     await onSubmit(payload);
@@ -182,14 +207,9 @@ export default function RecurringTransactionForm({
           Cuenta
           <span className="required-tag">Obligatorio</span>
         </span>
-        <select
-          name="ac_id"
-          value={form.ac_id}
-          onChange={handleChange}
-          disabled={saving}
-        >
+        <select name="ac_id" value={form.ac_id} onChange={handleChange} disabled={saving}>
           <option value="">Selecciona una cuenta</option>
-          {accounts.map((acc) => (
+          {accounts.map(acc => (
             <option key={acc.ac_id} value={acc.ac_id}>{acc.ac_name}</option>
           ))}
         </select>
@@ -202,21 +222,14 @@ export default function RecurringTransactionForm({
           <span className="required-tag">Obligatorio</span>
         </span>
         <div className="transaction-type-buttons">
-          {typeTransactions.map((t) => {
-            const isSelected = String(t.ty_id) === String(form.ty_id);
+          {typeTransactions.map(t => {
+            const sel = String(t.ty_id) === String(form.ty_id);
             const isEntry = t.ty_name?.toLowerCase() === 'entrada';
-
             return (
               <button
                 key={t.ty_id}
                 type="button"
-                className={`type-option-button ${
-                  isSelected
-                    ? isEntry
-                      ? 'selected-income'
-                      : 'selected-expense'
-                    : 'unselected'
-                }`}
+                className={`type-option-button ${sel ? (isEntry ? 'selected-income' : 'selected-expense') : 'unselected'}`}
                 onClick={() => handleTypeSelect(t.ty_id)}
                 disabled={saving}
               >
@@ -234,36 +247,56 @@ export default function RecurringTransactionForm({
           Frecuencia
           <span className="required-tag">Obligatorio</span>
         </span>
-        <select
-          name="fr_id"
-          value={form.fr_id}
-          onChange={handleChange}
-          disabled={saving}
-        >
+        <select name="fr_id" value={form.fr_id} onChange={handleFreqChange} disabled={saving}>
           <option value="">Selecciona una frecuencia</option>
-          {frequencies.map((freq) => (
-            <option key={freq.fr_id} value={freq.fr_id}>{freq.fr_name}</option>
+          {frequencies.map(f => (
+            <option key={f.fr_id} value={f.fr_id}>{f.fr_name}</option>
           ))}
         </select>
+        {freqInfo && (
+          <p className="rtr-freq-hint">{freqInfo.hint}</p>
+        )}
       </label>
 
-      {/* Día de referencia (condicional) */}
-      {showReferenceDayInput && (
+      {/* Día de la semana — solo Semanal */}
+      {needsWeekDay && (
         <label>
           <span className="label-row">
-            Día de referencia
+            Día de la semana
             <span className="required-tag">Obligatorio</span>
           </span>
-          <input
-            type="number"
+          <select
             name="rtr_reference_day"
             value={form.rtr_reference_day}
             onChange={handleChange}
-            min="0"
-            max="31"
-            placeholder={selectedFrequency?.fr_name === 'Semanal' ? '0-6 (dom-sab)' : '1-31'}
             disabled={saving}
-          />
+          >
+            <option value="">Selecciona un día</option>
+            {WEEK_DAYS.map(d => (
+              <option key={d.value} value={d.value}>{d.label}</option>
+            ))}
+          </select>
+        </label>
+      )}
+
+      {/* Día del mes — solo Mensual */}
+      {needsMonthDay && (
+        <label>
+          <span className="label-row">
+            Día del mes
+            <span className="required-tag">Obligatorio</span>
+          </span>
+          <select
+            name="rtr_reference_day"
+            value={form.rtr_reference_day}
+            onChange={handleChange}
+            disabled={saving}
+          >
+            <option value="">Selecciona un día</option>
+            {MONTH_DAYS.map(d => (
+              <option key={d.value} value={d.value}>{d.label}</option>
+            ))}
+          </select>
         </label>
       )}
 
@@ -295,42 +328,43 @@ export default function RecurringTransactionForm({
           Categoría
           <span className="required-tag">Obligatorio</span>
         </span>
-        <select
-          name="ct_id"
-          value={form.ct_id}
-          onChange={handleCategoryChange}
-          disabled={saving}
-        >
+        <select name="ct_id" value={form.ct_id} onChange={handleCategoryChange} disabled={saving}>
           <option value="">Selecciona</option>
-          {categories.map((cat) => (
+          {categories.map(cat => (
             <option key={cat.ct_id} value={cat.ct_id}>{cat.ct_name}</option>
           ))}
         </select>
       </label>
 
-      {/* Subcategorías múltiples */}
+      {/* Subcategorías */}
       {form.ct_id && (
-        <fieldset>
-          <legend>
-            <span className="label-row">
-              Subcategorías
-              <span className="required-tag">Obligatorio (al menos una)</span>
-            </span>
-          </legend>
-          <div className="checkbox-group">
-            {filteredSubcategories.map((s) => (
-              <label key={s.sct_id} className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={form.sct_ids.includes(String(s.sct_id))}
-                  onChange={() => handleSubcategoryToggle(s.sct_id)}
-                  disabled={saving}
-                />
-                <span>{s.sct_name}</span>
-              </label>
-            ))}
-          </div>
-        </fieldset>
+        <div className="form-field">
+          <span className="label-row">
+            Subcategorías
+            <span className="required-tag">Al menos una</span>
+          </span>
+          {filteredSubcategories.length === 0 ? (
+            <p className="rtr-empty-hint">No hay subcategorías disponibles.</p>
+          ) : (
+            <div className="rtr-subcategory-chips">
+              {filteredSubcategories.map(s => {
+                const selected = form.sct_ids.includes(String(s.sct_id));
+                return (
+                  <button
+                    key={s.sct_id}
+                    type="button"
+                    className={`rtr-chip ${selected ? 'rtr-chip--selected' : ''}`}
+                    onClick={() => handleSubcategoryToggle(s.sct_id)}
+                    disabled={saving}
+                  >
+                    {selected && <span className="rtr-chip-check">✓</span>}
+                    {s.sct_name}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
       )}
 
       {/* Nombre */}
@@ -344,7 +378,7 @@ export default function RecurringTransactionForm({
           name="rtr_name"
           value={form.rtr_name}
           onChange={handleChange}
-          placeholder="Ej: Pago de servicios, Salario mensual"
+          placeholder="Ej: Pago de luz, Salario mensual"
           disabled={saving}
           autoComplete="off"
         />
@@ -382,21 +416,22 @@ export default function RecurringTransactionForm({
         />
       </label>
 
-      {/* Fecha de fin (opcional) */}
-      <div className="form-field">
-        <label className="checkbox-label">
+      {/* Fecha de fin opcional */}
+      <div className="form-field rtr-finish-date-field">
+        <label className="rtr-toggle-label">
           <input
             type="checkbox"
             name="hasFinishDate"
             checked={form.hasFinishDate}
             onChange={handleChange}
             disabled={saving}
+            className="rtr-toggle-checkbox"
           />
           <span>¿Agregar fecha de fin?</span>
         </label>
 
         {form.hasFinishDate && (
-          <label>
+          <label style={{ marginTop: 10 }}>
             <span className="label-row">
               Fecha de fin
               <span className="required-tag">Obligatorio</span>
@@ -406,6 +441,7 @@ export default function RecurringTransactionForm({
               name="rtr_finish_date"
               value={form.rtr_finish_date}
               onChange={handleChange}
+              min={form.rtr_start_date}
               disabled={saving}
             />
           </label>
@@ -413,11 +449,11 @@ export default function RecurringTransactionForm({
       </div>
 
       {/* Botones */}
-      <div className="form-buttons">
-        <button type="submit" disabled={saving} className="btn-primary">
-          {saving ? 'Guardando...' : isEditing ? 'Actualizar' : 'Crear'}
+      <div className="form-actions">
+        <button type="submit" disabled={saving}>
+          {saving ? 'Guardando…' : isEditing ? 'Actualizar' : 'Crear'}
         </button>
-        <button type="button" onClick={onCancel} disabled={saving} className="btn-secondary">
+        <button type="button" onClick={onCancel} disabled={saving} className="secondary-button">
           Cancelar
         </button>
       </div>

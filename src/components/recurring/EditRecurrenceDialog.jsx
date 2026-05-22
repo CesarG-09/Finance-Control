@@ -8,85 +8,68 @@ export default function EditRecurrenceDialog({
 }) {
   const [choice, setChoice] = useState(null);
 
-  function handleSubmit() {
-    if (!choice) return;
-    onChoice(choice);
-  }
-
   return (
-    <div className="modal-overlay">
-      <div className="modal-dialog">
-        <div className="modal-header">
-          <h3>Editar transacción recurrente</h3>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="modal-close-btn"
-            disabled={loading}
-          >
-            ✕
-          </button>
-        </div>
+    <div className="modal-backdrop">
+      <div className="modal-card rtr-edit-dialog">
+        <h2>Editar transacción recurrente</h2>
+        <p>
+          Estás modificando <strong>"{transactionName}"</strong>.
+          ¿Cómo deseas aplicar los cambios?
+        </p>
 
-        <div className="modal-content">
-          <p>
-            Estás editando la transacción recurrente "{transactionName}".
-            ¿Cómo deseas aplicar los cambios?
-          </p>
-
-          <div className="radio-group">
-            <label className="radio-label">
-              <input
-                type="radio"
-                name="editChoice"
-                value="single"
-                checked={choice === 'single'}
-                onChange={(e) => setChoice(e.target.value)}
-                disabled={loading}
-              />
-              <span className="radio-text">
+        <div className="rtr-choice-list">
+          <label className={`rtr-choice-option ${choice === 'single' ? 'rtr-choice-option--selected' : ''}`}>
+            <input
+              type="radio"
+              name="editChoice"
+              value="single"
+              checked={choice === 'single'}
+              onChange={() => setChoice('single')}
+              disabled={loading}
+            />
+            <div className="rtr-choice-content">
+              <span className="rtr-choice-icon">✏️</span>
+              <div>
                 <strong>Solo esta transacción</strong>
-                <p className="radio-description">
-                  Modifica solo el registro actual, sin afectar futuras instancias
-                </p>
-              </span>
-            </label>
+                <p>El cambio aplica únicamente a este registro.</p>
+              </div>
+            </div>
+          </label>
 
-            <label className="radio-label">
-              <input
-                type="radio"
-                name="editChoice"
-                value="future"
-                checked={choice === 'future'}
-                onChange={(e) => setChoice(e.target.value)}
-                disabled={loading}
-              />
-              <span className="radio-text">
+          <label className={`rtr-choice-option ${choice === 'future' ? 'rtr-choice-option--selected' : ''}`}>
+            <input
+              type="radio"
+              name="editChoice"
+              value="future"
+              checked={choice === 'future'}
+              onChange={() => setChoice('future')}
+              disabled={loading}
+            />
+            <div className="rtr-choice-content">
+              <span className="rtr-choice-icon">🔄</span>
+              <div>
                 <strong>Esta y todas las futuras</strong>
-                <p className="radio-description">
-                  Actualiza la regla recurrente y todos los registros generados desde ahora en adelante
-                </p>
-              </span>
-            </label>
-          </div>
+                <p>Se actualiza la regla recurrente y los registros futuros.</p>
+              </div>
+            </div>
+          </label>
         </div>
 
-        <div className="modal-footer">
+        <div className="modal-actions">
           <button
             type="button"
             onClick={onCancel}
             disabled={loading}
-            className="btn-secondary"
+            className="secondary-button"
           >
             Cancelar
           </button>
           <button
             type="button"
-            onClick={handleSubmit}
+            onClick={() => onChoice(choice)}
             disabled={!choice || loading}
-            className="btn-primary"
           >
-            {loading ? 'Procesando...' : 'Continuar'}
+            {loading ? 'Procesando…' : 'Continuar'}
           </button>
         </div>
       </div>
