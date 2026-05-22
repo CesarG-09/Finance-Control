@@ -233,7 +233,7 @@ export default function RecurringTransactionForm({
                 onClick={() => handleTypeSelect(t.ty_id)}
                 disabled={saving}
               >
-                <span className="type-btn-icon">{isEntry ? '↑' : '↓'}</span>
+                <span className="type-btn-icon">{isEntry ? '↓' : '↑'}</span>
                 {t.ty_name}
               </button>
             );
@@ -367,6 +367,53 @@ export default function RecurringTransactionForm({
         </div>
       )}
 
+      {/* Fecha de inicio */}
+      <label>
+        <span className="label-row">
+          Fecha de inicio
+          <span className="required-tag">Obligatorio</span>
+        </span>
+        <input
+          type="date"
+          name="rtr_start_date"
+          value={form.rtr_start_date}
+          onChange={handleChange}
+          disabled={saving}
+        />
+      </label>
+
+      {/* Fecha de fin opcional */}
+      <div className="form-field rtr-finish-date-field">
+        <label className="rtr-toggle-label">
+          <input
+            type="checkbox"
+            name="hasFinishDate"
+            checked={form.hasFinishDate}
+            onChange={handleChange}
+            disabled={saving}
+            className="rtr-toggle-checkbox"
+          />
+          <span>¿Agregar fecha de fin?</span>
+        </label>
+
+        {form.hasFinishDate && (
+          <label>
+            <span className="label-row">
+              Fecha de fin
+              <span className="required-tag">Obligatorio</span>
+            </span>
+            <input
+              type="date"
+              name="rtr_finish_date"
+              value={form.rtr_finish_date}
+              onChange={handleChange}
+              min={form.rtr_start_date}
+              disabled={saving}
+            />
+          </label>
+        )}
+      </div>
+
       {/* Nombre */}
       <label>
         <span className="label-row">
@@ -400,53 +447,6 @@ export default function RecurringTransactionForm({
           autoComplete="off"
         />
       </label>
-
-      {/* Fecha de inicio */}
-      <label>
-        <span className="label-row">
-          Fecha de inicio
-          <span className="required-tag">Obligatorio</span>
-        </span>
-        <input
-          type="date"
-          name="rtr_start_date"
-          value={form.rtr_start_date}
-          onChange={handleChange}
-          disabled={saving}
-        />
-      </label>
-
-      {/* Fecha de fin opcional */}
-      <div className="form-field rtr-finish-date-field">
-        <label className="rtr-toggle-label">
-          <input
-            type="checkbox"
-            name="hasFinishDate"
-            checked={form.hasFinishDate}
-            onChange={handleChange}
-            disabled={saving}
-            className="rtr-toggle-checkbox"
-          />
-          <span>¿Agregar fecha de fin?</span>
-        </label>
-
-        {form.hasFinishDate && (
-          <label style={{ marginTop: 10 }}>
-            <span className="label-row">
-              Fecha de fin
-              <span className="required-tag">Obligatorio</span>
-            </span>
-            <input
-              type="date"
-              name="rtr_finish_date"
-              value={form.rtr_finish_date}
-              onChange={handleChange}
-              min={form.rtr_start_date}
-              disabled={saving}
-            />
-          </label>
-        )}
-      </div>
 
       {/* Botones */}
       <div className="form-actions">
