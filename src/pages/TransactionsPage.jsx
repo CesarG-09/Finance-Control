@@ -267,7 +267,7 @@ export default function TransactionsPage() {
   }, [transactions, debouncedSearchTerm, sortDirection]);
 
   const transactionCount = transactions.filter(
-    (transaction) => transaction.movement_source !== 'initial_balance'
+    (transaction) => transaction.movement_source !== 'initial_balance' && !transaction.rtr_id
   ).length;
 
   useEffect(() => {
@@ -615,6 +615,11 @@ async function handleRecurringTransactionDeactivate(rtrId) {
           <strong>
             {selectedAccount ? formatCurrency(selectedAccount.ac_balance) : formatCurrency(0)}
           </strong>
+        </div>
+
+        <div className="transactions-summary-card">
+          <span>Transacciones recurrentes</span>
+          <strong>{recurringTransactions.length}</strong>
         </div>
       </section>
 

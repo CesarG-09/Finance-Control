@@ -1269,7 +1269,7 @@ select:disabled {
 .transactions-summary-panel {
   flex-shrink: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 220px 220px;
+  grid-template-columns: minmax(0, 1fr) repeat(3, 200px);
   gap: 20px;
   align-items: stretch;
   margin-bottom: 20px;
