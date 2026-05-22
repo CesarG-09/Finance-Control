@@ -23,6 +23,12 @@ const menuSections = [
         path: '/movimientos',
         icon: 'movements',
       },
+      {
+        label: 'Calendario',
+        description: 'Cortes, pagos y recurrentes',
+        path: '/calendario',
+        icon: 'calendar',
+      },
     ],
   },
   {
@@ -74,6 +80,14 @@ function SidebarIcon({ name }) {
         <path d="M17 4l3 3-3 3" />
         <path d="M17 17H4" />
         <path d="M7 14l-3 3 3 3" />
+      </>
+    ),
+    calendar: (
+      <>
+        <path d="M4 6h16v14H4z" />
+        <path d="M4 10h16" />
+        <path d="M8 3v4" />
+        <path d="M16 3v4" />
       </>
     ),
     logout: (
