@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import TransactionForm from '../components/transactions/TransactionForm';
 import RecurringTransactionForm from '../components/recurring/RecurringTransactionForm';
 import RecurringTransactionList from '../components/recurring/RecurringTransactionList';
+import EditRecurrenceDialog from '../components/recurring/EditRecurrenceDialog';
 import { useAuth } from '../context/AuthContext';
 import { getAccountsByClientId } from '../services/accountService';
 import ConfirmModal from '../components/ui/ConfirmModal';
@@ -199,6 +200,8 @@ export default function TransactionsPage() {
   const [editingTransaction, setEditingTransaction] = useState(null);
   const [editingRecurringTransaction, setEditingRecurringTransaction] = useState(null);
   const [creatingRecurringTransaction, setCreatingRecurringTransaction] = useState(false);
+  const [showRecurringEditDialog, setShowRecurringEditDialog] = useState(false);
+  const [pendingRecurringFormData, setPendingRecurringFormData] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortDirection, setSortDirection] = useState('desc');
   const [activeTab, setActiveTab] = useState('transactions');
@@ -376,6 +379,13 @@ export default function TransactionsPage() {
 }
 
 async function handleSubmit(formData) {
+  // If editing a recurring transaction instance, show the choice dialog
+  if (editingTransaction && editingTransaction.rtr_id) {
+    setPendingRecurringFormData(formData);
+    setShowRecurringEditDialog(true);
+    return;
+  }
+
   const balanceValidationError = validateBalanceBeforeSave(formData);
 
   if (balanceValidationError) {
@@ -449,8 +459,49 @@ function handleEdit(transaction) {
 
 function handleCancelEdit() {
   setEditingTransaction(null);
+  setShowRecurringEditDialog(false);
+  setPendingRecurringFormData(null);
   setError('');
   setSuccess('');
+}
+
+async function handleRecurringEditChoice(choice) {
+  const { updateRecurringTransactionInstanceOnly, updateRecurringTransactionAndFuture } = await import(
+    '../services/transactionService'
+  );
+
+  try {
+    setSaving(true);
+    setError('');
+    setSuccess('');
+
+    const payload = {
+      ...pendingRecurringFormData,
+      ac_id: selectedAccountId,
+    };
+
+    if (choice === 'single') {
+      await updateRecurringTransactionInstanceOnly(editingTransaction.tr_id, payload);
+      setSuccess('Transacción actualizada (solo esta instancia). El balance se ajusta vía trigger.');
+    } else if (choice === 'future') {
+      await updateRecurringTransactionAndFuture(
+        editingTransaction.tr_id,
+        editingTransaction.rtr_id,
+        payload,
+        editingTransaction.tr_date
+      );
+      setSuccess('Transacción recurrente y futuras instancias actualizadas. El balance se ajusta vía trigger.');
+    }
+
+    setEditingTransaction(null);
+    setShowRecurringEditDialog(false);
+    setPendingRecurringFormData(null);
+    await loadTransactionsData(selectedAccountId);
+  } catch (currentError) {
+    setError(currentError.message);
+  } finally {
+    setSaving(false);
+  }
 }
 
 async function handleRecurringTransactionSubmit(formData) {
@@ -694,6 +745,15 @@ async function handleRecurringTransactionDeactivate(rtrId) {
             </section>
           )}
         </div>
+      )}
+
+      {showRecurringEditDialog && editingTransaction?.rtr_id && (
+        <EditRecurrenceDialog
+          transactionName={editingTransaction.tr_name}
+          onChoice={handleRecurringEditChoice}
+          onCancel={handleCancelEdit}
+          loading={saving}
+        />
       )}
 
       <ConfirmModal
