@@ -611,15 +611,15 @@ async function handleRecurringTransactionDeactivate(rtrId) {
         </div>
 
         <div className="transactions-summary-card">
+          <span>Transacciones recurrentes</span>
+          <strong>{recurringTransactions.length}</strong>
+        </div>
+
+        <div className="transactions-summary-card">
           <span>Balance actual</span>
           <strong>
             {selectedAccount ? formatCurrency(selectedAccount.ac_balance) : formatCurrency(0)}
           </strong>
-        </div>
-
-        <div className="transactions-summary-card">
-          <span>Transacciones recurrentes</span>
-          <strong>{recurringTransactions.length}</strong>
         </div>
       </section>
 
