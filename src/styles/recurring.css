@@ -2,6 +2,11 @@
    TRANSACCIONES RECURRENTES — estilos
 ================================================================ */
 
+/* ── Panel de resumen — 4 columnas (selector + 3 cards) ──────── */
+.transactions-summary-panel {
+  grid-template-columns: minmax(0, 1fr) repeat(3, minmax(150px, 190px));
+}
+
 /* ── Tabs ─────────────────────────────────────────────────────── */
 .transactions-tabs {
   display: flex;
