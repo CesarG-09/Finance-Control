@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import TransactionForm from '../components/transactions/TransactionForm';
+import RecurringTransactionForm from '../components/recurring/RecurringTransactionForm';
+import RecurringTransactionList from '../components/recurring/RecurringTransactionList';
+import EditRecurrenceDialog from '../components/recurring/EditRecurrenceDialog';
 import { useAuth } from '../context/AuthContext';
 import { getAccountsByClientId } from '../services/accountService';
 import ConfirmModal from '../components/ui/ConfirmModal';
@@ -15,6 +18,14 @@ import {
   getActiveTypeTransactions,
   updateTransaction,
 } from '../services/transactionService';
+import {
+  createRecurringTransaction,
+  deactivateRecurringTransaction,
+  generatePendingTransactions,
+  getFrequencies,
+  getActiveRecurringTransactions,
+  updateRecurringTransaction,
+} from '../services/recurringTransactionService';
 
 function formatCurrency(value) {
   const numericValue = Number(value ?? 0);
@@ -81,16 +92,24 @@ function getTransactionCategory(transaction) {
 
 function TransactionCard({ transaction, onEdit, onDelete }) {
   const isInitialBalance = transaction.movement_source === 'initial_balance';
+  const isRecurringInstance = transaction.rtr_id !== null && transaction.rtr_id !== undefined;
 
   return (
     <article
       className={`transaction-card ${
         isInitialBalance ? 'transaction-card-initial-balance' : ''
-      }`}
+      } ${isRecurringInstance ? 'transaction-card-recurring' : ''}`}
     >
       <div className="transaction-card-header">
         <div>
-          <h3>{isInitialBalance ? 'Balance inicial' : transaction.tr_name}</h3>
+          <h3>
+            {isInitialBalance ? 'Balance inicial' : transaction.tr_name}
+            {isRecurringInstance && (
+              <span className="recurring-badge" title="Transacción generada por recurrencia">
+                🔄
+              </span>
+            )}
+          </h3>
           <p>
             {formatDate(transaction.tr_date || transaction.created_at?.slice(0, 10))}
             {formatTime(transaction.tr_time) && (
@@ -182,11 +201,18 @@ export default function TransactionsPage() {
   const [accounts, setAccounts] = useState([]);
   const [typeTransactions, setTypeTransactions] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
+  const [frequencies, setFrequencies] = useState([]);
   const [transactions, setTransactions] = useState([]);
+  const [recurringTransactions, setRecurringTransactions] = useState([]);
   const [selectedAccountId, setSelectedAccountId] = useState('');
   const [editingTransaction, setEditingTransaction] = useState(null);
+  const [editingRecurringTransaction, setEditingRecurringTransaction] = useState(null);
+  const [creatingRecurringTransaction, setCreatingRecurringTransaction] = useState(false);
+  const [showRecurringEditDialog, setShowRecurringEditDialog] = useState(false);
+  const [pendingRecurringFormData, setPendingRecurringFormData] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortDirection, setSortDirection] = useState('desc');
+  const [activeTab, setActiveTab] = useState('transactions');
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -264,12 +290,17 @@ export default function TransactionsPage() {
       setLoading(true);
       setError('');
 
-      const [accountsData, typeTransactionsData, subcategoriesData] =
+      const [accountsData, typeTransactionsData, subcategoriesData, frequenciesData, recurringTransactionsData] =
         await Promise.all([
           getAccountsByClientId(clientId),
           getActiveTypeTransactions(),
           getActiveSubcategories(),
+          getFrequencies(),
+          getActiveRecurringTransactions(),
         ]);
+
+      // Generate pending recurring transactions
+      await generatePendingTransactions();
 
       const activeAccountsData = accountsData.filter(
         (account) => account.ac_is_active
@@ -292,6 +323,8 @@ export default function TransactionsPage() {
       setAccounts(accountsData);
       setTypeTransactions(typeTransactionsData);
       setSubcategories(subcategoriesData);
+      setFrequencies(frequenciesData);
+      setRecurringTransactions(recurringTransactionsData);
       setSelectedAccountId(nextSelectedAccountId);
       setTransactions(transactionsData);
     } catch (currentError) {
@@ -354,6 +387,13 @@ export default function TransactionsPage() {
 }
 
 async function handleSubmit(formData) {
+  // If editing a recurring transaction instance, show the choice dialog
+  if (editingTransaction && editingTransaction.rtr_id) {
+    setPendingRecurringFormData(formData);
+    setShowRecurringEditDialog(true);
+    return;
+  }
+
   const balanceValidationError = validateBalanceBeforeSave(formData);
 
   if (balanceValidationError) {
@@ -427,8 +467,102 @@ function handleEdit(transaction) {
 
 function handleCancelEdit() {
   setEditingTransaction(null);
+  setShowRecurringEditDialog(false);
+  setPendingRecurringFormData(null);
   setError('');
   setSuccess('');
+}
+
+async function handleRecurringEditChoice(choice) {
+  const { updateRecurringTransactionInstanceOnly, updateRecurringTransactionAndFuture } = await import(
+    '../services/transactionService'
+  );
+
+  try {
+    setSaving(true);
+    setError('');
+    setSuccess('');
+
+    const payload = {
+      ...pendingRecurringFormData,
+      ac_id: selectedAccountId,
+    };
+
+    if (choice === 'single') {
+      await updateRecurringTransactionInstanceOnly(editingTransaction.tr_id, payload);
+      setSuccess('Transacción actualizada (solo esta instancia). El balance se ajusta vía trigger.');
+    } else if (choice === 'future') {
+      await updateRecurringTransactionAndFuture(
+        editingTransaction.tr_id,
+        editingTransaction.rtr_id,
+        payload,
+        editingTransaction.tr_date
+      );
+      setSuccess('Transacción recurrente y futuras instancias actualizadas. El balance se ajusta vía trigger.');
+    }
+
+    setEditingTransaction(null);
+    setShowRecurringEditDialog(false);
+    setPendingRecurringFormData(null);
+    await loadTransactionsData(selectedAccountId);
+  } catch (currentError) {
+    setError(currentError.message);
+  } finally {
+    setSaving(false);
+  }
+}
+
+async function handleRecurringTransactionSubmit(formData) {
+  try {
+    setSaving(true);
+    setError('');
+    setSuccess('');
+
+    if (editingRecurringTransaction) {
+      await updateRecurringTransaction(editingRecurringTransaction.rtr_id, formData);
+      setSuccess('Transacción recurrente actualizada correctamente.');
+    } else {
+      await createRecurringTransaction(formData);
+      setSuccess('Transacción recurrente creada correctamente.');
+    }
+
+    setEditingRecurringTransaction(null);
+    setCreatingRecurringTransaction(false);
+    await loadTransactionsData();
+  } catch (currentError) {
+    setError(currentError.message);
+  } finally {
+    setSaving(false);
+  }
+}
+
+function handleRecurringTransactionEdit(rtr) {
+  setEditingRecurringTransaction(rtr);
+  setError('');
+  setSuccess('');
+}
+
+function handleCancelRecurringEdit() {
+  setEditingRecurringTransaction(null);
+  setCreatingRecurringTransaction(false);
+  setError('');
+  setSuccess('');
+}
+
+async function handleRecurringTransactionDeactivate(rtrId) {
+  try {
+    setSaving(true);
+    setError('');
+    setSuccess('');
+
+    await deactivateRecurringTransaction(rtrId);
+    setSuccess('Transacción recurrente desactivada correctamente.');
+    await loadTransactionsData();
+  } catch (currentError) {
+    setError(currentError.message);
+  } finally {
+    setSaving(false);
+  }
 }
 
   if (loading) {
@@ -486,23 +620,41 @@ function handleCancelEdit() {
         </div>
       </section>
 
-      <div className="transactions-layout">
-        <section className="panel transaction-form-panel">
-          <h2>{editingTransaction ? 'Editar transacción' : 'Nueva transacción'}</h2>
+      <div className="transactions-tabs">
+        <button
+          type="button"
+          className={`tab-btn ${activeTab === 'transactions' ? 'active' : ''}`}
+          onClick={() => setActiveTab('transactions')}
+        >
+          Transacciones
+        </button>
+        <button
+          type="button"
+          className={`tab-btn ${activeTab === 'recurring' ? 'active' : ''}`}
+          onClick={() => setActiveTab('recurring')}
+        >
+          Transacciones Recurrentes
+        </button>
+      </div>
 
-          <TransactionForm
-            typeTransactions={typeTransactions}
-            subcategories={subcategories}
-            selectedAccountId={selectedAccountId}
-            selectedAccountName={selectedAccount?.ac_name || ''}
-            initialData={editingTransaction}
-            saving={saving}
-            onSubmit={handleSubmit}
-            onCancel={handleCancelEdit}
-          />
-        </section>
+      {activeTab === 'transactions' && (
+        <div className="transactions-layout">
+          <section className="panel transaction-form-panel">
+            <h2>{editingTransaction ? 'Editar transacción' : 'Nueva transacción'}</h2>
 
-        <section className="panel transactions-section">
+            <TransactionForm
+              typeTransactions={typeTransactions}
+              subcategories={subcategories}
+              selectedAccountId={selectedAccountId}
+              selectedAccountName={selectedAccount?.ac_name || ''}
+              initialData={editingTransaction}
+              saving={saving}
+              onSubmit={handleSubmit}
+              onCancel={handleCancelEdit}
+            />
+          </section>
+
+          <section className="panel transactions-section">
           <div className="transactions-list-header">
             <div>
               <h2>Transacciones de la cuenta</h2>
@@ -566,6 +718,51 @@ function handleCancelEdit() {
           </div>
         </section>
       </div>
+      )}
+
+      {activeTab === 'recurring' && (
+        <div className="transactions-layout">
+          {creatingRecurringTransaction || editingRecurringTransaction ? (
+            <section className="panel transaction-form-panel">
+              <h2>
+                {editingRecurringTransaction
+                  ? 'Editar transacción recurrente'
+                  : 'Nueva transacción recurrente'}
+              </h2>
+
+              <RecurringTransactionForm
+                accounts={activeAccounts}
+                typeTransactions={typeTransactions}
+                frequencies={frequencies}
+                subcategories={subcategories}
+                initialData={editingRecurringTransaction}
+                saving={saving}
+                onSubmit={handleRecurringTransactionSubmit}
+                onCancel={handleCancelRecurringEdit}
+              />
+            </section>
+          ) : (
+            <section className="panel transactions-section" style={{ width: '100%' }}>
+              <RecurringTransactionList
+                recurringTransactions={recurringTransactions}
+                onEdit={handleRecurringTransactionEdit}
+                onDeactivate={handleRecurringTransactionDeactivate}
+                onCreateNew={() => setCreatingRecurringTransaction(true)}
+                loading={saving}
+              />
+            </section>
+          )}
+        </div>
+      )}
+
+      {showRecurringEditDialog && editingTransaction?.rtr_id && (
+        <EditRecurrenceDialog
+          transactionName={editingTransaction.tr_name}
+          onChoice={handleRecurringEditChoice}
+          onCancel={handleCancelEdit}
+          loading={saving}
+        />
+      )}
 
       <ConfirmModal
         open={Boolean(confirmDeleteTransaction)}
