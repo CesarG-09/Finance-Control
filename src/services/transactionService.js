@@ -341,3 +341,107 @@ export async function deactivateTransaction(transactionId) {
 
   return data;
 }
+
+export async function updateRecurringTransactionInstanceOnly(transactionId, transaction) {
+  if (!transactionId) {
+    throw new Error('Falta el ID de la transacción.');
+  }
+
+  const payload = validateTransactionPayload(transaction);
+
+  const { error: transactionError } = await supabase
+    .schema('ctrl_finance')
+    .from('transaction')
+    .update({
+      tr_name: payload.tr_name,
+      tr_description: payload.tr_description,
+      tr_amount: payload.tr_amount,
+      tr_date: payload.tr_date,
+      tr_time: payload.tr_time,
+    })
+    .eq('tr_id', transactionId);
+
+  if (transactionError) {
+    throw transactionError;
+  }
+
+  return await getTransactionById(transactionId);
+}
+
+export async function updateRecurringTransactionAndFuture(
+  transactionId,
+  rtrId,
+  transaction,
+  referenceDate
+) {
+  if (!transactionId || !rtrId) {
+    throw new Error('Faltan datos para actualizar la transacción recurrente.');
+  }
+
+  const payload = validateTransactionPayload(transaction);
+
+  const { error: transactionError } = await supabase
+    .schema('ctrl_finance')
+    .from('transaction')
+    .update({
+      tr_name: payload.tr_name,
+      tr_description: payload.tr_description,
+      tr_amount: payload.tr_amount,
+      tr_date: payload.tr_date,
+      tr_time: payload.tr_time,
+    })
+    .eq('tr_id', transactionId);
+
+  if (transactionError) {
+    throw transactionError;
+  }
+
+  const { error: recurringError } = await supabase
+    .schema('ctrl_finance')
+    .from('recurrent_transaction')
+    .update({
+      rtr_name: payload.tr_name,
+      rtr_description: payload.tr_description,
+      rtr_estimated_amount: payload.tr_amount,
+    })
+    .eq('rtr_id', rtrId);
+
+  if (recurringError) {
+    throw recurringError;
+  }
+
+  const { data: futureTransactions, error: fetchError } = await supabase
+    .schema('ctrl_finance')
+    .from('transaction')
+    .select('tr_id, tr_date')
+    .eq('rtr_id', rtrId)
+    .gt('tr_date', referenceDate)
+    .eq('tr_is_active', true);
+
+  if (fetchError) {
+    throw fetchError;
+  }
+
+  if (futureTransactions && futureTransactions.length > 0) {
+    const updatePromises = futureTransactions.map(tr =>
+      supabase
+        .schema('ctrl_finance')
+        .from('transaction')
+        .update({
+          tr_name: payload.tr_name,
+          tr_description: payload.tr_description,
+          tr_amount: payload.tr_amount,
+        })
+        .eq('tr_id', tr.tr_id)
+    );
+
+    const results = await Promise.all(updatePromises);
+    const hasError = results.some(result => result.error);
+
+    if (hasError) {
+      throw new Error('Error actualizando transacciones futuras');
+    }
+  }
+
+  return await getTransactionById(transactionId);
+}

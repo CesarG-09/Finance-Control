@@ -1,0 +1,445 @@
+/* ================================================================
+   TRANSACCIONES RECURRENTES — estilos
+================================================================ */
+
+/* ── Panel de resumen — 4 columnas (selector + 3 cards) ──────── */
+.transactions-summary-panel {
+  grid-template-columns: minmax(0, 1fr) repeat(3, minmax(150px, 190px));
+}
+
+/* ── Tabs ─────────────────────────────────────────────────────── */
+.transactions-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 18px;
+  border-bottom: 2px solid var(--color-border);
+  padding-bottom: 0;
+}
+
+.tab-btn {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  padding: 8px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-muted);
+  border-radius: 0;
+  cursor: pointer;
+  transition: color 0.18s, border-color 0.18s;
+  box-shadow: none;
+}
+
+.tab-btn:hover:not(:disabled) {
+  color: var(--color-primary);
+  background: none;
+  transform: none;
+  box-shadow: none;
+}
+
+.tab-btn.active {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+  background: none;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ── Badge recurrente en transacciones normales ───────────────── */
+.transaction-card-recurring {
+  border-left: 3px solid var(--color-primary);
+}
+
+.recurring-badge {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 13px;
+  vertical-align: middle;
+  opacity: 0.8;
+  cursor: help;
+}
+
+/* ── Formulario de recurrencia ────────────────────────────────── */
+.recurring-transaction-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.rtr-freq-hint {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--color-muted);
+  font-style: italic;
+}
+
+.rtr-empty-hint {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
+/* Subcategory chips */
+.rtr-subcategory-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.rtr-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  background: var(--color-surface-soft);
+  color: var(--color-muted);
+  border: 1.5px solid var(--color-border);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.rtr-chip:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: var(--color-primary-soft);
+  transform: none;
+  box-shadow: none;
+}
+
+.rtr-chip--selected {
+  background: var(--color-primary-soft);
+  color: var(--color-primary-dark);
+  border-color: var(--color-primary);
+}
+
+.rtr-chip-check {
+  font-size: 11px;
+  font-weight: 900;
+}
+
+/* Toggle fecha de fin */
+.rtr-finish-date-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.rtr-toggle-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.rtr-toggle-checkbox {
+  width: 16px !important;
+  height: 16px !important;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+/* ── Lista de transacciones recurrentes ───────────────────────── */
+.rtr-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.rtr-empty-icon {
+  font-size: 48px;
+  line-height: 1;
+}
+
+.rtr-empty-state h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.rtr-empty-state p {
+  margin: 0;
+  color: var(--color-muted);
+  max-width: 320px;
+}
+
+.rtr-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+}
+
+.rtr-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.rtr-list-header h2 {
+  margin: 0 0 4px;
+}
+
+.rtr-list-header p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-muted);
+}
+
+.rtr-cards {
+  display: grid;
+  gap: 12px;
+}
+
+/* Tarjeta de transacción recurrente */
+.rtr-card {
+  background: linear-gradient(180deg, #fff, #f8fafc);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+
+.rtr-card:hover {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.rtr-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.rtr-card-title-group {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.rtr-type-dot {
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-top: 5px;
+}
+
+.rtr-type-dot.dot-income  { background: var(--color-success); }
+.rtr-type-dot.dot-expense { background: var(--color-danger); }
+
+.rtr-card-name {
+  margin: 0 0 3px;
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rtr-card-description {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
+/* Cuerpo */
+.rtr-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rtr-card-amount strong,
+.rtr-card-amount span {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.rtr-card-meta,
+.rtr-card-subcats,
+.rtr-card-dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.rtr-card-dates {
+  gap: 12px;
+  color: var(--color-muted);
+}
+
+.rtr-card-dates strong {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+/* Pills de info */
+.rtr-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--color-surface-soft);
+  border: 1px solid var(--color-border);
+  color: var(--color-muted);
+}
+
+.rtr-pill--subcat {
+  background: var(--color-primary-soft);
+  border-color: transparent;
+  color: var(--color-primary-dark);
+}
+
+/* Footer */
+.rtr-card-footer {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-border);
+}
+
+/* ── Diálogo de edición de instancia ──────────────────────────── */
+.rtr-edit-dialog {
+  max-width: 460px;
+}
+
+.rtr-edit-dialog h2 {
+  margin-bottom: 8px;
+}
+
+.rtr-choice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 18px 0;
+}
+
+.rtr-choice-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface-soft);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.rtr-choice-option:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.rtr-choice-option--selected {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.rtr-choice-option input[type="radio"] {
+  width: 16px !important;
+  height: 16px !important;
+  accent-color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.rtr-choice-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  flex: 1;
+}
+
+.rtr-choice-icon {
+  font-size: 20px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.rtr-choice-content strong {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+
+.rtr-choice-content p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
+/* ── Button aliases ───────────────────────────────────────────── */
+/* Allow btn-primary / btn-secondary / btn-small as named variants */
+.btn-primary  { /* inherits default button style */ }
+
+.btn-secondary {
+  background: #64748b;
+  color: white;
+}
+.btn-secondary:hover:not(:disabled) {
+  background: #475569;
+}
+
+.btn-danger {
+  background: #dc2626;
+  color: white;
+}
+.btn-danger:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+.btn-small {
+  padding: 6px 12px !important;
+  font-size: 12px !important;
+  border-radius: var(--radius-sm) !important;
+}
+
+/* ── Responsive ───────────────────────────────────────────────── */
+@media (max-width: 700px) {
+  .transactions-tabs {
+    gap: 0;
+  }
+
+  .tab-btn {
+    flex: 1;
+    text-align: center;
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+
+  .rtr-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .rtr-card-footer {
+    justify-content: flex-start;
+  }
+
+  .rtr-card-footer button {
+    flex: 1;
+  }
+}
