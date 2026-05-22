@@ -92,16 +92,24 @@ function getTransactionCategory(transaction) {
 
 function TransactionCard({ transaction, onEdit, onDelete }) {
   const isInitialBalance = transaction.movement_source === 'initial_balance';
+  const isRecurringInstance = transaction.rtr_id !== null && transaction.rtr_id !== undefined;
 
   return (
     <article
       className={`transaction-card ${
         isInitialBalance ? 'transaction-card-initial-balance' : ''
-      }`}
+      } ${isRecurringInstance ? 'transaction-card-recurring' : ''}`}
     >
       <div className="transaction-card-header">
         <div>
-          <h3>{isInitialBalance ? 'Balance inicial' : transaction.tr_name}</h3>
+          <h3>
+            {isInitialBalance ? 'Balance inicial' : transaction.tr_name}
+            {isRecurringInstance && (
+              <span className="recurring-badge" title="Transacción generada por recurrencia">
+                🔄
+              </span>
+            )}
+          </h3>
           <p>
             {formatDate(transaction.tr_date || transaction.created_at?.slice(0, 10))}
             {formatTime(transaction.tr_time) && (
