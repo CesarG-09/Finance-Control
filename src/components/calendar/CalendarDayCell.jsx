@@ -8,8 +8,20 @@ function chipClassFor(event) {
   }
 }
 
+function chipIconFor(event) {
+  switch (event.type) {
+    case 'cut': return '✂';
+    case 'pay': return '💸';
+    case 'recurrent': return '🔁';
+    case 'tx': return '•';
+    default: return '';
+  }
+}
+
 export default function CalendarDayCell({
   day,
+  weekdayShort,
+  weekdayNumber,
   dateStr,
   inMonth,
   isToday,
@@ -24,17 +36,23 @@ export default function CalendarDayCell({
       type="button"
       className={`calendar-day-cell ${inMonth ? '' : 'out-of-month'} ${isToday ? 'is-today' : ''}`}
       onClick={() => onSelect(dateStr)}
+      title={`${weekdayShort} ${day} — día ${weekdayNumber} de la semana`}
     >
-      <span className="calendar-day-number">{day}</span>
+      <header className="calendar-day-head">
+        <span className="calendar-day-weekday">{weekdayShort}</span>
+        <span className="calendar-day-number">{day}</span>
+        {isToday && <span className="calendar-today-pill">Hoy</span>}
+      </header>
 
       <div className="calendar-day-chips">
         {visible.map((event, idx) => (
           <span key={idx} className={chipClassFor(event)} title={event.label}>
-            {event.label}
+            <span className="calendar-chip-icon">{chipIconFor(event)}</span>
+            <span className="calendar-chip-label">{event.label}</span>
           </span>
         ))}
         {hidden > 0 && (
-          <span className="calendar-chip calendar-chip-more">+{hidden}</span>
+          <span className="calendar-chip calendar-chip-more">+{hidden} más</span>
         )}
       </div>
     </button>

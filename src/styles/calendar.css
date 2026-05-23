@@ -1,4 +1,6 @@
-/* Calendar page */
+/* =====================================================
+   Calendar page
+===================================================== */
 .calendar-page {
   padding: 1.5rem;
   display: flex;
@@ -16,9 +18,13 @@
 .calendar-legend-item {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.4rem;
   font-size: 0.85rem;
-  color: var(--text-secondary, #555);
+  color: var(--color-muted, #475569);
+  background: #fff;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border, #e5e7eb);
 }
 
 .legend-dot {
@@ -35,8 +41,9 @@
 .calendar-panel {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  padding: 1rem;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: linear-gradient(180deg, #fff, #fafbff);
 }
 
 .calendar-header {
@@ -44,11 +51,16 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--color-border, #e5e7eb);
 }
 
 .calendar-header-title h2 {
   margin: 0;
-  font-size: 1.1rem;
+  font-size: 1.35rem;
+  text-transform: capitalize;
+  letter-spacing: 0.2px;
+  color: var(--color-text, #0f172a);
 }
 
 .calendar-header-actions {
@@ -56,69 +68,172 @@
   gap: 0.5rem;
 }
 
+/* =====================================================
+   Grid: cabecera de días + filas con número de semana
+===================================================== */
+.calendar-grid-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 .calendar-weekdays {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
-  margin-bottom: 4px;
+  grid-template-columns: 42px repeat(7, minmax(0, 1fr));
+  gap: 6px;
+  padding-bottom: 4px;
+}
+
+.calendar-week-col-header {
+  text-align: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #94a3b8;
+  letter-spacing: 0.5px;
+  padding: 6px 0;
 }
 
 .calendar-weekday {
-  text-align: center;
-  font-size: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  padding: 6px 0;
+  background: #eef2ff;
+  border-radius: 8px;
+  color: #1e3a8a;
+}
+
+.calendar-weekday strong {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+}
+
+.calendar-weekday small {
+  font-size: 0.62rem;
+  color: #6366f1;
   font-weight: 600;
-  color: var(--text-secondary, #555);
-  padding: 0.25rem 0;
 }
 
 .calendar-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
-}
-
-.calendar-day-cell {
-  min-height: 92px;
-  background: var(--surface, #fff);
-  border: 1px solid var(--border, #e5e7eb);
-  border-radius: 8px;
-  padding: 6px;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
+  gap: 6px;
+}
+
+.calendar-week-row {
+  display: grid;
+  grid-template-columns: 42px repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.calendar-week-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #64748b;
+  background: #f1f5f9;
+  border-radius: 8px;
+  min-height: 100%;
+  user-select: none;
+}
+
+/* =====================================================
+   Día (celda)
+===================================================== */
+.calendar-day-cell {
+  position: relative;
+  min-height: 112px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
   text-align: left;
+  font: inherit;
+  color: inherit;
 }
 
 .calendar-day-cell:hover {
-  background: #f9fafb;
-  border-color: #cbd5e1;
+  background: #f8fafc;
+  border-color: #93c5fd;
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.08);
+  transform: translateY(-1px);
 }
 
 .calendar-day-cell.out-of-month {
-  opacity: 0.45;
+  background: #fafbfc;
+  color: #94a3b8;
+  opacity: 0.7;
 }
 
 .calendar-day-cell.is-today {
   border-color: #2563eb;
+  background: linear-gradient(180deg, #eff6ff, #ffffff);
   box-shadow: inset 0 0 0 1px #2563eb;
 }
 
+.calendar-day-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.calendar-day-weekday {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #94a3b8;
+}
+
+.calendar-day-cell.is-today .calendar-day-weekday {
+  color: #2563eb;
+}
+
 .calendar-day-number {
-  font-weight: 600;
-  font-size: 0.85rem;
+  font-weight: 700;
+  font-size: 1rem;
+  line-height: 1;
+  color: var(--color-text, #0f172a);
+}
+
+.calendar-day-cell.out-of-month .calendar-day-number {
+  color: #cbd5e1;
+}
+
+.calendar-today-pill {
+  font-size: 0.6rem;
+  background: #2563eb;
+  color: #fff;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
 }
 
 .calendar-day-chips {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
   width: 100%;
 }
 
 .calendar-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 0.68rem;
   padding: 2px 6px;
   border-radius: 6px;
@@ -128,18 +243,53 @@
   max-width: 100%;
   color: #fff;
   line-height: 1.3;
+  font-weight: 600;
+}
+
+.calendar-chip-icon {
+  font-size: 0.62rem;
+  flex-shrink: 0;
+}
+
+.calendar-chip-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .calendar-chip-cut { background: #f97316; }
 .calendar-chip-pay { background: #dc2626; }
 .calendar-chip-recurrent { background: #2563eb; }
 .calendar-chip-tx { background: #6b7280; }
+
 .calendar-chip-more {
-  background: #e5e7eb;
-  color: #374151;
+  background: #e2e8f0;
+  color: #475569;
+  justify-content: center;
 }
 
-/* Credit card tweaks for account card */
+/* =====================================================
+   Responsive
+===================================================== */
+@media (max-width: 700px) {
+  .calendar-weekdays,
+  .calendar-week-row {
+    grid-template-columns: 28px repeat(7, minmax(0, 1fr));
+    gap: 3px;
+  }
+  .calendar-day-cell {
+    min-height: 72px;
+    padding: 5px;
+  }
+  .calendar-day-number { font-size: 0.85rem; }
+  .calendar-day-weekday { font-size: 0.55rem; }
+  .calendar-chip { font-size: 0.6rem; padding: 1px 4px; }
+  .calendar-week-number { font-size: 0.65rem; }
+}
+
+/* =====================================================
+   Credit card account-card additions
+===================================================== */
 .account-card-credit-body {
   display: flex;
   flex-direction: column;
@@ -174,7 +324,7 @@
 .account-credit-utilization small {
   display: block;
   margin-top: 4px;
-  color: var(--text-secondary, #555);
+  color: var(--color-muted, #475569);
   font-size: 0.78rem;
 }
 
@@ -182,7 +332,7 @@
   display: flex;
   justify-content: space-between;
   font-size: 0.8rem;
-  color: var(--text-secondary, #555);
+  color: var(--color-muted, #475569);
 }
 
 .account-tc-badge {
@@ -193,7 +343,7 @@
   font-size: 0.65rem;
   padding: 1px 6px;
   border-radius: 999px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 /* Transfer form */
