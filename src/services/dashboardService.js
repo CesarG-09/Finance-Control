@@ -1,6 +1,10 @@
 import { supabase } from '../lib/supabaseClient';
 import { getAccountsByClientId } from './accountService';
 import { getActiveTypeTransactions } from './transactionService';
+import {
+  getTransferSubcategoryId,
+  TRANSFER_SUBCATEGORY_NAME,
+} from '../constants/specialSubcategories';
 
 const MOVEMENT_SELECT = `
   tr_id,
@@ -113,6 +117,15 @@ export function getMovementSignedAmount(movement) {
   }
 
   return amount;
+}
+
+export function isTransferMovement(movement) {
+  if (!movement) return false;
+  const subs = movement.subcategories_transaction;
+  if (!Array.isArray(subs)) return false;
+  return subs.some(
+    (s) => s.st_is_active && s.subcategory?.sct_name === TRANSFER_SUBCATEGORY_NAME
+  );
 }
 
 export function getMovementCategory(movement) {
@@ -263,15 +276,20 @@ export async function getDashboardSummary(clientId) {
     }),
   ]);
 
+  // Asegura que el sct_id de "Transferencia" esté cacheado
+  await getTransferSubcategoryId();
+
   const activeAccounts = accounts.filter((account) => account.ac_is_active);
 
-  const balanceTotal = activeAccounts.reduce(
-    (total, account) => total + Number(account.ac_balance ?? 0),
-    0
-  );
+  // Para el balance total, excluir tarjetas de crédito (su ac_balance es crédito disponible)
+  const balanceTotal = activeAccounts
+    .filter((account) => Number(account.ta_id) !== 1)
+    .reduce((total, account) => total + Number(account.ac_balance ?? 0), 0);
 
   const transactionMovements = monthlyMovements.filter(
-    (movement) => movement.movement_source !== 'initial_balance'
+    (movement) =>
+      movement.movement_source !== 'initial_balance' &&
+      !isTransferMovement(movement)
   );
 
   const monthlyIncome = transactionMovements

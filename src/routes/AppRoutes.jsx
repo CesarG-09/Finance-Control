@@ -10,6 +10,7 @@ import DashboardPage from '../pages/DashboardPage';
 import AccountsPage from '../pages/AccountsPage';
 import TransactionsPage from '../pages/TransactionsPage';
 import MovementsPage from '../pages/MovementsPage';
+import CalendarPage from '../pages/CalendarPage';
 import ProfileSettingsPage from '../pages/ProfileSettingsPage';
 
 export default function AppRoutes() {
@@ -55,6 +56,7 @@ export default function AppRoutes() {
         <Route path="/cuentas" element={<AccountsPage />} />
         <Route path="/transacciones" element={<TransactionsPage />} />
         <Route path="/movimientos" element={<MovementsPage />} />
+        <Route path="/calendario" element={<CalendarPage />} />
         <Route path="/mi-perfil" element={<ProfileSettingsPage />} />
       </Route>
 
