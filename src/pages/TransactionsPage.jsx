@@ -672,10 +672,12 @@ async function handleTransferSubmit(payload) {
             <h2>{editingTransaction ? 'Editar transacción' : 'Nueva transacción'}</h2>
 
             <TransactionForm
+              accounts={activeAccounts}
               typeTransactions={typeTransactions}
               subcategories={subcategories}
               selectedAccountId={selectedAccountId}
               selectedAccountName={selectedAccount?.ac_name || ''}
+              onAccountChange={handleSelectedAccountChange}
               initialData={editingTransaction}
               saving={saving}
               onSubmit={handleSubmit}

@@ -39,10 +39,12 @@ function getActiveSubcategoryData(transaction) {
 }
 
 export default function TransactionForm({
+  accounts = [],
   typeTransactions,
   subcategories,
   selectedAccountId,
   selectedAccountName,
+  onAccountChange,
   initialData,
   saving,
   onSubmit,
@@ -54,7 +56,6 @@ export default function TransactionForm({
   const isEditing = Boolean(initialData);
   const hasSelectedAccount = Boolean(selectedAccountId);
 
-  /* Tipo seleccionado */
   const selectedType = useMemo(
     () => typeTransactions.find((t) => String(t.ty_id) === String(form.ty_id)),
     [typeTransactions, form.ty_id]
@@ -64,7 +65,6 @@ export default function TransactionForm({
     ? selectedType.ty_name?.toLowerCase() === 'entrada'
     : null;
 
-  /* Categorías únicas */
   const categories = useMemo(() => {
     const map = new Map();
     subcategories.forEach((s) => {
@@ -74,7 +74,6 @@ export default function TransactionForm({
     return Array.from(map.values()).sort((a, b) => a.ct_name.localeCompare(b.ct_name));
   }, [subcategories]);
 
-  /* Subcategorías filtradas */
   const filteredSubcategories = useMemo(
     () => subcategories.filter((s) => String(s.ct_id) === String(form.ct_id)),
     [subcategories, form.ct_id]
@@ -112,6 +111,11 @@ export default function TransactionForm({
     setForm((prev) => ({ ...prev, ct_id: event.target.value, sct_id: '' }));
   }
 
+  function handleSubcategorySelect(sctId) {
+    const s = String(sctId);
+    setForm((prev) => ({ ...prev, sct_id: prev.sct_id === s ? '' : s }));
+  }
+
   function handleTypeSelect(typeId) {
     setForm((prev) => ({ ...prev, ty_id: String(typeId) }));
   }
@@ -129,60 +133,62 @@ export default function TransactionForm({
       return;
     }
     if (!form.ty_id) { setError('Selecciona Entrada o Salida.'); return; }
-    if (!form.ct_id) { setError('Selecciona una categoría.'); return; }
-    if (!form.sct_id) { setError('Selecciona una subcategoría.'); return; }
-    if (!form.tr_name.trim()) { setError('El nombre es obligatorio.'); return; }
-    if (!form.tr_date) { setError('La fecha es obligatoria.'); return; }
 
     const amount = Number(form.tr_amount);
     if (!Number.isFinite(amount)) { setError('El monto debe ser un número válido.'); return; }
     if (amount <= 0) { setError('El monto debe ser mayor a 0.'); return; }
+
+    if (!form.ct_id) { setError('Selecciona una categoría.'); return; }
+    if (!form.sct_id) { setError('Selecciona una subcategoría.'); return; }
+    if (!form.tr_date) { setError('La fecha es obligatoria.'); return; }
+    if (!form.tr_name.trim()) { setError('El nombre es obligatorio.'); return; }
 
     await onSubmit(form);
     if (!isEditing) setForm(emptyForm);
   }
 
   return (
-    <form className="form transaction-form" onSubmit={handleSubmit}>
+    <form className="form recurring-transaction-form" onSubmit={handleSubmit}>
       {error && <p className="error-message">{error}</p>}
 
-      {!hasSelectedAccount && (
-        <p className="error-message">Selecciona una cuenta para registrar transacciones.</p>
-      )}
+      {/* Cuenta */}
+      <label>
+        <span className="label-row">
+          Cuenta
+          <span className="required-tag">Obligatorio</span>
+        </span>
+        <select
+          name="ac_id"
+          value={selectedAccountId || ''}
+          onChange={onAccountChange}
+          disabled={saving || isEditing || accounts.length === 0}
+        >
+          <option value="">Selecciona una cuenta</option>
+          {accounts.map((acc) => (
+            <option key={acc.ac_id} value={acc.ac_id}>{acc.ac_name}</option>
+          ))}
+        </select>
+      </label>
 
-      {hasSelectedAccount && (
-        <p className="info-message">
-          Cuenta: <strong>{selectedAccountName}</strong>
-        </p>
-      )}
-
-      {/* Tipo — botones prominentes */}
+      {/* Tipo */}
       <div className="form-field">
         <span className="label-row">
           Tipo de movimiento
           <span className="required-tag">Obligatorio</span>
         </span>
-
         <div className="transaction-type-buttons">
           {typeTransactions.map((t) => {
-            const isSelected = String(t.ty_id) === String(form.ty_id);
+            const sel = String(t.ty_id) === String(form.ty_id);
             const isEntry = t.ty_name?.toLowerCase() === 'entrada';
-
             return (
               <button
                 key={t.ty_id}
                 type="button"
-                className={`type-option-button ${
-                  isSelected
-                    ? isEntry
-                      ? 'selected-income'
-                      : 'selected-expense'
-                    : 'unselected'
-                }`}
+                className={`type-option-button ${sel ? (isEntry ? 'selected-income' : 'selected-expense') : 'unselected'}`}
                 onClick={() => handleTypeSelect(t.ty_id)}
                 disabled={!hasSelectedAccount || saving}
               >
-                <span className="type-btn-icon">{isEntry ? '↑' : '↓'}</span>
+                <span className="type-btn-icon">{isEntry ? '↓' : '↑'}</span>
                 {t.ty_name}
               </button>
             );
@@ -190,7 +196,7 @@ export default function TransactionForm({
         </div>
       </div>
 
-      {/* Monto — destacado cuando hay tipo */}
+      {/* Monto */}
       <label className={`amount-label-field ${form.ty_id ? `amount-${isIncome ? 'income' : 'expense'}` : ''}`}>
         <span className="label-row">
           Monto
@@ -212,45 +218,88 @@ export default function TransactionForm({
         </div>
       </label>
 
-      {/* Categoría y subcategoría en fila */}
-      <div className="category-row">
-        <label>
-          <span className="label-row">
-            Categoría
-            <span className="required-tag">Obligatorio</span>
-          </span>
-          <select
-            name="ct_id"
-            value={form.ct_id}
-            onChange={handleCategoryChange}
-            disabled={!hasSelectedAccount || saving}
-          >
-            <option value="">Selecciona</option>
-            {categories.map((cat) => (
-              <option key={cat.ct_id} value={cat.ct_id}>{cat.ct_name}</option>
-            ))}
-          </select>
-        </label>
+      {/* Categoría */}
+      <label>
+        <span className="label-row">
+          Categoría
+          <span className="required-tag">Obligatorio</span>
+        </span>
+        <select
+          name="ct_id"
+          value={form.ct_id}
+          onChange={handleCategoryChange}
+          disabled={!hasSelectedAccount || saving}
+        >
+          <option value="">Selecciona</option>
+          {categories.map((cat) => (
+            <option key={cat.ct_id} value={cat.ct_id}>{cat.ct_name}</option>
+          ))}
+        </select>
+      </label>
 
-        <label>
+      {/* Subcategoría */}
+      {form.ct_id && (
+        <div className="form-field">
           <span className="label-row">
             Subcategoría
             <span className="required-tag">Obligatorio</span>
           </span>
-          <select
-            name="sct_id"
-            value={form.sct_id}
+          {filteredSubcategories.length === 0 ? (
+            <p className="rtr-empty-hint">No hay subcategorías disponibles.</p>
+          ) : (
+            <div className="rtr-subcategory-chips">
+              {filteredSubcategories.map((s) => {
+                const selected = form.sct_id === String(s.sct_id);
+                return (
+                  <button
+                    key={s.sct_id}
+                    type="button"
+                    className={`rtr-chip ${selected ? 'rtr-chip--selected' : ''}`}
+                    onClick={() => handleSubcategorySelect(s.sct_id)}
+                    disabled={!hasSelectedAccount || saving}
+                  >
+                    {selected && <span className="rtr-chip-check">✓</span>}
+                    {s.sct_name}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Fecha y hora */}
+      <div className="form-field">
+        <span className="label-row">
+          Fecha y hora
+          <span className="required-tag">Obligatorio</span>
+        </span>
+        <div className="date-input-wrap">
+          <input
+            type="date"
+            name="tr_date"
+            value={form.tr_date}
             onChange={handleChange}
-            disabled={!hasSelectedAccount || saving || !form.ct_id}
+            disabled={!hasSelectedAccount || saving}
+          />
+          <input
+            type="time"
+            name="tr_time"
+            value={form.tr_time}
+            onChange={handleChange}
+            disabled={!hasSelectedAccount || saving}
+            className="time-input"
+          />
+          <button
+            type="button"
+            className="today-btn"
+            onClick={setNow}
+            disabled={!hasSelectedAccount || saving}
+            title="Usar fecha y hora actuales"
           >
-            <option value="">
-              {form.ct_id ? 'Selecciona' : '— elige categoría primero —'}
-            </option>
-            {filteredSubcategories.map((s) => (
-              <option key={s.sct_id} value={s.sct_id}>{s.sct_name}</option>
-            ))}
-          </select>
-        </label>
+            Ahora
+          </button>
+        </div>
       </div>
 
       {/* Nombre */}
@@ -287,49 +336,11 @@ export default function TransactionForm({
         />
       </label>
 
-      {/* Fecha y hora */}
-      <div className="form-field">
-        <span className="label-row">
-          Fecha y hora
-          <span className="required-tag">Obligatorio</span>
-        </span>
-        <div className="date-input-wrap">
-          <input
-            type="date"
-            name="tr_date"
-            value={form.tr_date}
-            onChange={handleChange}
-            disabled={!hasSelectedAccount || saving}
-          />
-          <input
-            type="time"
-            name="tr_time"
-            value={form.tr_time}
-            onChange={handleChange}
-            disabled={!hasSelectedAccount || saving}
-            className="time-input"
-          />
-          <button
-            type="button"
-            className="today-btn"
-            onClick={setNow}
-            disabled={!hasSelectedAccount || saving}
-            title="Usar fecha y hora actuales"
-          >
-            Ahora
-          </button>
-        </div>
-      </div>
-
+      {/* Botones */}
       <div className="form-actions">
         <button type="submit" disabled={saving || !hasSelectedAccount}>
-          {saving
-            ? 'Guardando...'
-            : isEditing
-              ? 'Guardar cambios'
-              : 'Registrar transacción'}
+          {saving ? 'Guardando…' : isEditing ? 'Guardar cambios' : 'Registrar transacción'}
         </button>
-
         {isEditing && (
           <button
             type="button"
