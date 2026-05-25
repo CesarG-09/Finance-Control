@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import AccountForm from '../components/accounts/AccountForm';
 import { EnhancedAccountCard } from '../components/accounts/EnhancedAccountCard';
-import TransferForm from '../components/transfers/TransferForm';
 import { useAuth } from '../context/AuthContext';
 import ConfirmModal from '../components/ui/ConfirmModal';
 import {
@@ -12,7 +11,6 @@ import {
   reactivateAccount,
   updateAccount,
 } from '../services/accountService';
-import { createTransfer } from '../services/transferService';
 
 
 
@@ -20,7 +18,6 @@ const ACCOUNT_VIEWS = {
   FORM: 'form',
   ACTIVE: 'active',
   INACTIVE: 'inactive',
-  TRANSFER: 'transfer',
 };
 
 function formatCurrency(value) {
@@ -135,29 +132,6 @@ export default function AccountsPage() {
     setEditingAccount(null);
     setError('');
     setSuccess('');
-  }
-
-  function handleShowTransfer() {
-    setAccountView(ACCOUNT_VIEWS.TRANSFER);
-    setEditingAccount(null);
-    setError('');
-    setSuccess('');
-  }
-
-  async function handleTransferSubmit(payload) {
-    try {
-      setSaving(true);
-      setError('');
-      setSuccess('');
-      await createTransfer(payload);
-      setSuccess('Transferencia realizada correctamente.');
-      await loadAccountsData();
-    } catch (err) {
-      setError(err.message);
-      throw err;
-    } finally {
-      setSaving(false);
-    }
   }
 
   async function handleSubmit(formData) {
@@ -314,26 +288,7 @@ export default function AccountsPage() {
     );
   }
 
-  function renderTransferView() {
-    return (
-      <div className="accounts-workspace-content accounts-form-view" key="transfer">
-        <div className="accounts-form-centered">
-          <h2>Transferir entre cuentas</h2>
-          <p>Mueve saldo entre tus cuentas. Las transferencias no afectan totales de ingresos/gastos.</p>
-          <TransferForm
-            accounts={accounts}
-            saving={saving}
-            onSubmit={handleTransferSubmit}
-          />
-        </div>
-      </div>
-    );
-  }
-
   function renderWorkspaceContent() {
-    if (accountView === ACCOUNT_VIEWS.TRANSFER) {
-      return renderTransferView();
-    }
     if (accountView === ACCOUNT_VIEWS.ACTIVE) {
       return renderAccountsList({
         title: 'Cuentas activas',
@@ -399,13 +354,6 @@ export default function AccountsPage() {
             count={inactiveAccounts.length}
             isActive={accountView === ACCOUNT_VIEWS.INACTIVE}
             onClick={handleShowInactiveAccounts}
-          />
-
-          <AccountViewButton
-            label="Transferir entre cuentas"
-            variant="secondary"
-            isActive={accountView === ACCOUNT_VIEWS.TRANSFER}
-            onClick={handleShowTransfer}
           />
         </div>
 

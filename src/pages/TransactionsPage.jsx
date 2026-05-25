@@ -4,8 +4,10 @@ import TransactionForm from '../components/transactions/TransactionForm';
 import RecurringTransactionForm from '../components/recurring/RecurringTransactionForm';
 import RecurringTransactionList from '../components/recurring/RecurringTransactionList';
 import EditRecurrenceDialog from '../components/recurring/EditRecurrenceDialog';
+import TransferForm from '../components/transfers/TransferForm';
 import { useAuth } from '../context/AuthContext';
 import { getAccountsByClientId } from '../services/accountService';
+import { createTransfer } from '../services/transferService';
 import ConfirmModal from '../components/ui/ConfirmModal';
 import { SearchBox } from '../components/ui/SearchBox';
 import { useDebounce } from '../hooks/useDebounce';
@@ -563,6 +565,23 @@ async function handleRecurringTransactionDeactivate(rtrId) {
   }
 }
 
+async function handleTransferSubmit(payload) {
+  try {
+    setSaving(true);
+    setError('');
+    setSuccess('');
+
+    await createTransfer(payload);
+    setSuccess('Transferencia realizada correctamente.');
+    await loadTransactionsData(selectedAccountId);
+  } catch (currentError) {
+    setError(currentError.message);
+    throw currentError;
+  } finally {
+    setSaving(false);
+  }
+}
+
   if (loading) {
     return <p>Cargando transacciones...</p>;
   }
@@ -637,6 +656,13 @@ async function handleRecurringTransactionDeactivate(rtrId) {
           onClick={() => setActiveTab('recurring')}
         >
           Transacciones Recurrentes
+        </button>
+        <button
+          type="button"
+          className={`tab-btn ${activeTab === 'transfer' ? 'active' : ''}`}
+          onClick={() => setActiveTab('transfer')}
+        >
+          Transferencias
         </button>
       </div>
 
@@ -755,6 +781,22 @@ async function handleRecurringTransactionDeactivate(rtrId) {
             />
           </section>
         )
+      )}
+
+      {activeTab === 'transfer' && (
+        <div className="transactions-layout">
+          <section className="panel transaction-form-panel">
+            <h2>Transferir entre cuentas</h2>
+            <p className="transfer-intro">
+              Mueve saldo entre tus cuentas. Las transferencias no afectan los totales de ingresos/gastos.
+            </p>
+            <TransferForm
+              accounts={accounts}
+              saving={saving}
+              onSubmit={handleTransferSubmit}
+            />
+          </section>
+        </div>
       )}
 
       {showRecurringEditDialog && editingTransaction?.rtr_id && (
