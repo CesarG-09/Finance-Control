@@ -6,6 +6,14 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.calendar-page > .page-header {
+  flex-shrink: 0;
+  margin-bottom: 0;
 }
 
 .calendar-legend {
@@ -44,6 +52,9 @@
   gap: 1rem;
   padding: 1.25rem;
   background: linear-gradient(180deg, #fff, #fafbff);
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .calendar-header {
@@ -53,6 +64,7 @@
   gap: 0.5rem;
   padding-bottom: 0.75rem;
   border-bottom: 1px solid var(--color-border, #e5e7eb);
+  flex-shrink: 0;
 }
 
 .calendar-header-title h2 {
@@ -75,6 +87,18 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  /* Scroll invisible */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.calendar-grid-wrapper::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
 }
 
 .calendar-weekdays {
@@ -82,6 +106,10 @@
   grid-template-columns: 42px repeat(7, minmax(0, 1fr));
   gap: 6px;
   padding-bottom: 4px;
+  position: sticky;
+  top: 0;
+  background: #fafbff;
+  z-index: 1;
 }
 
 .calendar-week-col-header {
