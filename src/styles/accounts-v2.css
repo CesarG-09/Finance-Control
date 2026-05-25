@@ -27,11 +27,16 @@
   min-width: 0;
 }
 
-/* fieldset usado como sección (datos TC) debe verse igual */
+/* fieldset usado como sección (datos TC) debe verse igual.
+   min-width:0 es imprescindible: un <fieldset> trae un
+   min-inline-size:min-content intrínseco que ignora minmax(0,1fr)
+   del grid y desborda el panel horizontalmente. */
 fieldset.account-form-section {
   margin: 0;
   border-style: solid;
   border-width: 1px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 fieldset.account-form-section legend {
