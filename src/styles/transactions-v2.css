@@ -186,6 +186,15 @@
 }
 
 /* ================================================================
+   Task 1: el panel del formulario de transacción no debe estirarse
+   con el contenido de la lista hermana (grid stretch). Se le da una
+   altura fija suficiente para mostrar todos los campos sin scroll. */
+.transactions-layout .transaction-form-panel {
+  align-self: start;
+  min-height: 720px;
+}
+
+/* ================================================================
    Sort toggle button */
 .transactions-list-header {
   display: flex;
