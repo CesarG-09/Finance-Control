@@ -1,6 +1,14 @@
 import CalendarDayCell from './CalendarDayCell';
 
-const WEEKDAYS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+const WEEKDAYS = [
+  { short: 'Dom', long: 'Domingo' },
+  { short: 'Lun', long: 'Lunes' },
+  { short: 'Mar', long: 'Martes' },
+  { short: 'Mié', long: 'Miércoles' },
+  { short: 'Jue', long: 'Jueves' },
+  { short: 'Vie', long: 'Viernes' },
+  { short: 'Sáb', long: 'Sábado' },
+];
 
 function pad(n) {
   return String(n).padStart(2, '0');
@@ -8,6 +16,16 @@ function pad(n) {
 
 function isoDate(year, monthIndex, day) {
   return `${year}-${pad(monthIndex + 1)}-${pad(day)}`;
+}
+
+// Número de semana ISO 8601
+function getISOWeek(date) {
+  const target = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNr = (target.getUTCDay() + 6) % 7;
+  target.setUTCDate(target.getUTCDate() - dayNr + 3);
+  const firstThursday = new Date(Date.UTC(target.getUTCFullYear(), 0, 4));
+  const diff = target - firstThursday;
+  return 1 + Math.round(diff / (7 * 24 * 3600 * 1000));
 }
 
 export default function CalendarGrid({ year, monthIndex, events, onSelectDay }) {
@@ -50,34 +68,56 @@ export default function CalendarGrid({ year, monthIndex, events, onSelectDay }) 
     }
 
     const dateStr = isoDate(cellYear, cellMonth, day);
+    const dateObj = new Date(cellYear, cellMonth, day);
+
     cells.push({
       key: `${cellYear}-${cellMonth}-${day}`,
       day,
       dateStr,
+      dateObj,
+      weekdayIndex: dateObj.getDay(),
       inMonth,
       isToday: dateStr === todayStr,
       events: eventsByDate[dateStr] ?? [],
     });
   }
 
+  // Agrupar en filas (semanas)
+  const rows = [];
+  for (let i = 0; i < cells.length; i += 7) {
+    rows.push(cells.slice(i, i + 7));
+  }
+
   return (
     <div className="calendar-grid-wrapper">
       <div className="calendar-weekdays">
-        {WEEKDAYS.map((w) => (
-          <span key={w} className="calendar-weekday">{w}</span>
+        <span className="calendar-week-col-header" title="Semana">Sem</span>
+        {WEEKDAYS.map((w, idx) => (
+          <span key={w.short} className="calendar-weekday" title={w.long}>
+            <strong>{w.short}</strong>
+            <small>{idx + 1}</small>
+          </span>
         ))}
       </div>
+
       <div className="calendar-grid">
-        {cells.map((cell) => (
-          <CalendarDayCell
-            key={cell.key}
-            day={cell.day}
-            dateStr={cell.dateStr}
-            inMonth={cell.inMonth}
-            isToday={cell.isToday}
-            events={cell.events}
-            onSelect={onSelectDay}
-          />
+        {rows.map((row, rowIdx) => (
+          <div key={rowIdx} className="calendar-week-row">
+            <span className="calendar-week-number">{getISOWeek(row[0].dateObj)}</span>
+            {row.map((cell) => (
+              <CalendarDayCell
+                key={cell.key}
+                day={cell.day}
+                weekdayShort={WEEKDAYS[cell.weekdayIndex].short}
+                weekdayNumber={cell.weekdayIndex + 1}
+                dateStr={cell.dateStr}
+                inMonth={cell.inMonth}
+                isToday={cell.isToday}
+                events={cell.events}
+                onSelect={onSelectDay}
+              />
+            ))}
+          </div>
         ))}
       </div>
     </div>
