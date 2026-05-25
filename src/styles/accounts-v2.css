@@ -565,6 +565,13 @@ fieldset.account-form-section legend {
   overflow: hidden;
 }
 
+/* Task 1: contener el scroll dentro del panel de cuentas activas
+   para que la rueda/touch no encadene hacia el body. */
+.accounts-workspace-panel.accounts-workspace-active,
+.accounts-workspace-panel.accounts-workspace-active .accounts-scroll-list {
+  overscroll-behavior: contain;
+}
+
 .accounts-workspace-content.accounts-list-view {
   flex: 1;
   min-height: 0;
