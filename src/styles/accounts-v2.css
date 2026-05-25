@@ -556,6 +556,36 @@ fieldset.account-form-section legend {
   align-self: stretch;
 }
 
+/* Subsecciones de listas (Activas / Inactivas): scroll interno invisible.
+   La cadena flex/min-height:0 garantiza que la lista haga scroll dentro
+   del panel en lugar de crecer la página. */
+.accounts-workspace-panel.accounts-workspace-active,
+.accounts-workspace-panel.accounts-workspace-inactive {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.accounts-workspace-content.accounts-list-view {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.accounts-scroll-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.accounts-scroll-list::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
 @media (max-width: 960px) {
   .accounts-tab-layout {
     flex-direction: column;
