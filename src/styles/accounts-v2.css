@@ -563,6 +563,9 @@ fieldset.account-form-section legend {
 .accounts-workspace-panel.accounts-workspace-inactive {
   min-height: 0;
   overflow: hidden;
+  /* Estira el panel a la altura del layout para que el scroll interno
+     tenga una altura acotada (igual que .accounts-workspace-form). */
+  align-self: stretch;
 }
 
 /* Task 1: contener el scroll dentro del panel de cuentas activas
