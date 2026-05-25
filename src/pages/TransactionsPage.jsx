@@ -609,19 +609,6 @@ async function handleTransferSubmit(payload) {
             <h2>{selectedAccount?.ac_name || 'Selecciona una cuenta'}</h2>
             <p>Cuenta activa para registrar y visualizar transacciones.</p>
           </div>
-
-          <select
-            value={selectedAccountId}
-            onChange={handleSelectedAccountChange}
-            disabled={activeAccounts.length === 0 || saving}
-          >
-            <option value="">Elegir cuenta</option>
-            {activeAccounts.map((account) => (
-              <option key={account.ac_id} value={account.ac_id}>
-                {account.ac_name}
-              </option>
-            ))}
-          </select>
         </div>
 
         <div className="transactions-summary-card">
