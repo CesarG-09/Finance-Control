@@ -46,7 +46,7 @@ export default function BudgetEvolutionChart({ data }) {
           const overExp = aExp > pExp && pExp > 0;
 
           return (
-            <div key={`${row.bma_year}-${row.bma_month}`} className="budget-evolution-col">
+            <div key={`${row.year}-${row.month}`} className="budget-evolution-col">
               <div className="budget-evolution-bars">
                 <div className="budget-evolution-pair">
                   <div
@@ -74,7 +74,7 @@ export default function BudgetEvolutionChart({ data }) {
                 </div>
               </div>
               <small className="budget-evolution-label">
-                {monthLabel(row.bma_year, row.bma_month)}
+                {monthLabel(row.year, row.month)}
               </small>
             </div>
           );
