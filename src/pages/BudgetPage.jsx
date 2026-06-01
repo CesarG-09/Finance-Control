@@ -15,12 +15,7 @@ import { getActiveRecurringTransactions } from '../services/recurringTransaction
 import FixedItemsList from '../components/budget/FixedItemsList';
 import MonthlyAllocationList from '../components/budget/MonthlyAllocationList';
 import BudgetEvolutionChart from '../components/budget/BudgetEvolutionChart';
-
-function formatCurrency(value) {
-  const num = Number(value ?? 0);
-  if (!Number.isFinite(num)) return '$0.00';
-  return new Intl.NumberFormat('es-PA', { style: 'currency', currency: 'USD' }).format(num);
-}
+import BudgetSummaryHero from '../components/budget/BudgetSummaryHero';
 
 function buildMonthOptions() {
   const options = [];
@@ -36,6 +31,13 @@ function buildMonthOptions() {
   }
   return options;
 }
+
+const TABS = [
+  { id: 'income', label: 'Ingresos fijos', icon: '⬆' },
+  { id: 'expense', label: 'Gastos fijos', icon: '⬇' },
+  { id: 'allocation', label: 'Distribución del mes', icon: '◐' },
+  { id: 'evolution', label: 'Evolución', icon: '📈' },
+];
 
 export default function BudgetPage() {
   const { clientProfile } = useAuth();
@@ -55,6 +57,7 @@ export default function BudgetPage() {
   const [summary, setSummary] = useState(null);
   const [evolution, setEvolution] = useState([]);
 
+  const [activeTab, setActiveTab] = useState('income');
   const [loading, setLoading] = useState(true);
   const [savingIncome, setSavingIncome] = useState(false);
   const [savingExpense, setSavingExpense] = useState(false);
@@ -150,22 +153,21 @@ export default function BudgetPage() {
 
   const currentValue = `${year}-${month}`;
   const monthLabel = getMonthLabel(year, month);
+  const available = Number(summary?.available_to_distribute ?? 0);
 
-  const plannedIncome = Number(summary?.planned_income ?? 0);
-  const plannedFixedExpense = Number(summary?.planned_fixed_expense ?? 0);
-  const plannedVariable = Number(summary?.planned_variable ?? 0);
-  const plannedExpenseTotal = Number(summary?.planned_expense_total ?? 0);
-  const availableToDistribute = Number(summary?.available_to_distribute ?? 0);
-  const unallocated = Number(summary?.unallocated_remainder ?? 0);
-  const actualIncome = Number(summary?.actual_income ?? 0);
-  const actualExpense = Number(summary?.actual_expense ?? 0);
+  // Conteos para badges en tabs
+  const tabCounts = {
+    income: incomes.length,
+    expense: expenses.length,
+    allocation: allocations.length,
+  };
 
   return (
     <section className="budget-page">
       <div className="page-header">
         <div>
           <h1>Presupuesto</h1>
-          <p>Define tus ingresos y gastos fijos una sola vez; distribuye el restante mes a mes.</p>
+          <p>Define una sola vez tus ingresos y gastos fijos. Distribuye el restante mes a mes y mide tu evolución.</p>
         </div>
 
         <div className="budget-month-selector">
@@ -184,117 +186,107 @@ export default function BudgetPage() {
       {success && <p className="info-message">{success}</p>}
 
       {loading ? (
-        <p>Cargando presupuesto...</p>
+        <div className="budget-loading">
+          <p>Cargando presupuesto…</p>
+        </div>
       ) : (
         <>
-          <section className="panel budget-overview-panel">
-            <div className="budget-overview-grid">
-              <div>
-                <small>Ingresos fijos</small>
-                <strong className="is-positive">{formatCurrency(plannedIncome)}</strong>
-              </div>
-              <div>
-                <small>Gastos fijos</small>
-                <strong className="is-negative">{formatCurrency(plannedFixedExpense)}</strong>
-              </div>
-              <div>
-                <small>Disponible para distribuir</small>
-                <strong className={availableToDistribute < 0 ? 'is-negative' : 'is-positive'}>
-                  {formatCurrency(availableToDistribute)}
-                </strong>
-              </div>
-              <div>
-                <small>Asignado este mes</small>
-                <strong>{formatCurrency(plannedVariable)}</strong>
-              </div>
-              <div>
-                <small>Sin asignar</small>
-                <strong className={unallocated < 0 ? 'is-negative' : ''}>
-                  {formatCurrency(unallocated)}
-                </strong>
-              </div>
-              <div>
-                <small>Real {monthLabel}</small>
-                <strong>
-                  <span className="is-positive">+{formatCurrency(actualIncome)}</span>
-                  {' / '}
-                  <span className="is-negative">-{formatCurrency(actualExpense)}</span>
-                </strong>
-              </div>
-            </div>
+          <BudgetSummaryHero summary={summary} monthLabel={monthLabel} />
+
+          <nav className="budget-tabs" role="tablist">
+            {TABS.map((t) => {
+              const isActive = activeTab === t.id;
+              const count = tabCounts[t.id];
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  className={`budget-tab ${isActive ? 'is-active' : ''}`}
+                  onClick={() => setActiveTab(t.id)}
+                >
+                  <span className="budget-tab-icon">{t.icon}</span>
+                  <span className="budget-tab-label">{t.label}</span>
+                  {count != null && count > 0 && (
+                    <span className="budget-tab-count">{count}</span>
+                  )}
+                </button>
+              );
+            })}
+          </nav>
+
+          <section className="panel budget-tab-panel">
+            {activeTab === 'income' && (
+              <>
+                <header className="budget-tab-head">
+                  <div>
+                    <h2>Ingresos fijos</h2>
+                    <p>Salario, rentas, otros ingresos estables. Se mantienen mes a mes.</p>
+                  </div>
+                </header>
+                <FixedItemsList
+                  kind="income"
+                  items={incomes}
+                  recurring={recurring}
+                  subcategories={subcategories}
+                  typeId={1}
+                  saving={savingIncome}
+                  onSave={handleSaveIncomes}
+                />
+              </>
+            )}
+
+            {activeTab === 'expense' && (
+              <>
+                <header className="budget-tab-head">
+                  <div>
+                    <h2>Gastos fijos</h2>
+                    <p>Internet, celular, deudas, préstamos. Se mantienen mes a mes.</p>
+                  </div>
+                </header>
+                <FixedItemsList
+                  kind="expense"
+                  items={expenses}
+                  recurring={recurring}
+                  subcategories={subcategories}
+                  typeId={2}
+                  saving={savingExpense}
+                  onSave={handleSaveExpenses}
+                />
+              </>
+            )}
+
+            {activeTab === 'allocation' && (
+              <>
+                <header className="budget-tab-head">
+                  <div>
+                    <h2>Distribución de {monthLabel}</h2>
+                    <p>Asigna el disponible a categorías variables (luz, tarjeta, ahorro, ocio…).</p>
+                  </div>
+                </header>
+                <MonthlyAllocationList
+                  items={allocations}
+                  subcategories={subcategories}
+                  availableToDistribute={available}
+                  saving={savingAllocations}
+                  onSave={handleSaveAllocations}
+                />
+              </>
+            )}
+
+            {activeTab === 'evolution' && (
+              <>
+                <header className="budget-tab-head">
+                  <div>
+                    <h2>Evolución de los últimos 6 meses</h2>
+                    <p>Planeado vs real. Las transferencias entre cuentas no cuentan como gasto.</p>
+                  </div>
+                </header>
+                <BudgetEvolutionChart data={evolution} />
+              </>
+            )}
           </section>
-
-          <div className="budget-layout">
-            <section className="panel budget-step-panel">
-              <header className="budget-step-header">
-                <span className="budget-step-pill">Paso 1</span>
-                <div>
-                  <h2>Ingresos fijos</h2>
-                  <p>Salario, rentas, otros ingresos estables. Se mantienen mes a mes.</p>
-                </div>
-              </header>
-
-              <FixedItemsList
-                kind="income"
-                items={incomes}
-                recurring={recurring}
-                subcategories={subcategories}
-                typeId={1}
-                saving={savingIncome}
-                onSave={handleSaveIncomes}
-              />
-            </section>
-
-            <section className="panel budget-step-panel">
-              <header className="budget-step-header">
-                <span className="budget-step-pill">Paso 2</span>
-                <div>
-                  <h2>Gastos fijos</h2>
-                  <p>Internet, celular, deudas, préstamos. Se mantienen mes a mes.</p>
-                </div>
-              </header>
-
-              <FixedItemsList
-                kind="expense"
-                items={expenses}
-                recurring={recurring}
-                subcategories={subcategories}
-                typeId={2}
-                saving={savingExpense}
-                onSave={handleSaveExpenses}
-              />
-            </section>
-
-            <section className="panel budget-step-panel budget-alloc-panel">
-              <header className="budget-step-header">
-                <span className="budget-step-pill">Paso 3</span>
-                <div>
-                  <h2>Distribuir restante — {monthLabel}</h2>
-                  <p>Asigna lo disponible a categorías variables (luz, tarjeta, ahorro, ocio).</p>
-                </div>
-              </header>
-
-              <MonthlyAllocationList
-                items={allocations}
-                subcategories={subcategories}
-                availableToDistribute={availableToDistribute}
-                saving={savingAllocations}
-                onSave={handleSaveAllocations}
-              />
-            </section>
-
-            <section className="panel budget-step-panel budget-evolution-panel">
-              <header className="budget-step-header">
-                <span className="budget-step-pill">Evolución</span>
-                <div>
-                  <h2>Planeado vs real (últimos 6 meses)</h2>
-                  <p>Las transferencias entre cuentas no cuentan como gasto.</p>
-                </div>
-              </header>
-
-              <BudgetEvolutionChart data={evolution} />
-            </section>
-          </div>
         </>
       )}
     </section>
