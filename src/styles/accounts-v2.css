@@ -559,6 +559,27 @@ fieldset.account-form-section legend {
   min-height: 0;
   flex: 1;
   align-self: stretch;
+  /* Si el contenido excede la altura disponible, scrollea internamente
+     en lugar de cortar campos. Cadena flex/min-height:0 + scroll en
+     .accounts-form-view garantiza que el panel mantenga su caja. */
+  overflow: hidden;
+}
+
+.accounts-workspace-panel.accounts-workspace-form .accounts-workspace-content.accounts-form-view {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  /* Scroll invisible */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.accounts-workspace-panel.accounts-workspace-form .accounts-form-view::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
 }
 
 /* Subsecciones de listas (Activas / Inactivas): scroll interno invisible.
