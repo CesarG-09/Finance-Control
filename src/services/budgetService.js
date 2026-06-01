@@ -1,116 +1,167 @@
 import { supabase } from '../lib/supabaseClient';
-import {
-  getMonthRange,
-  getMonthMovementsByClientId,
-  isExpenseTransaction,
-  isIncomeTransaction,
-  isTransferMovement,
-} from './dashboardService';
-import { TRANSFER_SUBCATEGORY_NAME } from '../constants/specialSubcategories';
 
-const BUDGET_SELECT = `
-  bg_id,
+// =====================================================================
+// Items fijos (persistentes): ingresos y gastos
+// =====================================================================
+
+const FIXED_ITEM_SELECT = `
+  bfi_id,
   cl_id,
-  bg_year,
-  bg_month,
-  bg_planned_income,
-  bg_planned_expense_total,
-  bg_notes,
-  bg_is_active,
+  bfi_kind,
+  bfi_label,
+  bfi_amount,
+  rtr_id,
+  sct_id,
+  bfi_notes,
+  bfi_is_active,
+  bfi_sort_order,
   created_at,
   modified_at,
-  budget_item (
-    bgi_id,
-    bg_id,
-    ct_id,
+  recurrent_transaction:recurrent_transaction (
+    rtr_id,
+    rtr_name,
+    rtr_estimated_amount,
+    frequency:frequency ( fr_id, fr_name )
+  ),
+  subcategory:subcategory (
     sct_id,
-    bgi_planned_amount,
-    category:category (
-      ct_id,
-      ct_name
-    ),
-    subcategory:subcategory (
-      sct_id,
-      sct_name,
-      ct_id
-    )
+    sct_name,
+    category:category ( ct_id, ct_name )
   )
 `;
 
-function todayMonth() {
-  const now = new Date();
-  return { year: now.getFullYear(), month: now.getMonth() + 1 };
-}
-
-export async function getBudgetByMonth(clientId, year, month) {
-  if (!clientId) return null;
+export async function getFixedItems(clientId) {
+  if (!clientId) return { incomes: [], expenses: [] };
 
   const { data, error } = await supabase
     .schema('ctrl_finance')
-    .from('budget')
-    .select(BUDGET_SELECT)
+    .from('budget_fixed_item')
+    .select(FIXED_ITEM_SELECT)
     .eq('cl_id', clientId)
-    .eq('bg_year', year)
-    .eq('bg_month', month)
-    .eq('bg_is_active', true)
-    .maybeSingle();
+    .eq('bfi_is_active', true)
+    .order('bfi_sort_order', { ascending: true })
+    .order('created_at', { ascending: true });
 
   if (error) throw error;
-  return data ?? null;
+
+  const incomes = (data ?? []).filter((it) => it.bfi_kind === 'income');
+  const expenses = (data ?? []).filter((it) => it.bfi_kind === 'expense');
+  return { incomes, expenses };
 }
 
-export async function upsertBudgetHeader(clientId, { year, month, plannedIncome, plannedExpenseTotal, notes }) {
-  if (!clientId) {
-    throw new Error('Falta el cliente.');
+export async function saveFixedItems(clientId, kind, items) {
+  if (!clientId) throw new Error('Falta el cliente.');
+  if (kind !== 'income' && kind !== 'expense') {
+    throw new Error('Tipo inválido. Debe ser income o expense.');
   }
-  const income = Number(plannedIncome);
-  const expense = Number(plannedExpenseTotal);
-  if (!Number.isFinite(income) || income < 0) {
-    throw new Error('El ingreso planeado debe ser un número ≥ 0.');
-  }
-  if (!Number.isFinite(expense) || expense < 0) {
-    throw new Error('El gasto planeado debe ser un número ≥ 0.');
-  }
-
-  const { data: bgId, error } = await supabase.rpc('fn_upsert_budget', {
-    p_cl_id: Number(clientId),
-    p_year: Number(year),
-    p_month: Number(month),
-    p_planned_income: income,
-    p_planned_expense_total: expense,
-    p_notes: notes?.trim() || null,
-  });
-
-  if (error) throw error;
-  return bgId;
-}
-
-export async function saveBudgetItems(bgId, items) {
-  if (!bgId) throw new Error('Falta el ID del presupuesto.');
 
   const payload = (items ?? [])
-    .filter((it) => Number(it.planned_amount) >= 0 && (it.ct_id || it.sct_id))
-    .map((it) => ({
-      ct_id: it.ct_id ? String(it.ct_id) : null,
+    .filter((it) => String(it.label ?? '').trim() !== '' && Number(it.amount) >= 0)
+    .map((it, idx) => ({
+      label: String(it.label).trim(),
+      amount: Number(it.amount) || 0,
+      rtr_id: it.rtr_id ? String(it.rtr_id) : null,
       sct_id: it.sct_id ? String(it.sct_id) : null,
-      planned_amount: Number(it.planned_amount) || 0,
+      notes: it.notes?.trim() || null,
+      sort_order: idx,
     }));
 
-  const { error } = await supabase.rpc('fn_replace_budget_items', {
-    p_bg_id: Number(bgId),
+  const { error } = await supabase.rpc('fn_replace_fixed_items', {
+    p_cl_id: Number(clientId),
+    p_kind: kind,
     p_items: payload,
   });
 
   if (error) throw error;
 }
 
-export async function getBudgetVsActual(clientId, year, month) {
+// =====================================================================
+// Asignaciones mensuales (variables): restante por categoría/etiqueta
+// =====================================================================
+
+const ALLOCATION_SELECT = `
+  bma_id,
+  cl_id,
+  bma_year,
+  bma_month,
+  bma_label,
+  bma_amount,
+  ct_id,
+  sct_id,
+  bma_sort_order,
+  created_at,
+  modified_at,
+  category:category ( ct_id, ct_name ),
+  subcategory:subcategory (
+    sct_id,
+    sct_name,
+    category:category ( ct_id, ct_name )
+  )
+`;
+
+export async function getMonthlyAllocations(clientId, year, month) {
   if (!clientId) return [];
 
-  const { data, error } = await supabase.rpc('fn_budget_vs_actual', {
+  const { data, error } = await supabase
+    .schema('ctrl_finance')
+    .from('budget_monthly_allocation')
+    .select(ALLOCATION_SELECT)
+    .eq('cl_id', clientId)
+    .eq('bma_year', year)
+    .eq('bma_month', month)
+    .order('bma_sort_order', { ascending: true })
+    .order('created_at', { ascending: true });
+
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function saveMonthlyAllocations(clientId, year, month, items) {
+  if (!clientId) throw new Error('Falta el cliente.');
+
+  const payload = (items ?? [])
+    .filter((it) => String(it.label ?? '').trim() !== '' && Number(it.amount) >= 0)
+    .map((it, idx) => ({
+      label: String(it.label).trim(),
+      amount: Number(it.amount) || 0,
+      ct_id: it.ct_id ? String(it.ct_id) : null,
+      sct_id: it.sct_id ? String(it.sct_id) : null,
+      sort_order: idx,
+    }));
+
+  const { error } = await supabase.rpc('fn_replace_monthly_allocations', {
     p_cl_id: Number(clientId),
     p_year: Number(year),
     p_month: Number(month),
+    p_items: payload,
+  });
+
+  if (error) throw error;
+}
+
+// =====================================================================
+// Resumen y evolución
+// =====================================================================
+
+export async function getBudgetSummary(clientId, year, month) {
+  if (!clientId) return null;
+
+  const { data, error } = await supabase.rpc('fn_budget_summary', {
+    p_cl_id: Number(clientId),
+    p_year: Number(year),
+    p_month: Number(month),
+  });
+
+  if (error) throw error;
+  return data ?? null;
+}
+
+export async function getBudgetEvolution(clientId, months = 6) {
+  if (!clientId) return [];
+
+  const { data, error } = await supabase.rpc('fn_budget_evolution', {
+    p_cl_id: Number(clientId),
+    p_months: Number(months),
   });
 
   if (error) throw error;
@@ -126,95 +177,50 @@ export async function getDashboardBudgetSummary(clientId) {
       actualIncome: 0,
       actualExpense: 0,
       pctExpense: 0,
-      categoriesOver: [],
+      unallocatedRemainder: 0,
     };
   }
 
-  const { year, month } = todayMonth();
-
-  const [budget, vsActual, monthly] = await Promise.all([
-    getBudgetByMonth(clientId, year, month),
-    getBudgetVsActual(clientId, year, month),
-    getMonthMovementsByClientId(clientId, { sortDirection: 'desc' }),
-  ]);
-
-  const transactionMovements = monthly.filter(
-    (m) => m.movement_source !== 'initial_balance' && !isTransferMovement(m)
-  );
-
-  const actualIncome = transactionMovements
-    .filter(isIncomeTransaction)
-    .reduce((acc, t) => acc + Number(t.tr_amount ?? 0), 0);
-
-  const actualExpense = transactionMovements
-    .filter(isExpenseTransaction)
-    .reduce((acc, t) => acc + Number(t.tr_amount ?? 0), 0);
-
-  // Categorías excedidas
-  const overByCategory = new Map();
-  for (const row of vsActual) {
-    if (row.status === 'over') {
-      const label = row.level === 'subcategory'
-        ? `${row.ct_name ?? '—'} / ${row.sct_name ?? '—'}`
-        : row.ct_name ?? '—';
-      overByCategory.set(label, true);
-    }
+  const now = new Date();
+  const summary = await getBudgetSummary(clientId, now.getFullYear(), now.getMonth() + 1);
+  if (!summary) {
+    return {
+      hasBudget: false,
+      plannedIncome: 0,
+      plannedExpense: 0,
+      actualIncome: 0,
+      actualExpense: 0,
+      pctExpense: 0,
+      unallocatedRemainder: 0,
+    };
   }
 
-  const plannedExpense = Number(budget?.bg_planned_expense_total ?? 0);
-  const plannedIncome = Number(budget?.bg_planned_income ?? 0);
+  const plannedExpense = Number(summary.planned_expense_total ?? 0);
+  const actualExpense = Number(summary.actual_expense ?? 0);
   const pctExpense = plannedExpense > 0
     ? Math.round((actualExpense / plannedExpense) * 100)
     : 0;
 
   return {
-    hasBudget: Boolean(budget),
-    plannedIncome,
+    hasBudget: Number(summary.planned_income ?? 0) > 0
+      || Number(summary.planned_expense_total ?? 0) > 0,
+    plannedIncome: Number(summary.planned_income ?? 0),
     plannedExpense,
-    actualIncome,
+    actualIncome: Number(summary.actual_income ?? 0),
     actualExpense,
     pctExpense,
-    categoriesOver: Array.from(overByCategory.keys()),
-    year,
-    month,
+    unallocatedRemainder: Number(summary.unallocated_remainder ?? 0),
+    year: summary.year,
+    month: summary.month,
   };
 }
 
-export async function copyBudgetFromPreviousMonth(clientId, year, month) {
-  const prev = new Date(Number(year), Number(month) - 2, 1);
-  const prevYear = prev.getFullYear();
-  const prevMonth = prev.getMonth() + 1;
-
-  const previous = await getBudgetByMonth(clientId, prevYear, prevMonth);
-  if (!previous) {
-    throw new Error(`No hay presupuesto del mes anterior (${prevMonth}/${prevYear}).`);
-  }
-
-  const bgId = await upsertBudgetHeader(clientId, {
-    year,
-    month,
-    plannedIncome: previous.bg_planned_income,
-    plannedExpenseTotal: previous.bg_planned_expense_total,
-    notes: previous.bg_notes,
-  });
-
-  const items = (previous.budget_item ?? []).map((it) => ({
-    ct_id: it.ct_id,
-    sct_id: it.sct_id,
-    planned_amount: it.bgi_planned_amount,
-  }));
-
-  await saveBudgetItems(bgId, items);
-  return bgId;
-}
-
 export function getCurrentMonth() {
-  return todayMonth();
+  const now = new Date();
+  return { year: now.getFullYear(), month: now.getMonth() + 1 };
 }
 
 export function getMonthLabel(year, month) {
   const date = new Date(Number(year), Number(month) - 1, 1);
   return date.toLocaleDateString('es-PA', { month: 'long', year: 'numeric' });
 }
-
-export { getMonthRange, TRANSFER_SUBCATEGORY_NAME };

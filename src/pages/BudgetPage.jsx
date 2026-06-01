@@ -1,18 +1,26 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import {
-  getBudgetByMonth,
-  upsertBudgetHeader,
-  saveBudgetItems,
-  getBudgetVsActual,
-  copyBudgetFromPreviousMonth,
+  getFixedItems,
+  saveFixedItems,
+  getMonthlyAllocations,
+  saveMonthlyAllocations,
+  getBudgetSummary,
+  getBudgetEvolution,
   getCurrentMonth,
   getMonthLabel,
 } from '../services/budgetService';
 import { getActiveSubcategories } from '../services/transactionService';
-import BudgetHeaderForm from '../components/budget/BudgetHeaderForm';
-import BudgetDistribution from '../components/budget/BudgetDistribution';
-import BudgetProgressCard from '../components/budget/BudgetProgressCard';
+import { getActiveRecurringTransactions } from '../services/recurringTransactionService';
+import FixedItemsList from '../components/budget/FixedItemsList';
+import MonthlyAllocationList from '../components/budget/MonthlyAllocationList';
+import BudgetEvolutionChart from '../components/budget/BudgetEvolutionChart';
+
+function formatCurrency(value) {
+  const num = Number(value ?? 0);
+  if (!Number.isFinite(num)) return '$0.00';
+  return new Intl.NumberFormat('es-PA', { style: 'currency', currency: 'USD' }).format(num);
+}
 
 function buildMonthOptions() {
   const options = [];
@@ -38,14 +46,19 @@ export default function BudgetPage() {
 
   const [year, setYear] = useState(initial.year);
   const [month, setMonth] = useState(initial.month);
-  const [budget, setBudget] = useState(null);
+
+  const [incomes, setIncomes] = useState([]);
+  const [expenses, setExpenses] = useState([]);
+  const [allocations, setAllocations] = useState([]);
+  const [recurring, setRecurring] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
-  const [vsActual, setVsActual] = useState([]);
+  const [summary, setSummary] = useState(null);
+  const [evolution, setEvolution] = useState([]);
 
   const [loading, setLoading] = useState(true);
-  const [savingHeader, setSavingHeader] = useState(false);
-  const [savingItems, setSavingItems] = useState(false);
-  const [copying, setCopying] = useState(false);
+  const [savingIncome, setSavingIncome] = useState(false);
+  const [savingExpense, setSavingExpense] = useState(false);
+  const [savingAllocations, setSavingAllocations] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -54,14 +67,21 @@ export default function BudgetPage() {
     try {
       setLoading(true);
       setError('');
-      const [bg, subs, vs] = await Promise.all([
-        getBudgetByMonth(clientId, year, month),
+      const [fixed, alloc, subs, recur, sum, evo] = await Promise.all([
+        getFixedItems(clientId),
+        getMonthlyAllocations(clientId, year, month),
         getActiveSubcategories(),
-        getBudgetVsActual(clientId, year, month),
+        getActiveRecurringTransactions(),
+        getBudgetSummary(clientId, year, month),
+        getBudgetEvolution(clientId, 6),
       ]);
-      setBudget(bg);
+      setIncomes(fixed.incomes);
+      setExpenses(fixed.expenses);
+      setAllocations(alloc);
       setSubcategories(subs);
-      setVsActual(vs);
+      setRecurring(recur);
+      setSummary(sum);
+      setEvolution(evo);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -83,64 +103,69 @@ export default function BudgetPage() {
     }
   }
 
-  async function handleHeaderSubmit(values) {
+  async function handleSaveIncomes(items) {
     try {
-      setSavingHeader(true);
+      setSavingIncome(true);
       setError('');
       setSuccess('');
-      await upsertBudgetHeader(clientId, { year, month, ...values });
-      setSuccess('Presupuesto del mes guardado.');
+      await saveFixedItems(clientId, 'income', items);
+      setSuccess('Ingresos fijos guardados.');
       await loadAll();
     } catch (err) {
       setError(err.message);
     } finally {
-      setSavingHeader(false);
+      setSavingIncome(false);
     }
   }
 
-  async function handleSaveItems(items) {
-    if (!budget?.bg_id) {
-      setError('Guarda primero el paso 1 antes de distribuir.');
-      return;
-    }
+  async function handleSaveExpenses(items) {
     try {
-      setSavingItems(true);
+      setSavingExpense(true);
       setError('');
       setSuccess('');
-      await saveBudgetItems(budget.bg_id, items);
-      setSuccess('Distribución guardada.');
+      await saveFixedItems(clientId, 'expense', items);
+      setSuccess('Gastos fijos guardados.');
       await loadAll();
     } catch (err) {
       setError(err.message);
     } finally {
-      setSavingItems(false);
+      setSavingExpense(false);
     }
   }
 
-  async function handleCopyPrevious() {
+  async function handleSaveAllocations(items) {
     try {
-      setCopying(true);
+      setSavingAllocations(true);
       setError('');
       setSuccess('');
-      await copyBudgetFromPreviousMonth(clientId, year, month);
-      setSuccess('Presupuesto copiado del mes anterior.');
+      await saveMonthlyAllocations(clientId, year, month, items);
+      setSuccess('Distribución del mes guardada.');
       await loadAll();
     } catch (err) {
       setError(err.message);
     } finally {
-      setCopying(false);
+      setSavingAllocations(false);
     }
   }
 
   const currentValue = `${year}-${month}`;
   const monthLabel = getMonthLabel(year, month);
 
+  const plannedIncome = Number(summary?.planned_income ?? 0);
+  const plannedFixedExpense = Number(summary?.planned_fixed_expense ?? 0);
+  const plannedVariable = Number(summary?.planned_variable ?? 0);
+  const plannedExpenseTotal = Number(summary?.planned_expense_total ?? 0);
+  const availableToDistribute = Number(summary?.available_to_distribute ?? 0);
+  const unallocated = Number(summary?.unallocated_remainder ?? 0);
+  const actualIncome = Number(summary?.actual_income ?? 0);
+  const actualExpense = Number(summary?.actual_expense ?? 0);
+
   return (
     <section className="budget-page">
       <div className="page-header">
         <div>
           <h1>Presupuesto</h1>
-          <p>Planea tus ingresos y gastos del mes, distribuye por categorías y sigue el avance real.</p>
+          <p>Define tus ingresos y gastos fijos una sola vez; distribuye el restante mes a mes.</p>
         </div>
 
         <div className="budget-month-selector">
@@ -161,68 +186,116 @@ export default function BudgetPage() {
       {loading ? (
         <p>Cargando presupuesto...</p>
       ) : (
-        <div className="budget-layout">
-          <section className="panel budget-step-panel">
-            <header className="budget-step-header">
-              <span className="budget-step-pill">Paso 1</span>
+        <>
+          <section className="panel budget-overview-panel">
+            <div className="budget-overview-grid">
               <div>
-                <h2>Ingresos y gastos del mes</h2>
-                <p>Define los totales del mes para saber cuánto puedes distribuir.</p>
+                <small>Ingresos fijos</small>
+                <strong className="is-positive">{formatCurrency(plannedIncome)}</strong>
               </div>
-            </header>
-
-            <BudgetHeaderForm
-              budget={budget}
-              saving={savingHeader}
-              onSubmit={handleHeaderSubmit}
-              onCopyPrevious={handleCopyPrevious}
-              copying={copying}
-              monthLabel={monthLabel}
-            />
+              <div>
+                <small>Gastos fijos</small>
+                <strong className="is-negative">{formatCurrency(plannedFixedExpense)}</strong>
+              </div>
+              <div>
+                <small>Disponible para distribuir</small>
+                <strong className={availableToDistribute < 0 ? 'is-negative' : 'is-positive'}>
+                  {formatCurrency(availableToDistribute)}
+                </strong>
+              </div>
+              <div>
+                <small>Asignado este mes</small>
+                <strong>{formatCurrency(plannedVariable)}</strong>
+              </div>
+              <div>
+                <small>Sin asignar</small>
+                <strong className={unallocated < 0 ? 'is-negative' : ''}>
+                  {formatCurrency(unallocated)}
+                </strong>
+              </div>
+              <div>
+                <small>Real {monthLabel}</small>
+                <strong>
+                  <span className="is-positive">+{formatCurrency(actualIncome)}</span>
+                  {' / '}
+                  <span className="is-negative">-{formatCurrency(actualExpense)}</span>
+                </strong>
+              </div>
+            </div>
           </section>
 
-          <section className={`panel budget-step-panel ${!budget ? 'is-disabled' : ''}`}>
-            <header className="budget-step-header">
-              <span className="budget-step-pill">Paso 2</span>
-              <div>
-                <h2>Distribución por categoría</h2>
-                <p>Asigna un tope por categoría; opcionalmente desglosa por subcategoría.</p>
-              </div>
-            </header>
+          <div className="budget-layout">
+            <section className="panel budget-step-panel">
+              <header className="budget-step-header">
+                <span className="budget-step-pill">Paso 1</span>
+                <div>
+                  <h2>Ingresos fijos</h2>
+                  <p>Salario, rentas, otros ingresos estables. Se mantienen mes a mes.</p>
+                </div>
+              </header>
 
-            {budget ? (
-              <BudgetDistribution
+              <FixedItemsList
+                kind="income"
+                items={incomes}
+                recurring={recurring}
                 subcategories={subcategories}
-                initialItems={budget.budget_item ?? []}
-                plannedExpenseTotal={budget.bg_planned_expense_total}
-                saving={savingItems}
-                onSave={handleSaveItems}
+                typeId={1}
+                saving={savingIncome}
+                onSave={handleSaveIncomes}
               />
-            ) : (
-              <p className="info-message">Guarda el paso 1 para habilitar la distribución.</p>
-            )}
-          </section>
+            </section>
 
-          <section className="panel budget-progress-panel">
-            <header className="budget-step-header">
-              <span className="budget-step-pill">Avance</span>
-              <div>
-                <h2>Real vs planeado</h2>
-                <p>Las transferencias entre cuentas no se incluyen en el gasto.</p>
-              </div>
-            </header>
+            <section className="panel budget-step-panel">
+              <header className="budget-step-header">
+                <span className="budget-step-pill">Paso 2</span>
+                <div>
+                  <h2>Gastos fijos</h2>
+                  <p>Internet, celular, deudas, préstamos. Se mantienen mes a mes.</p>
+                </div>
+              </header>
 
-            {vsActual.length === 0 ? (
-              <p className="info-message">Aún no hay ítems en el presupuesto para comparar.</p>
-            ) : (
-              <div className="budget-progress-grid">
-                {vsActual.map((row) => (
-                  <BudgetProgressCard key={row.bgi_id} row={row} />
-                ))}
-              </div>
-            )}
-          </section>
-        </div>
+              <FixedItemsList
+                kind="expense"
+                items={expenses}
+                recurring={recurring}
+                subcategories={subcategories}
+                typeId={2}
+                saving={savingExpense}
+                onSave={handleSaveExpenses}
+              />
+            </section>
+
+            <section className="panel budget-step-panel budget-alloc-panel">
+              <header className="budget-step-header">
+                <span className="budget-step-pill">Paso 3</span>
+                <div>
+                  <h2>Distribuir restante — {monthLabel}</h2>
+                  <p>Asigna lo disponible a categorías variables (luz, tarjeta, ahorro, ocio).</p>
+                </div>
+              </header>
+
+              <MonthlyAllocationList
+                items={allocations}
+                subcategories={subcategories}
+                availableToDistribute={availableToDistribute}
+                saving={savingAllocations}
+                onSave={handleSaveAllocations}
+              />
+            </section>
+
+            <section className="panel budget-step-panel budget-evolution-panel">
+              <header className="budget-step-header">
+                <span className="budget-step-pill">Evolución</span>
+                <div>
+                  <h2>Planeado vs real (últimos 6 meses)</h2>
+                  <p>Las transferencias entre cuentas no cuentan como gasto.</p>
+                </div>
+              </header>
+
+              <BudgetEvolutionChart data={evolution} />
+            </section>
+          </div>
+        </>
       )}
     </section>
   );
