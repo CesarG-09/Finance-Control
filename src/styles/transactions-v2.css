@@ -186,6 +186,41 @@
 }
 
 /* ================================================================
+   Task 1: el panel del formulario de transacción no debe estirarse
+   con el contenido de la lista hermana (grid stretch). Se le da una
+   altura fija suficiente para mostrar todos los campos sin scroll. */
+.transactions-layout .transaction-form-panel {
+  align-self: start;
+  min-height: 720px;
+}
+
+/* ================================================================
+   Task 2: el panel de la lista de transacciones no debe expandirse
+   y empujar/redimensionar el form. Altura acotada + scroll interno
+   con barra invisible. */
+.transactions-layout .transactions-section {
+  align-self: start;
+  max-height: 720px;
+  overflow: hidden;
+}
+
+.transactions-section .transactions-scroll-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.transactions-section .transactions-scroll-list::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+/* ================================================================
    Sort toggle button */
 .transactions-list-header {
   display: flex;

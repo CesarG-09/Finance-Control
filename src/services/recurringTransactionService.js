@@ -202,7 +202,7 @@ export async function updateRecurringTransaction(rtrId, transaction) {
     .eq('rtr_id', rtrId);
 
   const subcategoryInserts = payload.sct_ids.map(sct_id => ({
-    rtr_id,
+    rtr_id: rtrId,
     sct_id,
     rts_is_active: true,
   }));

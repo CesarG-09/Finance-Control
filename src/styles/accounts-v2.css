@@ -4,13 +4,17 @@
 
 .account-form-layout {
   display: grid;
-  grid-template-columns: 260px 1fr;
+  grid-template-columns: minmax(0, 260px) minmax(0, 1fr);
   gap: 24px;
   align-items: start;
+  min-width: 0;
+  width: 100%;
 }
 
 .account-form.account-form {
   gap: 18px;
+  min-width: 0;
+  width: 100%;
 }
 
 .account-form .account-form-section {
@@ -20,6 +24,37 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-surface-soft);
+  min-width: 0;
+}
+
+/* fieldset usado como sección (datos TC) debe verse igual.
+   min-width:0 es imprescindible: un <fieldset> trae un
+   min-inline-size:min-content intrínseco que ignora minmax(0,1fr)
+   del grid y desborda el panel horizontalmente. */
+fieldset.account-form-section {
+  margin: 0;
+  border-style: solid;
+  border-width: 1px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+fieldset.account-form-section legend {
+  padding: 0 6px;
+  margin-left: -6px;
+}
+
+.account-form input,
+.account-form select,
+.account-form textarea {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.account-form label {
+  min-width: 0;
 }
 
 .account-form .account-form-section-title {
@@ -95,8 +130,14 @@
 /* Two-column form fields layout */
 .account-form-two-col {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 12px;
+  min-width: 0;
+}
+
+.account-form-two-col > label,
+.account-form-two-col > .form-field {
+  min-width: 0;
 }
 
 /* Preview card */
@@ -185,6 +226,20 @@
 /* El contenedor del form necesita ancho generoso para el preview */
 .accounts-form-centered {
   max-width: 920px !important;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.accounts-workspace-form .accounts-form-view {
+  min-width: 0;
+  overflow: hidden;
+}
+
+@media (max-width: 1100px) {
+  .account-form-layout {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 850px) {
@@ -504,6 +559,67 @@
   min-height: 0;
   flex: 1;
   align-self: stretch;
+  /* Si el contenido excede la altura disponible, scrollea internamente
+     en lugar de cortar campos. Cadena flex/min-height:0 + scroll en
+     .accounts-form-view garantiza que el panel mantenga su caja. */
+  overflow: hidden;
+}
+
+.accounts-workspace-panel.accounts-workspace-form .accounts-workspace-content.accounts-form-view {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  /* Scroll invisible */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.accounts-workspace-panel.accounts-workspace-form .accounts-form-view::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+/* Subsecciones de listas (Activas / Inactivas): scroll interno invisible.
+   La cadena flex/min-height:0 garantiza que la lista haga scroll dentro
+   del panel en lugar de crecer la página. */
+.accounts-workspace-panel.accounts-workspace-active,
+.accounts-workspace-panel.accounts-workspace-inactive {
+  min-height: 0;
+  overflow: hidden;
+  /* Estira el panel a la altura del layout para que el scroll interno
+     tenga una altura acotada (igual que .accounts-workspace-form). */
+  align-self: stretch;
+}
+
+/* Task 1: contener el scroll dentro del panel de cuentas activas
+   para que la rueda/touch no encadene hacia el body. */
+.accounts-workspace-panel.accounts-workspace-active,
+.accounts-workspace-panel.accounts-workspace-active .accounts-scroll-list {
+  overscroll-behavior: contain;
+}
+
+.accounts-workspace-content.accounts-list-view {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.accounts-scroll-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.accounts-scroll-list::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
 }
 
 @media (max-width: 960px) {

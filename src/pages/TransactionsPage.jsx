@@ -4,8 +4,10 @@ import TransactionForm from '../components/transactions/TransactionForm';
 import RecurringTransactionForm from '../components/recurring/RecurringTransactionForm';
 import RecurringTransactionList from '../components/recurring/RecurringTransactionList';
 import EditRecurrenceDialog from '../components/recurring/EditRecurrenceDialog';
+import TransferForm from '../components/transfers/TransferForm';
 import { useAuth } from '../context/AuthContext';
 import { getAccountsByClientId } from '../services/accountService';
+import { createTransfer } from '../services/transferService';
 import ConfirmModal from '../components/ui/ConfirmModal';
 import { SearchBox } from '../components/ui/SearchBox';
 import { useDebounce } from '../hooks/useDebounce';
@@ -563,6 +565,23 @@ async function handleRecurringTransactionDeactivate(rtrId) {
   }
 }
 
+async function handleTransferSubmit(payload) {
+  try {
+    setSaving(true);
+    setError('');
+    setSuccess('');
+
+    await createTransfer(payload);
+    setSuccess('Transferencia realizada correctamente.');
+    await loadTransactionsData(selectedAccountId);
+  } catch (currentError) {
+    setError(currentError.message);
+    throw currentError;
+  } finally {
+    setSaving(false);
+  }
+}
+
   if (loading) {
     return <p>Cargando transacciones...</p>;
   }
@@ -590,19 +609,6 @@ async function handleRecurringTransactionDeactivate(rtrId) {
             <h2>{selectedAccount?.ac_name || 'Selecciona una cuenta'}</h2>
             <p>Cuenta activa para registrar y visualizar transacciones.</p>
           </div>
-
-          <select
-            value={selectedAccountId}
-            onChange={handleSelectedAccountChange}
-            disabled={activeAccounts.length === 0 || saving}
-          >
-            <option value="">Elegir cuenta</option>
-            {activeAccounts.map((account) => (
-              <option key={account.ac_id} value={account.ac_id}>
-                {account.ac_name}
-              </option>
-            ))}
-          </select>
         </div>
 
         <div className="transactions-summary-card">
@@ -638,6 +644,13 @@ async function handleRecurringTransactionDeactivate(rtrId) {
         >
           Transacciones Recurrentes
         </button>
+        <button
+          type="button"
+          className={`tab-btn ${activeTab === 'transfer' ? 'active' : ''}`}
+          onClick={() => setActiveTab('transfer')}
+        >
+          Transferencias
+        </button>
       </div>
 
       {activeTab === 'transactions' && (
@@ -646,10 +659,12 @@ async function handleRecurringTransactionDeactivate(rtrId) {
             <h2>{editingTransaction ? 'Editar transacción' : 'Nueva transacción'}</h2>
 
             <TransactionForm
+              accounts={activeAccounts}
               typeTransactions={typeTransactions}
               subcategories={subcategories}
               selectedAccountId={selectedAccountId}
               selectedAccountName={selectedAccount?.ac_name || ''}
+              onAccountChange={handleSelectedAccountChange}
               initialData={editingTransaction}
               saving={saving}
               onSubmit={handleSubmit}
@@ -755,6 +770,22 @@ async function handleRecurringTransactionDeactivate(rtrId) {
             />
           </section>
         )
+      )}
+
+      {activeTab === 'transfer' && (
+        <div className="transactions-layout">
+          <section className="panel transaction-form-panel">
+            <h2>Transferir entre cuentas</h2>
+            <p className="transfer-intro">
+              Mueve saldo entre tus cuentas. Las transferencias no afectan los totales de ingresos/gastos.
+            </p>
+            <TransferForm
+              accounts={accounts}
+              saving={saving}
+              onSubmit={handleTransferSubmit}
+            />
+          </section>
+        </div>
       )}
 
       {showRecurringEditDialog && editingTransaction?.rtr_id && (
