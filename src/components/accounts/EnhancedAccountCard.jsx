@@ -29,6 +29,7 @@ export function EnhancedAccountCard({
   onEdit,
   onDeactivate,
   onReactivate,
+  onDelete,
 }) {
   const isCreditCard = Number(account.ta_id) === 1;
   const card = account.account_card ?? null;
@@ -131,13 +132,26 @@ export function EnhancedAccountCard({
             </button>
           </>
         ) : (
-          <button
-            type="button"
-            className="secondary-button account-action"
-            onClick={() => onReactivate(account)}
-          >
-            ↻ Reactivar
-          </button>
+          <>
+            <button
+              type="button"
+              className="secondary-button account-action"
+              onClick={() => onReactivate(account)}
+            >
+              ↻ Reactivar
+            </button>
+
+            {onDelete && (
+              <button
+                type="button"
+                className="danger-button account-action"
+                onClick={() => onDelete(account)}
+                title="Elimina toda traza visual de la cuenta y sus transacciones"
+              >
+                🗑 Eliminar
+              </button>
+            )}
+          </>
         )}
       </div>
     </article>

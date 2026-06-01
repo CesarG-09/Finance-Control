@@ -164,6 +164,7 @@ async function getInitialBalanceMovementsByClientId(clientId, filters = {}, date
     .select(INITIAL_BALANCE_SELECT)
     .eq('account.cl_id', clientId)
     .eq('account.ac_is_active', true)
+    .eq('account.ac_is_delete', false)
     .eq('abh_movement_type', 'initial_balance')
     .gte('created_at', `${dateRange.startDate}T00:00:00`)
     .lte('created_at', `${dateRange.endDate}T23:59:59`);
@@ -199,6 +200,7 @@ export async function getMonthMovementsByClientId(clientId, filters = {}) {
     .eq('tr_is_active', true)
     .eq('account.cl_id', clientId)
     .eq('account.ac_is_active', true)
+    .eq('account.ac_is_delete', false)
     .gte('tr_date', startDate)
     .lte('tr_date', endDate);
 

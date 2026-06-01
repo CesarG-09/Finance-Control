@@ -74,6 +74,7 @@ export async function getMonthEvents(clientId, year, monthIndex) {
     .eq('acc_is_active', true)
     .eq('account.cl_id', clientId)
     .eq('account.ac_is_active', true)
+    .eq('account.ac_is_delete', false)
     .eq('account.ta_id', 1);
 
   // Transacciones del mes
@@ -87,10 +88,12 @@ export async function getMonthEvents(clientId, year, monthIndex) {
     `)
     .eq('tr_is_active', true)
     .eq('account.cl_id', clientId)
+    .eq('account.ac_is_active', true)
+    .eq('account.ac_is_delete', false)
     .gte('tr_date', monthStart)
     .lte('tr_date', monthEnd);
 
-  // Transacciones recurrentes activas
+  // Transacciones recurrentes activas (sólo cuentas activas y no eliminadas)
   const recurrentPromise = supabase
     .schema('ctrl_finance')
     .from('recurrent_transaction')
@@ -101,7 +104,9 @@ export async function getMonthEvents(clientId, year, monthIndex) {
       account:account!inner ( ac_id, cl_id, ac_name )
     `)
     .eq('rtr_is_active', true)
-    .eq('account.cl_id', clientId);
+    .eq('account.cl_id', clientId)
+    .eq('account.ac_is_active', true)
+    .eq('account.ac_is_delete', false);
 
   const [cardsRes, txRes, recRes] = await Promise.all([cardsPromise, txPromise, recurrentPromise]);
 

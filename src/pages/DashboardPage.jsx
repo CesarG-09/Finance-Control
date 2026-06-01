@@ -12,6 +12,7 @@ import { ComparisonSection } from '../components/dashboard/ComparisonSection';
 import { HealthScore } from '../components/dashboard/HealthScore';
 import { compareMovements } from '../services/analysisService';
 import { getTopCategories, calculateHealthScore } from '../services/chartService';
+import { getDashboardBudgetSummary } from '../services/budgetService';
 
 function formatCurrency(value) {
   return new Intl.NumberFormat('es-PA', {
@@ -57,6 +58,15 @@ export default function DashboardPage() {
   const [topCategories, setTopCategories] = useState([]);
   const [healthScore, setHealthScore] = useState(75);
   const [currentMovements, setCurrentMovements] = useState([]);
+  const [budgetSummary, setBudgetSummary] = useState({
+    hasBudget: false,
+    plannedIncome: 0,
+    plannedExpense: 0,
+    actualIncome: 0,
+    actualExpense: 0,
+    pctExpense: 0,
+    categoriesOver: [],
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -105,6 +115,10 @@ export default function DashboardPage() {
       // Calculate health score
       const score = calculateHealthScore(currentMovements);
       setHealthScore(score);
+
+      // Budget summary (mes actual)
+      const budgetData = await getDashboardBudgetSummary(clientId);
+      setBudgetSummary(budgetData);
     } catch (currentError) {
       setError(currentError.message);
     } finally {
@@ -130,6 +144,20 @@ export default function DashboardPage() {
       </div>
 
       {error && <p className="error-message">{error}</p>}
+
+      {budgetSummary.hasBudget && budgetSummary.actualExpense > budgetSummary.plannedExpense && budgetSummary.plannedExpense > 0 && (
+        <div className="dashboard-budget-alert">
+          <div>
+            <strong>⚠ Gasto del mes por encima de lo planeado</strong>
+            <p>
+              Real: {new Intl.NumberFormat('es-PA', { style: 'currency', currency: 'USD' }).format(budgetSummary.actualExpense)}
+              {' · '}Planeado: {new Intl.NumberFormat('es-PA', { style: 'currency', currency: 'USD' }).format(budgetSummary.plannedExpense)}
+              {' · '}{budgetSummary.pctExpense}%
+            </p>
+          </div>
+          <Link to="/presupuesto" className="button-link">Ver presupuesto</Link>
+        </div>
+      )}
 
       <section className="dashboard-cards-grid">
         <article className="dashboard-card">
@@ -165,6 +193,26 @@ export default function DashboardPage() {
           </strong>
           <small>Entradas menos salidas</small>
         </article>
+
+        {budgetSummary.hasBudget && (
+          <article className="dashboard-card dashboard-card-budget">
+            <span>Presupuesto del mes</span>
+            <strong
+              className={
+                budgetSummary.pctExpense > 100
+                  ? 'amount-negative'
+                  : budgetSummary.pctExpense >= 80
+                    ? 'amount-warn'
+                    : 'amount-positive'
+              }
+            >
+              {budgetSummary.pctExpense}%
+            </strong>
+            <small>
+              {formatCurrency(budgetSummary.actualExpense)} / {formatCurrency(budgetSummary.plannedExpense)}
+            </small>
+          </article>
+        )}
       </section>
 
       <ComparisonSection
