@@ -9,6 +9,7 @@ import {
   getAccountsByClientId,
   getActiveTypeAccounts,
   reactivateAccount,
+  softDeleteAccount,
   updateAccount,
 } from '../services/accountService';
 
@@ -182,6 +183,17 @@ export default function AccountsPage() {
     });
   }
 
+  function handleDelete(account) {
+    setConfirmAction({
+      type: 'delete',
+      account,
+      title: 'Eliminar cuenta',
+      message: `¿Eliminar definitivamente la cuenta "${account.ac_name}"? Desaparecerá del listado junto con todas sus transacciones. El registro se conserva en la base de datos por trazabilidad pero ya no se mostrará en ninguna sección de la app.`,
+      confirmText: 'Eliminar',
+      danger: true,
+    });
+  }
+
   async function handleConfirmAction() {
     if (!confirmAction?.account) return;
 
@@ -199,6 +211,11 @@ export default function AccountsPage() {
       if (confirmAction.type === 'reactivate') {
         await reactivateAccount(clientId, confirmAction.account.ac_id);
         setSuccess('Cuenta reactivada correctamente.');
+      }
+
+      if (confirmAction.type === 'delete') {
+        await softDeleteAccount(clientId, confirmAction.account.ac_id);
+        setSuccess('Cuenta eliminada del listado.');
       }
 
       setConfirmAction(null);
@@ -280,6 +297,7 @@ export default function AccountsPage() {
                 onEdit={handleEdit}
                 onDeactivate={handleDeactivate}
                 onReactivate={handleReactivate}
+                onDelete={handleDelete}
               />
             ))
           )}
