@@ -46,6 +46,12 @@ const menuSections = [
         path: '/transacciones',
         icon: 'transactions',
       },
+      {
+        label: 'Presupuesto',
+        description: 'Planeación mensual',
+        path: '/presupuesto',
+        icon: 'budget',
+      },
     ],
   },
 ];
@@ -88,6 +94,14 @@ function SidebarIcon({ name }) {
         <path d="M4 10h16" />
         <path d="M8 3v4" />
         <path d="M16 3v4" />
+      </>
+    ),
+    budget: (
+      <>
+        <path d="M4 5h16v6H4z" />
+        <path d="M4 13h16v6H4z" />
+        <path d="M8 8h4" />
+        <path d="M8 16h6" />
       </>
     ),
     logout: (
@@ -143,6 +157,7 @@ export default function AppLayout() {
   const isTransactionsPage = location.pathname.startsWith('/transacciones');
   const isMovementsPage = location.pathname.startsWith('/movimientos');
   const isDashboardPage = location.pathname.startsWith('/dashboard');
+  const isBudgetPage = location.pathname.startsWith('/presupuesto');
 
   const isProfilePage = location.pathname.startsWith('/mi-perfil');
 
@@ -150,7 +165,8 @@ export default function AppLayout() {
     isTransactionsPage ||
     isMovementsPage ||
     isProfilePage ||
-    isDashboardPage;
+    isDashboardPage ||
+    isBudgetPage;
 
   const userDisplayName = getUserDisplayName(clientProfile);
   const userInitials = getInitials(clientProfile);
