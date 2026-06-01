@@ -25,6 +25,46 @@
   text-transform: capitalize;
 }
 
+/* =====================================================
+   Overview (KPIs del mes)
+===================================================== */
+.budget-overview-panel {
+  padding: 14px 16px;
+}
+
+.budget-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.budget-overview-grid > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.budget-overview-grid small {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--color-muted, #475569);
+  letter-spacing: 0.4px;
+  font-weight: 600;
+}
+
+.budget-overview-grid strong {
+  font-size: 1.05rem;
+}
+
+.is-positive { color: var(--color-success, #10b981); }
+.is-negative { color: var(--color-danger, #dc2626); }
+.is-over { color: var(--color-danger, #dc2626); }
+.is-under { color: #d97706; }
+.is-ok { color: var(--color-success, #10b981); }
+
+/* =====================================================
+   Layout de pasos
+===================================================== */
 .budget-layout {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -32,7 +72,8 @@
   align-items: start;
 }
 
-.budget-progress-panel {
+.budget-alloc-panel,
+.budget-evolution-panel {
   grid-column: 1 / -1;
 }
 
@@ -40,11 +81,6 @@
   .budget-layout {
     grid-template-columns: 1fr;
   }
-}
-
-.budget-step-panel.is-disabled {
-  opacity: 0.55;
-  pointer-events: none;
 }
 
 .budget-step-header {
@@ -81,302 +117,237 @@
 }
 
 /* =====================================================
-   Paso 1: Header form
+   Fixed items + Monthly allocation rows
 ===================================================== */
-.budget-header-form {
+.budget-fixed-form,
+.budget-alloc-form {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
 }
 
-.budget-header-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.budget-header-summary {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.75rem;
-  background: #f8fafc;
-  border: 1px solid var(--color-border, #e5e7eb);
-  border-radius: var(--radius-md);
-  padding: 12px;
-}
-
-.budget-header-summary > div {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.budget-header-summary small {
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  color: var(--color-muted, #475569);
-  letter-spacing: 0.4px;
-  font-weight: 600;
-}
-
-.budget-header-summary strong {
-  font-size: 1.15rem;
-}
-
-.budget-header-summary .is-negative { color: var(--color-danger, #dc2626); }
-.budget-header-summary .is-positive { color: var(--color-success, #10b981); }
-
-.budget-month-label {
-  text-transform: capitalize;
-  font-size: 0.95rem !important;
-}
-
-.budget-header-actions {
-  justify-content: flex-end;
-  gap: 8px;
-}
-
-/* =====================================================
-   Paso 2: Distribución
-===================================================== */
-.budget-distribution-form {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.budget-distribution-summary {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.75rem;
-  background: #f8fafc;
-  border: 1px solid var(--color-border, #e5e7eb);
-  border-radius: var(--radius-md);
-  padding: 10px 12px;
-  font-size: 0.85rem;
-}
-
-.budget-distribution-summary.status-over {
-  border-color: #fecaca;
-  background: #fef2f2;
-}
-
-.budget-distribution-summary.status-under {
-  border-color: #fde68a;
-  background: #fffbeb;
-}
-
-.budget-distribution-summary > div {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.budget-distribution-summary small {
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  color: var(--color-muted, #475569);
-  font-weight: 600;
-}
-
-.budget-distribution-summary strong {
-  font-size: 1rem;
-}
-
-.budget-distribution-summary .is-over { color: var(--color-danger, #dc2626); }
-.budget-distribution-summary .is-under { color: #d97706; }
-
-.budget-categories-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.budget-category-row {
-  border: 1px solid var(--color-border, #e5e7eb);
-  border-radius: var(--radius-md);
-  background: #fff;
-  padding: 10px 12px;
-  transition: border-color 0.15s ease;
-}
-
-.budget-category-row.is-overflow {
-  border-color: #fca5a5;
-  background: #fef2f2;
-}
-
-.budget-category-head {
+.budget-fixed-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--color-muted, #475569);
 }
 
-.budget-category-toggle {
+.budget-fixed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 360px;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding-right: 4px;
+}
+
+.budget-fixed-list::-webkit-scrollbar { width: 0; display: none; }
+
+.budget-fixed-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) 130px minmax(0, 1.2fr) minmax(0, 1.4fr) 32px;
+  gap: 6px;
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: var(--radius-md);
+  padding: 6px 8px;
+}
+
+.budget-alloc-row {
+  grid-template-columns: minmax(0, 1.4fr) 130px minmax(0, 1.5fr) 32px;
+}
+
+.budget-fixed-row input,
+.budget-fixed-row select {
+  width: 100%;
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  background: #fff;
+}
+
+.budget-fixed-row .amount-input-wrap {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 2px;
+}
+
+.budget-fixed-row .currency-prefix {
+  font-size: 0.85rem;
+  color: var(--color-muted, #475569);
+  padding-left: 2px;
+}
+
+.budget-fixed-row .amount-number-input {
+  border: 1px solid var(--color-border, #e5e7eb);
+}
+
+.budget-fixed-remove {
   background: transparent;
-  border: none;
+  border: 1px solid var(--color-border, #e5e7eb);
+  color: var(--color-danger, #dc2626);
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
   cursor: pointer;
-  padding: 4px 6px;
-  border-radius: var(--radius-sm);
-  color: var(--color-text, #0f172a);
-  font-size: 0.95rem;
-  text-align: left;
-  flex: 1;
-  min-width: 0;
-}
-
-.budget-category-toggle:disabled {
-  cursor: default;
-  opacity: 0.7;
-}
-
-.budget-category-caret {
-  width: 14px;
-  text-align: center;
-  color: var(--color-muted, #475569);
-}
-
-.budget-category-toggle small {
-  font-size: 0.7rem;
-  color: var(--color-muted, #475569);
-  margin-left: 6px;
-}
-
-.budget-category-amount {
-  width: 160px;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
 }
 
-.budget-subcategory-list {
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px dashed var(--color-border, #e5e7eb);
+.budget-fixed-remove:hover {
+  background: #fef2f2;
+  border-color: #fca5a5;
+}
+
+.budget-fixed-remove:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 720px) {
+  .budget-fixed-row,
+  .budget-alloc-row {
+    grid-template-columns: 1fr 30px;
+    grid-auto-rows: min-content;
+  }
+  .budget-fixed-row > * {
+    grid-column: 1 / 2;
+  }
+  .budget-fixed-row .budget-fixed-remove {
+    grid-column: 2 / 3;
+    grid-row: 1 / 2;
+  }
+}
+
+/* =====================================================
+   Resumen de asignación mensual
+===================================================== */
+.budget-alloc-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  background: #f8fafc;
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+}
+
+.budget-alloc-summary > div {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 2px;
 }
 
-.budget-subcategory-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 160px;
-  gap: 0.5rem;
-  align-items: center;
+.budget-alloc-summary small {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--color-muted, #475569);
+  font-weight: 600;
 }
 
-.budget-subcategory-name {
-  font-size: 0.85rem;
-  color: var(--color-text, #0f172a);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.budget-alloc-summary strong {
+  font-size: 1rem;
 }
 
-.budget-subcategory-summary {
+.budget-alloc-summary.status-over { border-color: #fca5a5; background: #fef2f2; }
+.budget-alloc-summary.status-under { border-color: #fde68a; background: #fffbeb; }
+
+/* =====================================================
+   Evolution chart (bars)
+===================================================== */
+.budget-evolution {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 4px;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.budget-evolution-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
   font-size: 0.8rem;
   color: var(--color-muted, #475569);
 }
 
-.budget-subcategory-summary.is-overflow strong {
-  color: var(--color-danger, #dc2626);
+.budget-evolution-legend i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  margin-right: 5px;
+  vertical-align: middle;
 }
 
-.budget-warn-pill {
-  margin-left: auto;
-  background: #fee2e2;
-  color: #b91c1c;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 0.7rem;
-  font-weight: 600;
-}
+.dot-planned-income { background: #93c5fd; }
+.dot-actual-income { background: #2563eb; }
+.dot-planned-expense { background: #fca5a5; }
+.dot-actual-expense { background: #dc2626; }
 
-/* =====================================================
-   Real vs Planeado: progreso
-===================================================== */
-.budget-progress-grid {
+.budget-evolution-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 0.75rem;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(90px, 1fr);
+  gap: 14px;
+  height: 220px;
+  align-items: end;
+  padding-bottom: 22px;
+  border-bottom: 1px solid var(--color-border, #e5e7eb);
 }
 
-.budget-progress-card {
-  border: 1px solid var(--color-border, #e5e7eb);
-  border-radius: var(--radius-md);
-  padding: 12px;
-  background: #fff;
+.budget-evolution-col {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-}
-
-.budget-progress-card.status-warn { border-color: #fde68a; background: #fffbeb; }
-.budget-progress-card.status-over { border-color: #fca5a5; background: #fef2f2; }
-
-.budget-progress-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.5rem;
-}
-
-.budget-progress-head strong {
-  display: block;
-  font-size: 0.9rem;
-}
-
-.budget-progress-head small {
-  display: block;
-  font-size: 0.7rem;
-  color: var(--color-muted, #475569);
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-}
-
-.budget-status-pill {
-  font-size: 0.65rem;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-}
-
-.budget-status-pill.status-ok { background: #d1fae5; color: #065f46; }
-.budget-status-pill.status-warn { background: #fef3c7; color: #92400e; }
-.budget-status-pill.status-over { background: #fee2e2; color: #991b1b; }
-
-.budget-progress-track {
-  height: 8px;
-  background: #e5e7eb;
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.budget-progress-fill {
+  align-items: center;
   height: 100%;
-  background: var(--color-success, #10b981);
-  transition: width 0.25s ease;
+  position: relative;
 }
 
-.budget-progress-fill.status-warn { background: #f59e0b; }
-.budget-progress-fill.status-over { background: var(--color-danger, #dc2626); }
-
-.budget-progress-foot {
+.budget-evolution-bars {
   display: flex;
-  justify-content: space-between;
-  font-size: 0.78rem;
+  gap: 10px;
+  align-items: flex-end;
+  height: 100%;
+}
+
+.budget-evolution-pair {
+  display: flex;
+  gap: 3px;
+  align-items: flex-end;
+  height: 100%;
+}
+
+.budget-evolution-pair .bar {
+  width: 14px;
+  border-radius: 4px 4px 0 0;
+  background: #cbd5e1;
+  transition: height 0.2s ease;
+  min-height: 2px;
+}
+
+.bar-planned-income { background: #93c5fd; }
+.bar-actual-income { background: #2563eb; }
+.bar-planned-expense { background: #fca5a5; }
+.bar-actual-expense { background: #dc2626; }
+.bar-actual-expense.is-over { box-shadow: 0 0 0 2px #b91c1c; }
+
+.budget-evolution-label {
+  position: absolute;
+  bottom: -20px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
   color: var(--color-muted, #475569);
 }
-
-.budget-progress-foot .is-positive { color: var(--color-success, #10b981); }
-.budget-progress-foot .is-negative { color: var(--color-danger, #dc2626); }
 
 /* =====================================================
    Dashboard banner + card

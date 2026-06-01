@@ -145,14 +145,14 @@ export default function DashboardPage() {
 
       {error && <p className="error-message">{error}</p>}
 
-      {budgetSummary.hasBudget && budgetSummary.categoriesOver.length > 0 && (
+      {budgetSummary.hasBudget && budgetSummary.actualExpense > budgetSummary.plannedExpense && budgetSummary.plannedExpense > 0 && (
         <div className="dashboard-budget-alert">
           <div>
-            <strong>⚠ Presupuesto excedido</strong>
+            <strong>⚠ Gasto del mes por encima de lo planeado</strong>
             <p>
-              {budgetSummary.categoriesOver.length} ítem(s) por encima del tope:{' '}
-              {budgetSummary.categoriesOver.slice(0, 3).join(' · ')}
-              {budgetSummary.categoriesOver.length > 3 ? ' …' : ''}
+              Real: {new Intl.NumberFormat('es-PA', { style: 'currency', currency: 'USD' }).format(budgetSummary.actualExpense)}
+              {' · '}Planeado: {new Intl.NumberFormat('es-PA', { style: 'currency', currency: 'USD' }).format(budgetSummary.plannedExpense)}
+              {' · '}{budgetSummary.pctExpense}%
             </p>
           </div>
           <Link to="/presupuesto" className="button-link">Ver presupuesto</Link>
