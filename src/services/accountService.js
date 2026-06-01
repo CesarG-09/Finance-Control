@@ -53,6 +53,7 @@ export async function getAccountsByClientId(clientId) {
     .from('account')
     .select(ACCOUNT_SELECT)
     .eq('cl_id', clientId)
+    .eq('ac_is_delete', false)
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -259,6 +260,31 @@ export async function reactivateAccount(clientId, accountId) {
     .eq('ac_id', accountId)
     .eq('cl_id', clientId)
     .select(ACCOUNT_SELECT)
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
+// Eliminación lógica: marca la cuenta como ac_is_delete=true. La cuenta
+// desaparece de toda la UI (queries filtran ac_is_delete=false), pero el
+// registro permanece en BD por trazabilidad. Sólo permitido sobre cuentas
+// ya desactivadas.
+export async function softDeleteAccount(clientId, accountId) {
+  if (!clientId || !accountId) {
+    throw new Error('Faltan datos para eliminar la cuenta.');
+  }
+
+  const { data, error } = await supabase
+    .schema('ctrl_finance')
+    .from('account')
+    .update({ ac_is_delete: true, ac_is_active: false })
+    .eq('ac_id', accountId)
+    .eq('cl_id', clientId)
+    .select('ac_id, ac_is_delete, ac_is_active')
     .single();
 
   if (error) {
